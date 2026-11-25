@@ -17,7 +17,7 @@ import type {
   PilotAffiliateOfferRecord,
 } from '@/tree/first-value/pilot-affiliate-studio-repo';
 
-export type CampaignContentLocale = 'en' | 'vi';
+export type CampaignContentLocale = 'en' | 'vi' | 'es';
 
 export function resolveDefaultContentLocaleForMarket(
   targetMarket: string | null | undefined,
@@ -121,6 +121,7 @@ export function AffiliateCampaignGeneratorCard({
               >
                 <option value="en">{t('affContentLangEn')}</option>
                 <option value="vi">{t('affContentLangVi')}</option>
+                <option value="es">{t('affContentLangEs')}</option>
               </select>
             </label>
             <button

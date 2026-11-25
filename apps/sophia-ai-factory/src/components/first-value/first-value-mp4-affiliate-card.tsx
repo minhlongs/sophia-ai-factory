@@ -195,20 +195,27 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
 
   async function handlePollHeyGen(exportId: string) {
     setPollingExportId(exportId);
+    const checkedTime = new Date().toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
     try {
       const result = await props.onPollHeyGenMp4(exportId);
-      const checkedTime = new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      });
       let message = t('pilotPollHeyGenStillProcessing', { time: checkedTime });
-      if (result?.status === 'completed') {
+      if (result === null) {
+        message = t('pilotPollHeyGenError', { time: checkedTime });
+      } else if (result?.status === 'completed') {
         message = t('pilotPollHeyGenCompleted');
       } else if (result?.status === 'failed') {
         message = t('pilotPollHeyGenFailed');
       }
       setPollFeedbackById((prev) => ({ ...prev, [exportId]: message }));
+    } catch {
+      setPollFeedbackById((prev) => ({
+        ...prev,
+        [exportId]: t('pilotPollHeyGenError', { time: checkedTime }),
+      }));
     } finally {
       setPollingExportId(null);
     }
@@ -481,7 +488,7 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
                     </div>
                   )}
                   {pollNotice && (
-                    <div role="status" className="text-xs text-muted-foreground">
+                    <div role="status" aria-live="polite" className="text-xs text-muted-foreground">
                       {pollNotice}
                     </div>
                   )}

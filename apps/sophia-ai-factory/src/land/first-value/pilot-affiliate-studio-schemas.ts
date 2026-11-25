@@ -50,6 +50,7 @@ export const EditableCampaignPackSchema = z.object({
   socialPost: z.string().trim().min(5).max(4000),
   affiliateDisclosure: z.string().trim().min(2).max(1500),
   referralUrl: SafeHttpsUrlSchema,
+  contentLanguage: z.enum(['en', 'vi', 'es']).optional(),
 });
 
 export const SaveAffiliateOfferActionSchema = z.object({
@@ -76,7 +77,8 @@ export const GenerateAffiliateCampaignActionSchema = z.object({
   orgId: z.string().min(1).max(128),
   offerId: z.string().min(3).max(128),
   durationSec: z.number().int().min(15).max(480).optional().default(30),
-  locale: z.enum(['vi', 'en']).optional().default('vi'),
+  locale: z.enum(['vi', 'en', 'es']).optional(),
+  contentLanguage: z.enum(['en', 'vi', 'es']).optional(),
   provenance: z.enum(['fixture_simulated', 'live_provider']).optional().default('live_provider'),
   idempotencyKey: z.string().min(8).max(128).trim().optional(),
 });
@@ -87,7 +89,8 @@ export const EditAffiliateCampaignActionSchema = z.object({
   campaignId: z.string().min(3).max(128),
   expectedVersion: z.number().int().min(1),
   pack: EditableCampaignPackSchema,
-  locale: z.enum(['vi', 'en']).optional().default('vi'),
+  locale: z.enum(['vi', 'en', 'es']).optional(),
+  contentLanguage: z.enum(['en', 'vi', 'es']).optional(),
   idempotencyKey: z.string().min(8).max(128).trim().optional(),
 });
 

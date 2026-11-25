@@ -322,6 +322,7 @@ export async function handleSubmitHeyGenMp4(
 function formatHeyGenFailureCode(rawMessage?: string): string {
   const cleaned = String(rawMessage ?? '')
     .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/(?:Bearer\s+|X-Api-Key[:=\s]+|sk-[a-zA-Z0-9_-]{8,})[^\s,;]*/gi, '[redacted]')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 200);
@@ -406,7 +407,27 @@ export async function handlePollHeyGenMp4(
       { mp4Export: target, checkedAtIso: nowIso, publicPublished: false, paidInferenceExecuted: false },
       200,
     );
-  } catch {
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : '';
+    const errName = err instanceof Error ? err.name : '';
+    if (errName === 'TimeoutError' || errName === 'AbortError' || /timeout|aborted/i.test(errMsg)) {
+      return jsonPrivate(
+        { code: 'HEYGEN_POLL_TIMEOUT', error: 'HeyGen status check timed out. Please retry shortly.' },
+        504,
+      );
+    }
+    if (errMsg === 'HEYGEN_STATUS_HTTP_429') {
+      return jsonPrivate(
+        { code: 'HEYGEN_RATE_LIMITED', error: 'HeyGen rate limit reached. Please wait a moment before checking again.' },
+        429,
+      );
+    }
+    if (errMsg === 'HEYGEN_STATUS_HTTP_401' || errMsg === 'HEYGEN_STATUS_HTTP_403') {
+      return jsonPrivate(
+        { code: 'HEYGEN_KEY_REJECTED', error: 'HeyGen rejected your API key. Please verify your HeyGen BYOK key.' },
+        422,
+      );
+    }
     return jsonPrivate({ code: 'HEYGEN_POLL_FAILED', error: 'Unable to poll HeyGen status right now' }, 502);
   }
 }

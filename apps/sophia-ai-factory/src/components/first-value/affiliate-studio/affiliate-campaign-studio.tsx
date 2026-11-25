@@ -172,6 +172,7 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
         offerId: activeOffer.id,
         durationSec,
         locale: effectiveLocale,
+        contentLanguage: effectiveLocale,
         provenance: 'live_provider',
         idempotencyKey: key,
       },
@@ -187,7 +188,10 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
 
   async function handleSaveEdit(pack: AffiliateCampaignPack): Promise<boolean> {
     if (!activeCampaign) return false;
-    const effectiveLocale = resolveDefaultContentLocaleForMarket(activeCampaign.targetMarket);
+    const effectiveLocale =
+      pack.contentLanguage ??
+      activeCampaign.pack.contentLanguage ??
+      resolveDefaultContentLocaleForMarket(activeCampaign.targetMarket);
     const key = `aff-edit-${crypto.randomUUID()}`;
     const res = await props.postAction(
       {
@@ -197,6 +201,7 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
         expectedVersion: activeCampaign.version,
         pack,
         locale: effectiveLocale,
+        contentLanguage: effectiveLocale,
         idempotencyKey: key,
       },
       key,

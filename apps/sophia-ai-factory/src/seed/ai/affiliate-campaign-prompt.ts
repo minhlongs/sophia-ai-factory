@@ -21,6 +21,19 @@ import {
 import type { ScriptOutput } from './script-prompt-builders';
 
 export type AffiliateStudioVertical = 'crypto' | 'saas';
+export type CampaignContentLanguage = 'en' | 'vi' | 'es';
+
+export function resolveEffectiveContentLanguage(opts: {
+  readonly contentLanguage?: CampaignContentLanguage | null;
+  readonly packContentLanguage?: CampaignContentLanguage | null;
+  readonly locale?: CampaignContentLanguage | null;
+  readonly targetMarket?: string | null;
+}): CampaignContentLanguage {
+  if (opts.contentLanguage) return opts.contentLanguage;
+  if (opts.packContentLanguage) return opts.packContentLanguage;
+  if (opts.locale) return opts.locale;
+  return (opts.targetMarket ?? '').trim().toUpperCase() === 'VN' ? 'vi' : 'en';
+}
 
 export interface AffiliateOfferBrief {
   readonly vertical: AffiliateStudioVertical;
@@ -44,6 +57,7 @@ export interface AffiliateCampaignPack {
   readonly socialPost: string;
   readonly affiliateDisclosure: string;
   readonly referralUrl: string;
+  readonly contentLanguage?: CampaignContentLanguage;
 }
 
 const PROHIBITED_CRYPTO_CLAIMS: readonly RegExp[] = [
@@ -111,15 +125,19 @@ export function assertNoForeignAffiliateUrls(
 export function buildMandatoryAffiliateDisclosure(
   vertical: AffiliateStudioVertical,
   targetMarket: string,
-  locale: 'vi' | 'en' = 'vi',
+  locale: CampaignContentLanguage = 'vi',
 ): string {
   if (vertical === 'crypto') {
     const disclaimer = getDisclaimerForJurisdiction(targetMarket);
-    return disclaimer.full[locale];
+    return locale === 'vi' ? disclaimer.full.vi : disclaimer.full.en;
   }
-  return locale === 'vi'
-    ? '#QuảngCáo | Nội dung này có chứa liên kết giới thiệu (affiliate). Nếu bạn đăng ký hoặc mua qua liên kết của chúng tôi, chúng tôi có thể nhận hoa hồng mà bạn không mất thêm bất kỳ chi phí nào.'
-    : '#ad | This content contains an affiliate referral link. If you sign up or purchase through this link, we may earn a commission at no extra cost to you.';
+  if (locale === 'vi') {
+    return '#QuảngCáo | Nội dung này có chứa liên kết giới thiệu (affiliate). Nếu bạn đăng ký hoặc mua qua liên kết của chúng tôi, chúng tôi có thể nhận hoa hồng mà bạn không mất thêm bất kỳ chi phí nào.';
+  }
+  if (locale === 'es') {
+    return '#ad | Este contenido contiene un enlace de afiliado. Si te registras o compras a través de este enlace, podemos recibir una comisión sin costo adicional para ti.';
+  }
+  return '#ad | This content contains an affiliate referral link. If you sign up or purchase through this link, we may earn a commission at no extra cost to you.';
 }
 
 export const AFFILIATE_CAMPAIGN_SYSTEM_PROMPT = `You are a commercial Affiliate Marketing Strategist for SaaS and Crypto products.
@@ -133,7 +151,7 @@ Strict commercial & regulatory rules:
 export function buildAffiliateCampaignUserPrompt(
   offer: AffiliateOfferBrief,
   durationSec: number,
-  locale: 'vi' | 'en' = 'vi',
+  locale: CampaignContentLanguage = 'vi',
 ): string {
   const safeDuration = Math.max(15, Math.min(480, Math.round(durationSec || 30)));
   const isLongForm = safeDuration >= 180;
@@ -145,7 +163,9 @@ export function buildAffiliateCampaignUserPrompt(
   const langInstruction =
     locale === 'vi'
       ? 'Write all campaign text in natural, persuasive business Vietnamese (keep URLs exact).'
-      : 'Write all campaign text in clear, persuasive business English (keep URLs exact).';
+      : locale === 'es'
+        ? 'Write all campaign text in natural, persuasive business Spanish (keep URLs exact).'
+        : 'Write all campaign text in clear, persuasive business English (keep URLs exact).';
 
   return `${langInstruction}
 
@@ -206,7 +226,7 @@ export function normalizeAndValidateCampaignPack(
     readonly vertical: AffiliateStudioVertical;
     readonly targetMarket: string;
     readonly targetDurationSec?: number;
-    readonly locale?: 'vi' | 'en';
+    readonly locale?: CampaignContentLanguage;
   },
 ): AffiliateCampaignPack {
   const parsed =
@@ -304,13 +324,14 @@ export function normalizeAndValidateCampaignPack(
     socialPost,
     affiliateDisclosure,
     referralUrl,
+    contentLanguage: locale,
   };
 }
 
 export function buildSimulatedAffiliateCampaignPack(
   offer: AffiliateOfferBrief,
   durationSec: number,
-  locale: 'vi' | 'en' = 'vi',
+  locale: CampaignContentLanguage = 'vi',
 ): AffiliateCampaignPack {
   const safeDuration = Math.max(15, Math.min(480, Math.round(durationSec || 30)));
   const s1 = Math.max(5, Math.round(safeDuration * 0.25));
@@ -359,6 +380,7 @@ export function buildSimulatedAffiliateCampaignPack(
     socialPost: `[SIMULATED STUB] Practical breakdown of ${offer.productName} for ${offer.targetAudience} (${offer.targetMarket}).\n\n👉 ${offer.referralUrl}\n\n${disclosure}`,
     affiliateDisclosure: disclosure,
     referralUrl: offer.referralUrl,
+    contentLanguage: locale,
   };
 }
 

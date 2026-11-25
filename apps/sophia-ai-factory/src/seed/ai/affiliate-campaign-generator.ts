@@ -14,13 +14,14 @@ import {
   normalizeAndValidateCampaignPack,
   type AffiliateCampaignPack,
   type AffiliateOfferBrief,
+  type CampaignContentLanguage,
 } from './affiliate-campaign-prompt';
 import { rethrowMappedProviderError } from './script-generator-helpers';
 
 export interface GenerateAffiliateCampaignInput {
   readonly offer: AffiliateOfferBrief;
   readonly durationSec: number;
-  readonly locale: 'vi' | 'en';
+  readonly locale: CampaignContentLanguage;
   readonly userId: string;
   readonly apiKey: string;
   readonly model: string;
