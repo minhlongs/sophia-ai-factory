@@ -11,12 +11,17 @@ import { z } from 'zod';
 const SafeHttpsUrlSchema = z
   .string()
   .trim()
-  .min(10)
+  .min(4)
   .max(1000)
+  .transform((val) => (/^[a-z][a-z0-9+.-]*:\/\//i.test(val) ? val : `https://${val}`))
   .refine((val) => {
     try {
       const parsed = new URL(val);
-      return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+      return (
+        (parsed.protocol === 'https:' || parsed.protocol === 'http:') &&
+        Boolean(parsed.hostname) &&
+        parsed.hostname.includes('.')
+      );
     } catch {
       return false;
     }

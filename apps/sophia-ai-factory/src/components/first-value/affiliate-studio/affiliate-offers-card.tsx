@@ -38,6 +38,20 @@ export interface AffiliateOffersCardProps {
 const CRYPTO_MARKETS = ['US', 'EU', 'JP', 'VN', 'SG'] as const;
 const SAAS_MARKETS = ['GLOBAL', 'US', 'EU', 'VN', 'SG', 'JP'] as const;
 
+export function normalizeOfferUrlInput(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed || /\s/.test(trimmed)) return null;
+  const candidate = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const parsed = new URL(candidate);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null;
+    if (!parsed.hostname || !parsed.hostname.includes('.')) return null;
+    return candidate;
+  } catch {
+    return null;
+  }
+}
+
 export function AffiliateOffersCard({
   offers,
   selectedOfferId,
@@ -56,10 +70,13 @@ export function AffiliateOffersCard({
   const [targetMarket, setTargetMarket] = useState('GLOBAL');
   const [productInfoSource, setProductInfoSource] = useState('');
 
+  const normalizedOfficialUrl = normalizeOfferUrlInput(officialWebsiteUrl);
+  const normalizedReferralUrl = normalizeOfferUrlInput(referralUrl);
+
   const canSave =
     productName.trim().length >= 2 &&
-    officialWebsiteUrl.trim().startsWith('http') &&
-    referralUrl.trim().startsWith('http') &&
+    normalizedOfficialUrl !== null &&
+    normalizedReferralUrl !== null &&
     commissionTerms.trim().length >= 3 &&
     targetAudience.trim().length >= 3 &&
     productInfoSource.trim().length >= 3;
@@ -72,12 +89,12 @@ export function AffiliateOffersCard({
   }
 
   async function handleSubmit() {
-    if (!canSave) return;
+    if (!canSave || !normalizedOfficialUrl || !normalizedReferralUrl) return;
     const ok = await onSaveOffer({
       vertical,
       productName: productName.trim(),
-      officialWebsiteUrl: officialWebsiteUrl.trim(),
-      referralUrl: referralUrl.trim(),
+      officialWebsiteUrl: normalizedOfficialUrl,
+      referralUrl: normalizedReferralUrl,
       commissionTerms: commissionTerms.trim(),
       targetAudience: targetAudience.trim(),
       targetMarket,

@@ -2,7 +2,7 @@ import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AffiliateOverviewCard } from '../affiliate-studio/affiliate-overview-card';
-import { AffiliateOffersCard } from '../affiliate-studio/affiliate-offers-card';
+import { AffiliateOffersCard, normalizeOfferUrlInput } from '../affiliate-studio/affiliate-offers-card';
 import { AffiliateCampaignGeneratorCard } from '../affiliate-studio/affiliate-campaign-generator-card';
 import { AffiliateContentWorkspaceCard } from '../affiliate-studio/affiliate-content-workspace-card';
 import { AffiliateRevenueDashboardCard } from '../affiliate-studio/affiliate-revenue-dashboard-card';
@@ -132,6 +132,42 @@ describe('Affiliate Studio UI Cards branch coverage', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'affArchiveBtn' })[0]);
     await waitFor(() => expect(onArchive).toHaveBeenCalledWith('poff_1'));
+
+    // Bare domain without https:// (e.g. "oneroyal.com") normalizes to https:// and enables Save
+    expect(normalizeOfferUrlInput('oneroyal.com')).toBe('https://oneroyal.com');
+    expect(normalizeOfferUrlInput('javascript:alert(1)')).toBeNull();
+    expect(normalizeOfferUrlInput('not a url')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'affVerticalCrypto' }));
+    fireEvent.change(screen.getByPlaceholderText('affProductNamePlaceholder'), {
+      target: { value: 'Oneroyal' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('https://example.com'), {
+      target: { value: 'oneroyal.com' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('https://example.com/?via=your-partner-code'), {
+      target: { value: 'https://vc.cabinet.oneroyal.com/links/go/18230' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('affCommissionTermsPlaceholder'), {
+      target: { value: '25% commission on trading fees' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('affTargetAudiencePlaceholder'), {
+      target: { value: 'Active traders' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('affInfoSourcePlaceholder'), {
+      target: { value: 'Official website' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'affSaveOfferBtn' }));
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          vertical: 'crypto',
+          productName: 'Oneroyal',
+          officialWebsiteUrl: 'https://oneroyal.com',
+          referralUrl: 'https://vc.cabinet.oneroyal.com/links/go/18230',
+        }),
+      ),
+    );
   });
 
   it('updates duration and selects campaigns in AffiliateCampaignGeneratorCard', async () => {
