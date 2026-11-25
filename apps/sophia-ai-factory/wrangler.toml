@@ -1,6 +1,7 @@
 # Sophia Video Factory — Cloudflare Workers (OpenNext)
 # Deploy: npm run build && npx wrangler deploy
 name = "sophia-ai-factory"
+workers_dev = false
 main = ".open-next/worker.js"
 compatibility_date = "2026-03-17"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
