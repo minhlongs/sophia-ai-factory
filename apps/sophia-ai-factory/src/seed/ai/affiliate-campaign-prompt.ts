@@ -134,6 +134,7 @@ export function buildAffiliateCampaignUserPrompt(
   offer: AffiliateOfferBrief,
   durationSec: number,
   locale: 'vi' | 'en' = 'vi',
+  winningSignalsContext?: string,
 ): string {
   const safeDuration = Math.max(15, Math.min(480, Math.round(durationSec || 30)));
   const isLongForm = safeDuration >= 180;
@@ -187,7 +188,7 @@ Generate a complete Affiliate Campaign Pack as JSON with this exact shape:
 
 Constraints:
 - shortFormScript must have ${sceneConstraint} and total_duration between ${minDur} and ${maxDur} seconds.
-- Include ${offer.referralUrl} verbatim in callToAction and socialPost, and include NO third-party links.`;
+- Include ${offer.referralUrl} verbatim in callToAction and socialPost, and include NO third-party links.${winningSignalsContext?.trim() ? `\n\n${winningSignalsContext.trim()}` : ''}`;
 }
 
 function readNonEmptyString(obj: Record<string, unknown>, key: string, maxLen = 4000): string {
