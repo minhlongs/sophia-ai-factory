@@ -32,6 +32,10 @@ import {
   assertAccessPoliciesSafeAndExact,
   buildAccessSingleEmailPolicyPayload,
   buildCustomerUrlsAndVietnameseInvite,
+  buildShortlinkSubpathBypassAppPayload,
+  buildShortlinkSubpathBypassPolicyPayload,
+  DEFAULT_PILOT_OPERATOR_EMAILS,
+  resolveAuthorizedPilotEmails,
   validateSinglePilotEmail,
 } from '../../../../scripts/pilot-invite-customer.mjs';
 import {
@@ -487,11 +491,24 @@ describe('pilot operator CLIs (invite & support queue)', () => {
     expect(() => validateSinglePilotEmail('everyone')).toThrow(/Everyone/);
     expect(() => validateSinglePilotEmail('not-an-email')).toThrow(/Invalid email/);
 
+    const authorized = resolveAuthorizedPilotEmails('khach@congty.vn');
+    expect(authorized).toEqual([...DEFAULT_PILOT_OPERATOR_EMAILS, 'khach@congty.vn']);
+    expect(resolveAuthorizedPilotEmails('billwill.mentor@gmail.com')).toEqual([
+      ...DEFAULT_PILOT_OPERATOR_EMAILS,
+    ]);
+
+    const bypassApp = buildShortlinkSubpathBypassAppPayload();
+    expect(bypassApp.domain).toBe(
+      'sophia-ai-factory-pilot.agencyos-openclaw.workers.dev/api/r/*',
+    );
+    expect(buildShortlinkSubpathBypassPolicyPayload().decision).toBe('bypass');
+
     const policy = {
       id: '5ad49a50-b19a-4cc9-a43d-d2455e92fa42',
       ...buildAccessSingleEmailPolicyPayload('khach@congty.vn'),
     };
     expect(() => assertAccessPoliciesSafeAndExact([policy], 'khach@congty.vn')).not.toThrow();
+    expect(() => assertAccessPoliciesSafeAndExact([policy], authorized)).not.toThrow();
     expect(() =>
       assertAccessPoliciesSafeAndExact(
         [{ id: 'other', decision: 'bypass', include: [{ everyone: {} }] }],
@@ -528,6 +545,7 @@ describe('pilot operator CLIs (invite & support queue)', () => {
         '0515_first_value_reviews.sql',
         '0517_customer_pilot_first_value.sql',
         '0519_pilot_support_requests.sql',
+        '0520_pilot_commercial_validation.sql',
       ]) {
         const sqlText = fs.readFileSync(
           path.resolve(__dirname, '../../../../migrations', mig),

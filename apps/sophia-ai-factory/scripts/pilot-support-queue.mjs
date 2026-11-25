@@ -16,8 +16,10 @@
  */
 
 import { execFileSync } from 'node:child_process';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+const APP_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PILOT_DB_NAME = 'sophia-pilot-db';
 const PILOT_WRANGLER_CONFIG = 'wrangler.pilot.toml';
 const REQUEST_ID_RE = /^psr_[a-z0-9-]{8,64}$/i;
@@ -47,6 +49,10 @@ export function buildPurgeUserStatements(userId, orgId, requestId, nowIso) {
   return [
     `DELETE FROM "verification" WHERE identifier IN (SELECT email FROM "user" WHERE id = ${safeUser});`,
     `DELETE FROM user_api_keys WHERE user_id = ${safeUser};`,
+    `DELETE FROM pilot_manual_publishes WHERE org_id = ${safeOrg} OR user_id = ${safeUser};`,
+    `DELETE FROM pilot_mp4_exports WHERE org_id = ${safeOrg} OR user_id = ${safeUser};`,
+    `DELETE FROM pilot_affiliate_clicks WHERE org_id = ${safeOrg} OR user_id = ${safeUser};`,
+    `DELETE FROM pilot_affiliate_links WHERE org_id = ${safeOrg} OR user_id = ${safeUser};`,
     `DELETE FROM first_value_reviews WHERE org_id = ${safeOrg} OR user_id = ${safeUser};`,
     `DELETE FROM pilot_feedback WHERE org_id = ${safeOrg} OR user_id = ${safeUser};`,
     `DELETE FROM pilot_events WHERE org_id = ${safeOrg} OR user_id = ${safeUser};`,
@@ -87,7 +93,7 @@ function runPilotD1Sql(sql) {
       '--command',
       sql,
     ],
-    { encoding: 'utf8', env, stdio: ['ignore', 'pipe', 'pipe'] },
+    { cwd: APP_ROOT, encoding: 'utf8', env, stdio: ['ignore', 'pipe', 'pipe'] },
   );
   const parsed = JSON.parse(stdout);
   const first = Array.isArray(parsed) ? parsed[0] : parsed;

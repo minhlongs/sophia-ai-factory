@@ -1,106 +1,63 @@
 #!/usr/bin/env node
 /**
- * Operator-only Single-Customer Invitation Provisioner (Section IX).
+ * Operator Customer Invitation & Scoped Shortlink Bypass Provisioner.
  *
- * Accepts ONE exact invited email, rejects wildcards / lists / Everyone / Bypass,
- * updates BOTH:
- *   1. Cloudflare Access App `11a89148-d86e-4d3e-a1d4-e12edbeb6f75`
- *      Policy `5ad49a50-b19a-4cc9-a43d-d2455e92fa42`
- *   2. Pilot Worker secret `PILOT_ALLOWED_EMAILS` (`wrangler.pilot.toml`)
- * and verifies both configurations by readback without sending any external message.
- *
- * Usage:
- *   node scripts/pilot-invite-customer.mjs <exact-email> [--dry-run]
+ * Modes:
+ *   1. `node scripts/pilot-invite-customer.mjs <exact-email> [--dry-run]`
+ *      Reads live operator emails on Policy `5ad49a50-b19a-4cc9-a43d-d2455e92fa42`
+ *      so operator/GitHub SSO emails are never accidentally overwritten, adds the
+ *      single invited customer email, updates Worker secret `PILOT_ALLOWED_EMAILS`,
+ *      and ensures + probes the scoped `/api/r/*` public redirect bypass.
+ *   2. `node scripts/pilot-invite-customer.mjs --ensure-shortlink-bypass [--dry-run]`
+ *      Ensures ONLY the scoped `/api/r/*` Cloudflare Access subpath bypass app exists
+ *      and probes live HTTP edge behavior without modifying the invited email list.
  */
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  assertAccessPoliciesSafeAndExact,
+  assertShortlinkBypassPoliciesExact,
+  buildAccessSingleEmailPolicyPayload,
+  buildCustomerUrlsAndVietnameseInvite,
+  buildShortlinkSubpathBypassAppPayload,
+  buildShortlinkSubpathBypassPolicyPayload,
+  DEFAULT_PILOT_OPERATOR_EMAILS,
+  extractExistingOperatorEmails,
+  PILOT_ACCESS_APP_ID,
+  PILOT_ACCESS_POLICY_ID,
+  PILOT_BASE_URL,
+  PILOT_CF_ACCOUNT_ID,
+  PILOT_SHORTLINK_BYPASS_DOMAIN,
+  resolveAuthorizedPilotEmails,
+  validateSinglePilotEmail,
+} from './pilot-invite-policy.mjs';
 
-export const PILOT_CF_ACCOUNT_ID = 'f691e83094f776311a1bfe3f8b126f1c';
-export const PILOT_ACCESS_APP_ID = '11a89148-d86e-4d3e-a1d4-e12edbeb6f75';
-export const PILOT_ACCESS_POLICY_ID = '5ad49a50-b19a-4cc9-a43d-d2455e92fa42';
-export const PILOT_BASE_URL = 'https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev';
-const STRICT_EMAIL_RE = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/;
+export {
+  assertAccessPoliciesSafeAndExact,
+  assertShortlinkBypassPoliciesExact,
+  buildAccessSingleEmailPolicyPayload,
+  buildCustomerUrlsAndVietnameseInvite,
+  buildShortlinkSubpathBypassAppPayload,
+  buildShortlinkSubpathBypassPolicyPayload,
+  DEFAULT_PILOT_OPERATOR_EMAILS,
+  extractExistingOperatorEmails,
+  PILOT_ACCESS_APP_ID,
+  PILOT_ACCESS_POLICY_ID,
+  PILOT_BASE_URL,
+  PILOT_CF_ACCOUNT_ID,
+  PILOT_SHORTLINK_BYPASS_DOMAIN,
+  resolveAuthorizedPilotEmails,
+  validateSinglePilotEmail,
+};
 
-export function validateSinglePilotEmail(raw) {
-  const trimmed = String(raw ?? '').trim().toLowerCase();
-  if (!trimmed) throw new Error('Invited customer email is required.');
-  if (/[,\s;<>()]/.test(trimmed)) {
-    throw new Error('Only a single exact email is allowed (lists and display names are forbidden).');
-  }
-  if (trimmed.includes('*') || trimmed.startsWith('@') || trimmed === 'everyone' || trimmed === 'bypass') {
-    throw new Error('Wildcard domains, Everyone, and public Bypass are strictly forbidden.');
-  }
-  if (!STRICT_EMAIL_RE.test(trimmed)) {
-    throw new Error(`Invalid email format: "${trimmed}".`);
-  }
-  return trimmed;
-}
+const APP_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const REQUEST_TIMEOUT_MS = 15_000;
 
-export function buildAccessSingleEmailPolicyPayload(email) {
-  const validEmail = validateSinglePilotEmail(email);
-  return {
-    name: 'Sophia Pilot Single Customer Allowlist',
-    decision: 'allow',
-    include: [{ email: { email: validEmail } }],
-    exclude: [],
-    require: [],
-    precedence: 1,
-  };
-}
-
-export function assertAccessPoliciesSafeAndExact(policies, expectedEmail) {
-  if (!Array.isArray(policies) || policies.length === 0) {
-    throw new Error('Cloudflare Access readback returned zero policies.');
-  }
-  for (const pol of policies) {
-    if (pol.decision === 'bypass' || pol.decision === 'non_identity') {
-      throw new Error(`Forbidden Access decision "${pol.decision}" detected on policy ${pol.id}.`);
-    }
-    for (const rule of pol.include ?? []) {
-      if ('everyone' in rule || 'email_domain' in rule || 'any_valid_service_token' in rule) {
-        throw new Error(`Forbidden broad include rule detected on Access policy ${pol.id}.`);
-      }
-    }
-  }
-  const target = policies.find((p) => p.id === PILOT_ACCESS_POLICY_ID);
-  if (!target) {
-    throw new Error(`Target Access policy ${PILOT_ACCESS_POLICY_ID} missing in readback.`);
-  }
-  if (target.decision !== 'allow' || !Array.isArray(target.include) || target.include.length !== 1) {
-    throw new Error('Target Access policy must be decision="allow" with exactly 1 include rule.');
-  }
-  const actualEmail = String(target.include[0]?.email?.email ?? '').toLowerCase();
-  if (actualEmail !== expectedEmail) {
-    throw new Error(`Access policy readback mismatch: expected "${expectedEmail}", got "${actualEmail}".`);
-  }
-}
-
-export function buildCustomerUrlsAndVietnameseInvite(email) {
-  const registerUrl = `${PILOT_BASE_URL}/vi/register?next=/vi/dashboard/first-value`;
-  const loginUrl = `${PILOT_BASE_URL}/vi/login?next=/vi/dashboard/first-value`;
-  const workspaceUrl = `${PILOT_BASE_URL}/vi/dashboard/first-value`;
-  const inviteVi = [
-    'Chào bạn,',
-    '',
-    `Mời bạn trải nghiệm riêng Sophia AI Factory (Private Beta 7 ngày — $0 phí nền tảng, tối đa 20 lượt tạo kịch bản AI thật) dành riêng cho email ${email}.`,
-    '',
-    `1. Mở liên kết đăng ký / bắt đầu: ${registerUrl}`,
-    `   (Nếu đã tạo mật khẩu trước đó, đăng nhập tại: ${loginUrl})`,
-    '2. Nhập mã xác thực OTP gửi tới email của bạn trên màn hình bảo mật Cloudflare Access.',
-    '3. Tạo tài khoản Sophia bằng đúng email được mời, tick đồng ý điều khoản Private Beta.',
-    '4. Tại mục số 1, dán khóa OpenRouter của bạn (sk-or-v1-...) và bấm "Xác thực & Lưu khóa" (khóa được mã hóa AES-256-GCM, bạn có thể xóa bất cứ lúc nào).',
-    '5. Nhập chủ đề + đối tượng khách hàng -> bấm "Tạo kịch bản AI thật" -> chỉnh sửa phân cảnh, lưu nháp, xuất Markdown/JSON và gửi góp ý ngay trên trang.',
-    '',
-    'Cần hỗ trợ hoặc xóa toàn bộ dữ liệu thử nghiệm: gửi trực tiếp tại khung "Yêu cầu Hỗ trợ & Xóa dữ liệu" ở cuối trang làm việc để nhận mã biên nhận xử lý trong 72 giờ.',
-  ].join('\n');
-  return { registerUrl, loginUrl, workspaceUrl, inviteVi };
-}
-
-function resolveAccessToken() {
+export function resolveAccessToken() {
   if (process.env.CLOUDFLARE_ACCESS_TOKEN?.trim()) {
     return process.env.CLOUDFLARE_ACCESS_TOKEN.trim();
   }
@@ -112,8 +69,8 @@ function resolveAccessToken() {
   throw new Error('Missing Cloudflare Access token (set CLOUDFLARE_ACCESS_TOKEN or ~/.config/sophia-pilot-cf-token).');
 }
 
-async function cfAccessRequest(token, method, path, body) {
-  const url = `https://api.cloudflare.com/client/v4/accounts/${PILOT_CF_ACCOUNT_ID}/access/apps/${PILOT_ACCESS_APP_ID}${path}`;
+async function cfAccountAccessApi(token, method, subPath, body) {
+  const url = `https://api.cloudflare.com/client/v4/accounts/${PILOT_CF_ACCOUNT_ID}/access${subPath}`;
   const res = await fetch(url, {
     method,
     headers: {
@@ -121,29 +78,125 @@ async function cfAccessRequest(token, method, path, body) {
       'Content-Type': 'application/json',
     },
     body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   const json = await res.json();
   if (!res.ok || !json?.success) {
-    throw new Error(`Cloudflare Access ${method} ${path} failed (HTTP ${res.status}).`);
+    throw new Error(`Cloudflare Access ${method} ${subPath} failed (HTTP ${res.status}).`);
   }
   return json.result;
 }
 
-function updateAndVerifyWorkerAllowlistSecret(email) {
+export async function verifyLiveShortlinkBypassPerimeter(fetchImpl = fetch, maxAttempts = 4) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    if (attempt > 1) {
+      await new Promise((r) => setTimeout(r, 2500));
+    }
+    try {
+      const shortlinkProbe = await fetchImpl(`${PILOT_BASE_URL}/api/r/abcdefghij`, {
+        method: 'GET',
+        redirect: 'manual',
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+      const shortlinkLocation = shortlinkProbe.headers.get('location') ?? '';
+      if (shortlinkLocation.includes('cloudflareaccess.com')) {
+        throw new Error(
+          `Public shortlink probe was intercepted by Cloudflare Access (${shortlinkProbe.status} -> ${shortlinkLocation}).`,
+        );
+      }
+
+      const protectedProbe = await fetchImpl(`${PILOT_BASE_URL}/vi/dashboard/first-value`, {
+        method: 'GET',
+        redirect: 'manual',
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+      const protectedLocation = protectedProbe.headers.get('location') ?? '';
+      if (protectedProbe.status !== 302 || !protectedLocation.includes('cloudflareaccess.com')) {
+        throw new Error(
+          `Protected pilot workspace did not enforce Cloudflare Access redirect (got HTTP ${protectedProbe.status}).`,
+        );
+      }
+
+      return {
+        shortlinkPublicHttpStatus: shortlinkProbe.status,
+        protectedWorkspaceAccessRedirectVerified: true,
+      };
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+    }
+  }
+  throw lastError ?? new Error('Failed to verify live shortlink bypass perimeter');
+}
+
+export async function ensureShortlinkBypassApp(token) {
+  const apps = await cfAccountAccessApi(token, 'GET', '/apps');
+  const appPayload = buildShortlinkSubpathBypassAppPayload();
+  let bypassApp = Array.isArray(apps)
+    ? apps.find((a) => String(a?.domain ?? '').toLowerCase() === PILOT_SHORTLINK_BYPASS_DOMAIN)
+    : null;
+
+  if (!bypassApp) {
+    bypassApp = await cfAccountAccessApi(token, 'POST', '/apps', appPayload);
+  } else {
+    bypassApp = await cfAccountAccessApi(token, 'PUT', `/apps/${bypassApp.id}`, appPayload);
+  }
+
+  const existingPolicies = await cfAccountAccessApi(token, 'GET', `/apps/${bypassApp.id}/policies`);
+  const policyPayload = buildShortlinkSubpathBypassPolicyPayload();
+  if (Array.isArray(existingPolicies) && existingPolicies.length > 0) {
+    await cfAccountAccessApi(
+      token,
+      'PUT',
+      `/apps/${bypassApp.id}/policies/${existingPolicies[0].id}`,
+      policyPayload,
+    );
+    for (const extra of existingPolicies.slice(1)) {
+      await cfAccountAccessApi(token, 'DELETE', `/apps/${bypassApp.id}/policies/${extra.id}`);
+    }
+  } else {
+    await cfAccountAccessApi(token, 'POST', `/apps/${bypassApp.id}/policies`, policyPayload);
+  }
+
+  const bypassPoliciesAfter = await cfAccountAccessApi(token, 'GET', `/apps/${bypassApp.id}/policies`);
+  assertShortlinkBypassPoliciesExact(bypassPoliciesAfter);
+
+  const rootPolicies = await cfAccountAccessApi(token, 'GET', `/apps/${PILOT_ACCESS_APP_ID}/policies`);
+  for (const pol of rootPolicies ?? []) {
+    if (pol.decision === 'bypass' || pol.decision === 'non_identity') {
+      throw new Error(`Safety violation: root Pilot Access app carries forbidden decision "${pol.decision}".`);
+    }
+  }
+
+  return {
+    bypassAppId: bypassApp.id,
+    domain: bypassApp.domain,
+  };
+}
+
+function updateAndVerifyWorkerAllowlistSecret(authorizedEmails) {
+  const secretValue = Array.isArray(authorizedEmails)
+    ? authorizedEmails.join(',')
+    : String(authorizedEmails);
   const env = {
     ...process.env,
     CLOUDFLARE_API_TOKEN: process.env.CLOUDFLARE_WORKER_API_TOKEN ?? '',
   };
-  execFileSync('npx', ['wrangler', 'secret', 'put', 'PILOT_ALLOWED_EMAILS', '--config', 'wrangler.pilot.toml'], {
-    input: `${email}\n`,
-    encoding: 'utf8',
-    env,
-    stdio: ['pipe', 'pipe', 'pipe'],
-  });
+  execFileSync(
+    'npx',
+    ['wrangler', 'secret', 'put', 'PILOT_ALLOWED_EMAILS', '--config', 'wrangler.pilot.toml'],
+    {
+      cwd: APP_ROOT,
+      input: `${secretValue}\n`,
+      encoding: 'utf8',
+      env,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    },
+  );
   const listRaw = execFileSync(
     'npx',
     ['wrangler', 'secret', 'list', '--config', 'wrangler.pilot.toml', '--format', 'json'],
-    { encoding: 'utf8', env, stdio: ['ignore', 'pipe', 'pipe'] },
+    { cwd: APP_ROOT, encoding: 'utf8', env, stdio: ['ignore', 'pipe', 'pipe'] },
   );
   const secrets = JSON.parse(listRaw);
   if (!Array.isArray(secrets) || !secrets.some((s) => s?.name === 'PILOT_ALLOWED_EMAILS')) {
@@ -153,29 +206,99 @@ function updateAndVerifyWorkerAllowlistSecret(email) {
 
 async function main(argv) {
   const dryRun = argv.includes('--dry-run');
+  const onlyBypass = argv.includes('--ensure-shortlink-bypass');
+
+  if (onlyBypass) {
+    if (dryRun) {
+      process.stdout.write(
+        `${JSON.stringify(
+          {
+            mode: 'dry-run',
+            shortlinkBypassApp: buildShortlinkSubpathBypassAppPayload(),
+            shortlinkBypassPolicy: buildShortlinkSubpathBypassPolicyPayload(),
+          },
+          null,
+          2,
+        )}\n`,
+      );
+      return;
+    }
+    const token = resolveAccessToken();
+    const bypass = await ensureShortlinkBypassApp(token);
+    const perimeter = await verifyLiveShortlinkBypassPerimeter();
+    process.stdout.write(
+      `${JSON.stringify({ ok: true, shortlinkBypass: bypass, perimeter }, null, 2)}\n`,
+    );
+    return;
+  }
+
   const emailArg = argv.find((a) => !a.startsWith('--'));
   const email = validateSinglePilotEmail(emailArg);
-  const payload = buildAccessSingleEmailPolicyPayload(email);
   const bundle = buildCustomerUrlsAndVietnameseInvite(email);
 
   if (dryRun) {
-    process.stdout.write(`${JSON.stringify({ mode: 'dry-run', email, accessPolicyPayload: payload, ...bundle }, null, 2)}\n`);
+    const authorizedEmails = resolveAuthorizedPilotEmails(email);
+    const payload = buildAccessSingleEmailPolicyPayload(email, {
+      operatorEmails: authorizedEmails.filter((item) => item !== email),
+    });
+    process.stdout.write(
+      `${JSON.stringify(
+        {
+          mode: 'dry-run',
+          email,
+          authorizedEmails,
+          accessPolicyPayload: payload,
+          shortlinkBypassDomain: PILOT_SHORTLINK_BYPASS_DOMAIN,
+          ...bundle,
+        },
+        null,
+        2,
+      )}\n`,
+    );
     return;
   }
 
   const token = resolveAccessToken();
-  await cfAccessRequest(token, 'PUT', `/policies/${PILOT_ACCESS_POLICY_ID}`, payload);
-  const policiesAfter = await cfAccessRequest(token, 'GET', '/policies');
-  assertAccessPoliciesSafeAndExact(policiesAfter, email);
-  updateAndVerifyWorkerAllowlistSecret(email);
+  const policiesBefore = await cfAccountAccessApi(
+    token,
+    'GET',
+    `/apps/${PILOT_ACCESS_APP_ID}/policies`,
+  );
+  const preservedOperators =
+    process.env.PILOT_OPERATOR_EMAILS !== undefined
+      ? undefined
+      : extractExistingOperatorEmails(policiesBefore);
+  const authorizedEmails = resolveAuthorizedPilotEmails(email, preservedOperators);
+  const payload = buildAccessSingleEmailPolicyPayload(email, {
+    operatorEmails: authorizedEmails.filter((item) => item !== email),
+  });
+
+  await cfAccountAccessApi(
+    token,
+    'PUT',
+    `/apps/${PILOT_ACCESS_APP_ID}/policies/${PILOT_ACCESS_POLICY_ID}`,
+    payload,
+  );
+  const policiesAfter = await cfAccountAccessApi(
+    token,
+    'GET',
+    `/apps/${PILOT_ACCESS_APP_ID}/policies`,
+  );
+  assertAccessPoliciesSafeAndExact(policiesAfter, authorizedEmails);
+  updateAndVerifyWorkerAllowlistSecret(authorizedEmails);
+  const shortlinkBypass = await ensureShortlinkBypassApp(token);
+  const perimeter = await verifyLiveShortlinkBypassPerimeter();
 
   process.stdout.write(
     `${JSON.stringify(
       {
         ok: true,
         email,
+        authorizedEmails,
         accessVerified: true,
         workerSecretVerified: true,
+        shortlinkBypass,
+        perimeter,
         ...bundle,
       },
       null,

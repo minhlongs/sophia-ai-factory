@@ -112,13 +112,70 @@ export const FirstValuePostSchema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('save_byok_key'),
     orgId: z.string().min(1).max(128),
-    provider: z.literal('openrouter').optional().default('openrouter'),
+    provider: z.enum(['openrouter', 'heygen']).optional().default('openrouter'),
     apiKey: z.string().trim().min(12).max(256),
   }),
   z.object({
     action: z.literal('clear_byok_key'),
     orgId: z.string().min(1).max(128),
-    provider: z.literal('openrouter').optional().default('openrouter'),
+    provider: z.enum(['openrouter', 'heygen']).optional().default('openrouter'),
+  }),
+  z.object({
+    action: z.literal('create_affiliate_shortlink'),
+    orgId: z.string().min(1).max(128),
+    artifactId: z.string().min(1).max(128).optional().nullable(),
+    destinationUrl: z.string().trim().min(10).max(2000),
+    ctaText: z.string().trim().min(3).max(240),
+    networkHint: z
+      .enum(['generic', 'shopee', 'tiktok_shop', 'accesstrade', 'clickbank', 'amazon', 'awin'])
+      .optional()
+      .default('generic'),
+    disclosureTag: z.enum(['#QuảngCáo', '#ad']).optional().default('#QuảngCáo'),
+  }),
+  z.object({
+    action: z.literal('record_mp4_export'),
+    orgId: z.string().min(1).max(128),
+    artifactId: z.string().min(1).max(128),
+    sha256Hex: z.string().regex(/^[a-f0-9]{64}$/i),
+    byteSize: z.number().int().min(128).max(268_435_456),
+    durationSec: z.number().min(1).max(600),
+    width: z.number().int().min(160).max(3840),
+    height: z.number().int().min(160).max(3840),
+    codec: z.literal('h264').optional().default('h264'),
+    containerBrand: z.enum(['isom', 'mp42', 'mp41', 'avc1']).optional().default('isom'),
+    ctaText: z.string().trim().min(3).max(240),
+    shortCode: z.string().regex(/^[a-z2-7]{8,13}$/),
+    referralUrl: z.string().trim().min(10).max(2000),
+  }),
+  z.object({
+    action: z.literal('submit_heygen_mp4'),
+    orgId: z.string().min(1).max(128),
+    artifactId: z.string().min(1).max(128),
+    ctaText: z.string().trim().min(3).max(240),
+    shortCode: z.string().regex(/^[a-z2-7]{8,13}$/),
+    referralUrl: z.string().trim().min(10).max(2000),
+  }),
+  z.object({
+    action: z.literal('poll_heygen_mp4'),
+    orgId: z.string().min(1).max(128),
+    exportId: z.string().min(4).max(128),
+  }),
+  z.object({
+    action: z.literal('record_manual_publish'),
+    orgId: z.string().min(1).max(128),
+    artifactId: z.string().min(1).max(128).optional().nullable(),
+    mp4ExportId: z.string().min(1).max(128).optional().nullable(),
+    linkId: z.string().min(1).max(128).optional().nullable(),
+    platform: z.enum(['tiktok', 'youtube_shorts', 'instagram_reels', 'facebook_reels', 'other']),
+    publishedPostUrl: z.string().trim().min(10).max(2000),
+    reportedViews: z.number().int().min(0).max(1_000_000_000).optional().nullable(),
+    reportedConversions: z.number().int().min(0).max(1_000_000).optional().nullable(),
+    reportedCommissionAmount: z.number().min(0).max(100_000_000_000).optional().nullable(),
+    reportedCommissionCurrency: z
+      .enum(['VND', 'USD', 'USDT'])
+      .optional()
+      .nullable(),
+    evidenceNote: z.string().trim().max(1000).optional().nullable(),
   }),
   z.object({
     action: z.literal('submit_support_request'),

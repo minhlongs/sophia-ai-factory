@@ -70,6 +70,7 @@ const VIDEO_DISTRIBUTE_PATTERN = /^\/api\/v1\/videos\/[^/]+\/distribute(?:\/|$)/
 const PILOT_ALLOWED_API_PREFIXES = [
   '/api/auth',
   '/api/first-value',
+  '/api/r',
   '/api/health',
   '/api/version',
   '/api/check-access',

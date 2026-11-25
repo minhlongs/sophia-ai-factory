@@ -61,6 +61,8 @@
     "pilot:check-isolation": "node scripts/verify-pilot-wrangler-isolation.mjs",
     "pilot:invite": "node scripts/pilot-invite-customer.mjs",
     "pilot:support-queue": "node scripts/pilot-support-queue.mjs",
+    "pilot:ops-report": "node scripts/pilot-ops-report.mjs",
+    "pilot:decision-report": "node scripts/pilot-decision-report.mjs",
     "deploy:full": "./scripts/deploy-with-sha.sh",
     "deploy:migrations": "bash scripts/apply-migrations.sh",
     "deploy:verify": "node scripts/sophia-doctor.mjs",

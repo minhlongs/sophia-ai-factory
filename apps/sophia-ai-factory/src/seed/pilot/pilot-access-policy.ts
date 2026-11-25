@@ -17,6 +17,8 @@ export const PILOT_EVENT_NAMES = [
   'FIRST_LOGIN',
   'BYOK_KEY_SAVED',
   'BYOK_KEY_CLEARED',
+  'HEYGEN_BYOK_SAVED',
+  'HEYGEN_BYOK_CLEARED',
   'BRIEF_SUBMITTED',
   'GENERATION_REQUESTED',
   'GENERATION_SUCCEEDED',
@@ -24,6 +26,11 @@ export const PILOT_EVENT_NAMES = [
   'SCRIPT_REVIEWED',
   'SCRIPT_EDITED',
   'SCRIPT_EXPORTED',
+  'AFFILIATE_SHORTLINK_CREATED',
+  'MP4_EXPORT_REQUESTED',
+  'MP4_EXPORTED',
+  'MP4_EXPORT_FAILED',
+  'MANUAL_PUBLISH_RECORDED',
   'CUSTOMER_FEEDBACK_SUBMITTED',
   'SUPPORT_REQUEST_SUBMITTED',
   'DATA_DELETION_REQUESTED',
@@ -48,6 +55,58 @@ export interface PilotSupportRequestSummary {
   readonly resolvedAtIso: string | null;
 }
 
+export interface PilotAffiliateLinkSummary {
+  readonly id: string;
+  readonly artifactId: string | null;
+  readonly shortCode: string;
+  readonly shortUrl: string;
+  readonly destinationUrl: string;
+  readonly ctaText: string;
+  readonly networkHint: string;
+  readonly subId: string;
+  readonly disclosureTag: string;
+  readonly verifiedClicks: number;
+  readonly createdAtIso: string;
+}
+
+export interface PilotMp4ExportSummary {
+  readonly id: string;
+  readonly artifactId: string;
+  readonly renderMode: 'browser_h264_mp4' | 'heygen_byok_mp4';
+  readonly heygenJobId: string | null;
+  readonly status: 'processing' | 'completed' | 'failed';
+  readonly sha256Hex: string | null;
+  readonly byteSize: number | null;
+  readonly durationSec: number | null;
+  readonly width: number | null;
+  readonly height: number | null;
+  readonly codec: string;
+  readonly containerBrand: string;
+  readonly ctaText: string;
+  readonly shortCode: string;
+  readonly referralUrl: string;
+  readonly providerVideoUrl: string | null;
+  readonly errorCode: string | null;
+  readonly createdAtIso: string;
+  readonly updatedAtIso: string;
+}
+
+export interface PilotManualPublishSummary {
+  readonly id: string;
+  readonly artifactId: string | null;
+  readonly mp4ExportId: string | null;
+  readonly linkId: string | null;
+  readonly platform: 'tiktok' | 'youtube_shorts' | 'instagram_reels' | 'facebook_reels' | 'other';
+  readonly publishedPostUrl: string;
+  readonly reportedViews: number | null;
+  readonly reportedConversions: number | null;
+  readonly reportedCommissionAmount: number | null;
+  readonly reportedCommissionCurrency: string | null;
+  readonly evidenceNote: string | null;
+  readonly provenance: 'CUSTOMER_SELF_REPORTED';
+  readonly createdAtIso: string;
+}
+
 export interface PilotQuotaSnapshot {
   readonly usedGenerations: number;
   readonly maxGenerations: number;
@@ -67,7 +126,11 @@ export interface PilotStatusSnapshot {
   readonly fundingMode: PilotFundingMode;
   readonly modelId?: string;
   readonly byokKeyConfigured?: boolean;
+  readonly heygenByokConfigured?: boolean;
   readonly supportRequests?: readonly PilotSupportRequestSummary[];
+  readonly affiliateLinks?: readonly PilotAffiliateLinkSummary[];
+  readonly mp4Exports?: readonly PilotMp4ExportSummary[];
+  readonly manualPublishes?: readonly PilotManualPublishSummary[];
   readonly quota: PilotQuotaSnapshot;
 }
 

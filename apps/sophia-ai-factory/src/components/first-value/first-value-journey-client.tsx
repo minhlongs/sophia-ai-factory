@@ -15,12 +15,17 @@ import type { ScriptOutput } from '@/seed/ai/script-generator';
 import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 import type { HonestValidationReceipt } from '@/tree/byok/honest-validation-receipt';
 import type { DurableFirstValueReview } from '@/tree/first-value/first-value-review-repo';
-import type { PilotStatusSnapshot } from '@/seed/pilot/pilot-access-policy';
+import type {
+  PilotAffiliateLinkSummary,
+  PilotStatusSnapshot,
+} from '@/seed/pilot/pilot-access-policy';
 import { FirstValueByokCard } from './first-value-byok-card';
 import {
   FirstValueFeedbackCard,
   type PilotFeedbackCategory,
 } from './first-value-feedback-card';
+import { FirstValueManualPublishCard } from './first-value-manual-publish-card';
+import { FirstValueMp4AffiliateCard } from './first-value-mp4-affiliate-card';
 import { FirstValuePilotBanner } from './first-value-pilot-banner';
 import { FirstValueReviewPanel } from './first-value-review-panel';
 import {
@@ -284,6 +289,139 @@ export function FirstValueJourneyClient({
     return false;
   }
 
+  async function handleSaveHeyGenKey(apiKey: string): Promise<boolean> {
+    const data = await postAction({
+      action: 'save_byok_key',
+      orgId,
+      provider: 'heygen',
+      apiKey,
+    });
+    if (data?.heygenByokConfigured) {
+      await loadStatus();
+      return true;
+    }
+    return false;
+  }
+
+  async function handleClearHeyGenKey(): Promise<boolean> {
+    const data = await postAction({
+      action: 'clear_byok_key',
+      orgId,
+      provider: 'heygen',
+    });
+    if (data && data.heygenByokConfigured === false) {
+      await loadStatus();
+      return true;
+    }
+    return false;
+  }
+
+  async function handleCreateAffiliateShortlink(input: {
+    readonly destinationUrl: string;
+    readonly ctaText: string;
+    readonly networkHint:
+      | 'generic'
+      | 'shopee'
+      | 'tiktok_shop'
+      | 'accesstrade'
+      | 'clickbank'
+      | 'amazon'
+      | 'awin';
+    readonly disclosureTag: '#QuảngCáo' | '#ad';
+  }): Promise<PilotAffiliateLinkSummary | null> {
+    const data = await postAction({
+      action: 'create_affiliate_shortlink',
+      orgId,
+      artifactId: activeReview?.artifactId ?? null,
+      destinationUrl: input.destinationUrl,
+      ctaText: input.ctaText,
+      networkHint: input.networkHint,
+      disclosureTag: input.disclosureTag,
+    });
+    const link = data?.affiliateLink as PilotAffiliateLinkSummary | undefined;
+    if (link?.id) {
+      await loadStatus();
+      return link;
+    }
+    return null;
+  }
+
+  async function handleRecordBrowserMp4(input: {
+    readonly artifactId: string;
+    readonly sha256Hex: string;
+    readonly byteSize: number;
+    readonly durationSec: number;
+    readonly width: number;
+    readonly height: number;
+    readonly ctaText: string;
+    readonly shortCode: string;
+    readonly referralUrl: string;
+  }): Promise<boolean> {
+    const data = await postAction({
+      action: 'record_mp4_export',
+      orgId,
+      ...input,
+    });
+    if (data?.mp4Export) {
+      await loadStatus();
+      return true;
+    }
+    return false;
+  }
+
+  async function handleSubmitHeyGenMp4(input: {
+    readonly artifactId: string;
+    readonly ctaText: string;
+    readonly shortCode: string;
+    readonly referralUrl: string;
+  }): Promise<boolean> {
+    const data = await postAction({
+      action: 'submit_heygen_mp4',
+      orgId,
+      ...input,
+    });
+    if (data?.mp4Export) {
+      await loadStatus();
+      return true;
+    }
+    return false;
+  }
+
+  async function handlePollHeyGenMp4(exportId: string): Promise<void> {
+    const data = await postAction({
+      action: 'poll_heygen_mp4',
+      orgId,
+      exportId,
+    });
+    if (data?.mp4Export) {
+      await loadStatus();
+    }
+  }
+
+  async function handleRecordManualPublish(input: {
+    readonly artifactId: string | null;
+    readonly mp4ExportId: string | null;
+    readonly linkId: string | null;
+    readonly platform: 'tiktok' | 'youtube_shorts' | 'instagram_reels' | 'facebook_reels' | 'other';
+    readonly publishedPostUrl: string;
+    readonly reportedViews: number | null;
+    readonly reportedConversions: number | null;
+    readonly reportedCommissionAmount: number | null;
+    readonly reportedCommissionCurrency: 'VND' | 'USD' | 'USDT' | null;
+    readonly evidenceNote: string | null;
+  }): Promise<boolean> {
+    const data = await postAction({
+      action: 'record_manual_publish',
+      orgId,
+      ...input,
+    });
+    if (data?.manualPublish) {
+      await loadStatus();
+      return true;
+    }
+    return false;
+  }
+
   async function handleSubmitSupportRequest(input: {
     readonly requestType: SupportRequestKind;
     readonly subject: string;
@@ -518,6 +656,29 @@ export function FirstValueJourneyClient({
 
       {isLivePilot && (
         <>
+          <FirstValueMp4AffiliateCard
+            review={activeReview}
+            busy={busy}
+            consentAccepted={Boolean(pilot?.consentAccepted)}
+            heygenConfigured={Boolean(pilot?.heygenByokConfigured)}
+            affiliateLinks={pilot?.affiliateLinks ?? []}
+            mp4Exports={pilot?.mp4Exports ?? []}
+            onCreateShortlink={handleCreateAffiliateShortlink}
+            onRecordBrowserMp4={handleRecordBrowserMp4}
+            onSaveHeyGenKey={handleSaveHeyGenKey}
+            onClearHeyGenKey={handleClearHeyGenKey}
+            onSubmitHeyGenMp4={handleSubmitHeyGenMp4}
+            onPollHeyGenMp4={handlePollHeyGenMp4}
+          />
+          <FirstValueManualPublishCard
+            review={activeReview}
+            busy={busy}
+            consentAccepted={Boolean(pilot?.consentAccepted)}
+            affiliateLinks={pilot?.affiliateLinks ?? []}
+            mp4Exports={pilot?.mp4Exports ?? []}
+            manualPublishes={pilot?.manualPublishes ?? []}
+            onRecordManualPublish={handleRecordManualPublish}
+          />
           <FirstValueFeedbackCard
             busy={busy}
             artifactId={activeReview?.artifactId ?? null}
