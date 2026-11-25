@@ -319,6 +319,15 @@ export async function handleSubmitHeyGenMp4(
   }
 }
 
+function formatHeyGenFailureCode(rawMessage?: string): string {
+  const cleaned = String(rawMessage ?? '')
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 200);
+  return cleaned ? `HEYGEN_RENDER_FAILED: ${cleaned}` : 'HEYGEN_RENDER_FAILED';
+}
+
 export async function handlePollHeyGenMp4(
   d1: D1Database,
   user: PilotLiveUser,
@@ -371,12 +380,13 @@ export async function handlePollHeyGenMp4(
       return jsonPrivate({ mp4Export: updated ?? target, publicPublished: false, paidInferenceExecuted: false }, 200);
     }
     if (statusRes.status === 'failed') {
+      const errorCode = formatHeyGenFailureCode(statusRes.errorMessage);
       const updated = await updatePilotMp4ExportStatus(d1, {
         id: target.id,
         orgId: payload.orgId,
         userId: user.id,
         status: 'failed',
-        errorCode: 'HEYGEN_RENDER_FAILED',
+        errorCode,
         nowIso,
       });
       await safeRecordPilotEvent(d1, {
@@ -384,12 +394,18 @@ export async function handlePollHeyGenMp4(
         userId: user.id,
         eventName: 'MP4_EXPORT_FAILED',
         artifactId: target.artifactId,
-        metadata: { exportId: target.id, renderMode: 'heygen_byok_mp4', errorCode: 'HEYGEN_RENDER_FAILED' },
+        metadata: { exportId: target.id, renderMode: 'heygen_byok_mp4', errorCode },
         nowIso,
       });
-      return jsonPrivate({ mp4Export: updated ?? target, publicPublished: false, paidInferenceExecuted: false }, 200);
+      return jsonPrivate(
+        { mp4Export: updated ?? target, checkedAtIso: nowIso, publicPublished: false, paidInferenceExecuted: false },
+        200,
+      );
     }
-    return jsonPrivate({ mp4Export: target, publicPublished: false, paidInferenceExecuted: false }, 200);
+    return jsonPrivate(
+      { mp4Export: target, checkedAtIso: nowIso, publicPublished: false, paidInferenceExecuted: false },
+      200,
+    );
   } catch {
     return jsonPrivate({ code: 'HEYGEN_POLL_FAILED', error: 'Unable to poll HeyGen status right now' }, 502);
   }

@@ -59,7 +59,7 @@ export interface FirstValueMp4AffiliateCardProps {
     readonly shortCode: string;
     readonly referralUrl: string;
   }) => Promise<boolean>;
-  readonly onPollHeyGenMp4: (exportId: string) => Promise<void>;
+  readonly onPollHeyGenMp4: (exportId: string) => Promise<PilotMp4ExportSummary | null | void>;
 }
 
 export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProps) {
@@ -72,6 +72,8 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
   const [disclosureTag, setDisclosureTag] = useState<'#QuảngCáo' | '#ad'>('#QuảngCáo');
   const [heygenKeyInput, setHeygenKeyInput] = useState('');
   const [renderingMp4, setRenderingMp4] = useState(false);
+  const [pollingExportId, setPollingExportId] = useState<string | null>(null);
+  const [pollFeedbackById, setPollFeedbackById] = useState<Record<string, string>>({});
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [productImageUrls, setProductImageUrls] = useState<readonly string[]>([]);
   const productImageUrlsRef = useRef<readonly string[]>([]);
@@ -177,6 +179,27 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
       });
     } finally {
       setRenderingMp4(false);
+    }
+  }
+
+  async function handlePollHeyGen(exportId: string) {
+    setPollingExportId(exportId);
+    try {
+      const result = await props.onPollHeyGenMp4(exportId);
+      const checkedTime = new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+      let message = t('pilotPollHeyGenStillProcessing', { time: checkedTime });
+      if (result?.status === 'completed') {
+        message = t('pilotPollHeyGenCompleted');
+      } else if (result?.status === 'failed') {
+        message = t('pilotPollHeyGenFailed');
+      }
+      setPollFeedbackById((prev) => ({ ...prev, [exportId]: message }));
+    } finally {
+      setPollingExportId(null);
     }
   }
 
@@ -392,41 +415,57 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
         {props.mp4Exports.length > 0 && (
           <div className="mt-4 space-y-2">
             <div className="text-xs font-semibold text-foreground">{t('pilotMp4ReceiptsTitle')}</div>
-            {props.mp4Exports.slice(0, 5).map((item) => (
-              <div
-                key={item.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background p-2.5 text-xs"
-              >
-                <div className="font-mono text-foreground">
-                  {item.renderMode} • {item.status.toUpperCase()}
-                  {item.durationSec ? ` • ${item.durationSec}s` : ''}
-                  {item.byteSize ? ` • ${(item.byteSize / 1024).toFixed(1)} KB` : ''}
-                  {item.sha256Hex ? ` • sha256:${item.sha256Hex.slice(0, 12)}…` : ''}
-                </div>
-                <div className="flex items-center gap-2">
-                  {item.status === 'processing' && (
-                    <button
-                      type="button"
-                      disabled={props.busy}
-                      onClick={() => void props.onPollHeyGenMp4(item.id)}
-                      className="rounded border border-border px-2.5 py-1 text-xs font-medium text-foreground"
-                    >
-                      {t('pilotPollHeyGenBtn')}
-                    </button>
+            {props.mp4Exports.slice(0, 5).map((item) => {
+              const isPollingThis = pollingExportId === item.id;
+              const pollNotice = pollFeedbackById[item.id];
+              return (
+                <div
+                  key={item.id}
+                  className="flex flex-col gap-1.5 rounded-lg border border-border bg-background p-2.5 text-xs"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-mono text-foreground">
+                      {item.renderMode} • {item.status.toUpperCase()}
+                      {item.durationSec ? ` • ${item.durationSec}s` : ''}
+                      {item.byteSize ? ` • ${(item.byteSize / 1024).toFixed(1)} KB` : ''}
+                      {item.sha256Hex ? ` • sha256:${item.sha256Hex.slice(0, 12)}…` : ''}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {item.status === 'processing' && (
+                        <button
+                          type="button"
+                          disabled={props.busy || isPollingThis}
+                          onClick={() => void handlePollHeyGen(item.id)}
+                          className="rounded border border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
+                        >
+                          {isPollingThis ? t('pilotPollHeyGenChecking') : t('pilotPollHeyGenBtn')}
+                        </button>
+                      )}
+                      {item.providerVideoUrl && (
+                        <a
+                          href={item.providerVideoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground"
+                        >
+                          {t('downloadExportBtn')} MP4
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  {item.status === 'failed' && item.errorCode && (
+                    <div role="alert" className="text-xs text-destructive">
+                      <strong>{t('pilotHeyGenFailureReasonLabel')}:</strong> {item.errorCode}
+                    </div>
                   )}
-                  {item.providerVideoUrl && (
-                    <a
-                      href={item.providerVideoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground"
-                    >
-                      {t('downloadExportBtn')} MP4
-                    </a>
+                  {pollNotice && (
+                    <div role="status" className="text-xs text-muted-foreground">
+                      {pollNotice}
+                    </div>
                   )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -10,6 +10,7 @@ import { enforcePilotFeatureDisabled } from '@/seed/pilot/pilot-auth-guard';
 import { isPublicApiRoute } from '@/forest/middleware/guard/public-routes';
 import {
   hashPilotVisitorIp,
+  recordPilotMp4Export,
   resolveAffiliateSubIdParam,
   resolveAndRecordPilotShortlinkClick,
 } from '@/tree/first-value/pilot-commercial-repo';
@@ -710,6 +711,41 @@ describe('Customer Pilot Commercial Validation E2E (CUSTOMER_BYOK, MP4, Shortlin
         baseDeps,
       );
       expect(missingPoll.status).toBe(404);
+
+      // Failed HeyGen poll preserves sanitized upstream error message
+      const failedExport = await recordPilotMp4Export(d1, {
+        orgId: 'o1',
+        userId: 'u1',
+        artifactId: 'art_fail_1',
+        renderMode: 'heygen_byok_mp4',
+        heygenJobId: 'hg_fail_job',
+        status: 'processing',
+        ctaText: 'Try now',
+        shortCode: 'scfail1',
+        referralUrl: 'https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev/api/r/scfail1',
+        nowIso: '2026-11-25T10:00:00.000Z',
+      });
+      const failedPollRes = await handleFirstValuePost(
+        makeJsonPost({ action: 'poll_heygen_mp4', orgId: 'o1', exportId: failedExport.id }),
+        {
+          ...baseDeps,
+          lookupHeyGenByokKey: async () => 'hg_test_key_1234567890',
+          fetchHeyGenVideoStatus: async () => ({
+            status: 'failed',
+            errorMessage: 'Insufficient credits\non account',
+          }),
+        },
+      );
+      expect(failedPollRes.status).toBe(200);
+      const failedPollJson = (await failedPollRes.json()) as {
+        mp4Export: { status: string; errorCode: string };
+        checkedAtIso: string;
+      };
+      expect(failedPollJson.mp4Export.status).toBe('failed');
+      expect(failedPollJson.mp4Export.errorCode).toBe(
+        'HEYGEN_RENDER_FAILED: Insufficient credits on account',
+      );
+      expect(failedPollJson.checkedAtIso).toBeTruthy();
 
       // Invalid shortlink code in Pilot mode -> 404
       const prevPilot = process.env.SOPHIA_PILOT_MODE;
