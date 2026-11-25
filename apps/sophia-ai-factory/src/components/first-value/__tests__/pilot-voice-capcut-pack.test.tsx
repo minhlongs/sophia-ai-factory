@@ -8,6 +8,7 @@ import {
 } from '../pilot-capcut-pack-helpers';
 import { AffiliatePilotStepper } from '../affiliate-studio/affiliate-pilot-stepper';
 import { PilotVoiceAndCapCutPack } from '../pilot-voice-and-capcut-pack';
+import { renderAndDownloadPilotMp4 } from '../pilot-browser-mp4-renderer';
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
@@ -128,6 +129,69 @@ describe('Pilot CapCut Pack helpers & UI', () => {
     await waitFor(() => {
       expect(writeText).toHaveBeenCalledWith(expect.stringContaining('https://pilot.test/api/r/xyz'));
     });
+
+    vi.unstubAllGlobals();
+  });
+
+  it('handles product image selection, removal, voice error, and MP4 compositing with product images', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({ ok: false, status: 500 });
+    vi.stubGlobal('fetch', mockFetch);
+    const mockCreateObjectURL = vi.fn().mockReturnValue('blob:mock-img-1');
+    const mockRevokeObjectURL = vi.fn();
+    vi.stubGlobal('URL', {
+      ...URL,
+      createObjectURL: mockCreateObjectURL,
+      revokeObjectURL: mockRevokeObjectURL,
+    });
+
+    const onProductImagesChange = vi.fn();
+    const { container } = render(
+      <PilotVoiceAndCapCutPack
+        artifactId="cmp_02"
+        script={SAMPLE_SCRIPT}
+        ctaText="Bấm link"
+        shortUrl="https://pilot.test/api/r/xyz"
+        disclosureTag="#QuảngCáo"
+        busy={false}
+        productImageUrls={['blob:existing-1']}
+        onProductImagesChange={onProductImagesChange}
+      />,
+    );
+
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const imgFile = new File(['img'], 'prod.png', { type: 'image/png' });
+    fireEvent.change(fileInput, { target: { files: [imgFile] } });
+    expect(onProductImagesChange).toHaveBeenCalledWith(['blob:existing-1', 'blob:mock-img-1']);
+
+    fireEvent.click(screen.getByLabelText('Remove image'));
+    expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:existing-1');
+
+    fireEvent.click(screen.getByTestId('pilot-generate-voice-btn'));
+    await waitFor(() => {
+      expect(screen.getByText('pilotVoiceError')).toBeTruthy();
+    });
+
+    class MockImage {
+      crossOrigin = '';
+      naturalWidth = 640;
+      naturalHeight = 480;
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      set src(_val: string) {
+        setTimeout(() => this.onload?.(), 0);
+      }
+    }
+    vi.stubGlobal('Image', MockImage);
+
+    const mp4 = await renderAndDownloadPilotMp4({
+      artifactId: 'cmp_02',
+      script: SAMPLE_SCRIPT,
+      ctaText: 'Bấm link',
+      shortUrl: 'https://pilot.test/api/r/xyz',
+      disclosureTag: '#QuảngCáo',
+      productImageUrls: ['blob:existing-1'],
+    });
+    expect(mp4.byteSize).toBeGreaterThan(0);
 
     vi.unstubAllGlobals();
   });

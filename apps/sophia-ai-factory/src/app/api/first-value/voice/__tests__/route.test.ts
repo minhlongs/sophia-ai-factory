@@ -80,4 +80,31 @@ describe('POST /api/first-value/voice', () => {
       { gender: 'female', voice: 'vi-VN-HoaiMyNeural' },
     );
   });
+
+  it('returns 500 when Edge TTS synthesis throws and handles wav fallback', async () => {
+    mockGetCurrentUser.mockResolvedValue({ id: 'u1', email: 'pilot@example.com' });
+    mockSynthesizeEdgeTts.mockRejectedValueOnce(new Error('edge timeout'));
+
+    const errReq = new NextRequest('http://localhost/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ text: 'Kịch bản test lỗi tổng hợp giọng đọc.' }),
+    });
+    expect((await POST(errReq)).status).toBe(500);
+
+    mockSynthesizeEdgeTts.mockResolvedValueOnce({
+      audioBuffer: new Uint8Array([0x52, 0x49, 0x46, 0x46]),
+      mimeType: 'audio/wav',
+      durationSec: 4,
+      voice: 'vi-VN-HoaiMyNeural',
+      rate: '+0%',
+      wordCount: 8,
+    });
+    const wavReq = new NextRequest('http://localhost/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ text: 'Kịch bản fallback wav khi mạng lỗi.' }),
+    });
+    const wavRes = await POST(wavReq);
+    expect(wavRes.status).toBe(200);
+    expect(wavRes.headers.get('Content-Disposition')).toContain('.wav');
+  });
 });
