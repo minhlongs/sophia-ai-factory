@@ -34,7 +34,7 @@ export async function ensureKeyVersionRow(version: number): Promise<void> {
 
   if (existing) return;
 
-  const raw = process.env.BYOK_MASTER_KEY;
+  const raw = process.env.BYOK_MASTER_KEY?.trim();
   if (!raw) throw new ByokMissingMasterKeyError();
 
   let bytes: Uint8Array;
