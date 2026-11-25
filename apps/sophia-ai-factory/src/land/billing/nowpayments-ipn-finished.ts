@@ -117,22 +117,25 @@ function resolveUserFromOrderAndConfig(
 async function validateIpnAndGetUserId(ipn: NowPaymentsIpnPayload): Promise<string | null> {
   const actuallyPaid = ipn.actually_paid
   const amountCheck = checkCryptoPaidAmount(actuallyPaid, ipn.pay_amount, UNDERPAYMENT_THRESHOLD)
-  if (amountCheck.status === 'missing-expected' || amountCheck.status === 'invalid') {
-    logger.error('[NOWPayments] Paid amount cannot be verified without a valid crypto payment amount', {
-      paymentId: ipn.payment_id,
-      payAmount: ipn.pay_amount,
-      actuallyPaid,
-      payCurrency: ipn.pay_currency,
-    })
-    return null
-  }
-  if (amountCheck.status === 'underpaid') {
-    if (actuallyPaid !== undefined && actuallyPaid !== null) {
+  if (amountCheck.status !== 'sufficient') {
+    if (amountCheck.status === 'underpaid') {
       logger.warn('[NOWPayments] Subscription underpayment — not activating', {
-        paymentId: ipn.payment_id, payAmount: ipn.pay_amount, payCurrency: ipn.pay_currency, actuallyPaid, required: amountCheck.required,
+        paymentId: ipn.payment_id,
+        payAmount: ipn.pay_amount,
+        payCurrency: ipn.pay_currency,
+        actuallyPaid,
+        required: amountCheck.required,
       })
-      return null
+    } else {
+      logger.error('[NOWPayments] Paid amount cannot be verified without a sufficient crypto payment amount', {
+        paymentId: ipn.payment_id,
+        status: amountCheck.status,
+        payAmount: ipn.pay_amount,
+        actuallyPaid,
+        payCurrency: ipn.pay_currency,
+      })
     }
+    return null
   }
 
   await recordOverpaymentAuditIfNeeded(ipn)

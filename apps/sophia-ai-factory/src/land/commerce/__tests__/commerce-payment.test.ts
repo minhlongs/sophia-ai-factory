@@ -1,7 +1,7 @@
 /**
  * Unit tests: commerce payment confirmation — the NOWPayments IPN →
  * commerce bridge. Covers pending→paid marking, replay idempotency,
- * validation rejections, and the fulfillment enqueue contract.
+ * fiat/crypto amount & currency rejections, and the fulfillment enqueue contract.
  * Real SQLite DB (shared D1 shim); only the Inngest send boundary is mocked.
  */
 
@@ -72,6 +72,19 @@ async function createPendingOrder(): Promise<string> {
   return created.value.id;
 }
 
+function makeValidConfirmation(orderId: string, overrides: Record<string, unknown> = {}) {
+  return {
+    orderId,
+    paymentId: 'np-123',
+    paymentStatus: 'confirmed' as const,
+    priceAmount: 49,
+    priceCurrency: 'USD',
+    payAmount: 49,
+    actuallyPaid: 49,
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockSend.mockResolvedValue(undefined);
@@ -82,11 +95,7 @@ describe('confirmCommercePayment', () => {
     setupDb();
     const orderId = await createPendingOrder();
 
-    const result = await confirmCommercePayment({
-      orderId,
-      paymentId: 'np-123',
-      paymentStatus: 'confirmed',
-    });
+    const result = await confirmCommercePayment(makeValidConfirmation(orderId));
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -119,13 +128,11 @@ describe('confirmCommercePayment', () => {
   it('is idempotent on replay: already-paid order stays paid, no double mark', async () => {
     setupDb();
     const orderId = await createPendingOrder();
-    await confirmCommercePayment({ orderId, paymentId: 'np-123', paymentStatus: 'confirmed' });
+    await confirmCommercePayment(makeValidConfirmation(orderId));
 
-    const replay = await confirmCommercePayment({
-      orderId,
-      paymentId: 'np-123',
-      paymentStatus: 'finished',
-    });
+    const replay = await confirmCommercePayment(
+      makeValidConfirmation(orderId, { paymentStatus: 'finished' }),
+    );
 
     expect(replay.ok).toBe(true);
     if (!replay.ok) return;
@@ -147,15 +154,59 @@ describe('confirmCommercePayment', () => {
   it('rejects unknown orders with ORDER_NOT_FOUND (webhook fall-through)', async () => {
     setupDb();
 
-    const result = await confirmCommercePayment({
-      orderId: 'missing',
-      paymentId: 'np-1',
-      paymentStatus: 'confirmed',
-    });
+    const result = await confirmCommercePayment(
+      makeValidConfirmation('missing', { paymentId: 'np-1' }),
+    );
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error.code).toBe('ORDER_NOT_FOUND');
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+
+  it('rejects fiat price mismatch ($1 paid on $49 order)', async () => {
+    setupDb();
+    const orderId = await createPendingOrder();
+
+    const result = await confirmCommercePayment(
+      makeValidConfirmation(orderId, { priceAmount: 1, payAmount: 1, actuallyPaid: 1 }),
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('AMOUNT_MISMATCH');
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+
+  it('rejects fiat currency mismatch', async () => {
+    setupDb();
+    const orderId = await createPendingOrder();
+
+    const result = await confirmCommercePayment(
+      makeValidConfirmation(orderId, { priceCurrency: 'EUR' }),
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('CURRENCY_MISMATCH');
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+
+  it('rejects crypto underpayment or missing actuallyPaid (not-reported)', async () => {
+    setupDb();
+    const orderId = await createPendingOrder();
+
+    const underpaid = await confirmCommercePayment(
+      makeValidConfirmation(orderId, { actuallyPaid: 20 }),
+    );
+    expect(underpaid.ok).toBe(false);
+    if (!underpaid.ok) expect(underpaid.error.code).toBe('UNDERPAID');
+
+    const missingPaid = await confirmCommercePayment(
+      makeValidConfirmation(orderId, { actuallyPaid: undefined }),
+    );
+    expect(missingPaid.ok).toBe(false);
+    if (!missingPaid.ok) expect(missingPaid.error.code).toBe('UNDERPAID');
     expect(mockSend).not.toHaveBeenCalled();
   });
 
@@ -165,11 +216,9 @@ describe('confirmCommercePayment', () => {
     const db = mockGetD1() as ReturnType<typeof makeD1>;
     await db.prepare(`UPDATE commerce_orders SET status = 'failed' WHERE id = ?1`).bind(orderId).run();
 
-    const result = await confirmCommercePayment({
-      orderId,
-      paymentId: 'np-1',
-      paymentStatus: 'confirmed',
-    });
+    const result = await confirmCommercePayment(
+      makeValidConfirmation(orderId, { paymentId: 'np-1' }),
+    );
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
@@ -182,11 +231,9 @@ describe('confirmCommercePayment', () => {
     const orderId = await createPendingOrder();
     mockSend.mockRejectedValueOnce(new Error('inngest down'));
 
-    const result = await confirmCommercePayment({
-      orderId,
-      paymentId: 'np-1',
-      paymentStatus: 'confirmed',
-    });
+    const result = await confirmCommercePayment(
+      makeValidConfirmation(orderId, { paymentId: 'np-1' }),
+    );
 
     expect(result.ok).toBe(false);
     if (result.ok) return;

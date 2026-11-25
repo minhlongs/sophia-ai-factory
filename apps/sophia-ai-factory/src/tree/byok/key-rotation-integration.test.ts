@@ -58,19 +58,24 @@ vi.mock('@/tree/audit/logger/audit-query', () => ({
   logAuditEvent: mocks.mockLogAuditEvent,
 }));
 
-vi.mock('@/tree/byok/byok-crypto', () => ({
-  encryptApiKey: vi.fn().mockImplementation(
-    (plain: Uint8Array) => Promise.resolve(new TextEncoder().encode(`encrypted:${new TextDecoder().decode(plain)}`)),
-  ),
-  decryptApiKey: vi.fn().mockImplementation(
-    (blob: Uint8Array) => {
-      const text = new TextDecoder().decode(blob);
-      return Promise.resolve(new TextEncoder().encode(text.replace('encrypted:', '')));
-    },
-  ),
-  generateMasterKey: vi.fn().mockResolvedValue('encrypted-master-key-base64'),
-  getActiveKeyVersion: vi.fn().mockResolvedValue(1),
-}));
+vi.mock('@/tree/byok/byok-crypto', async (importOriginal) => {
+  const actual = (await importOriginal()) as typeof import('@/tree/byok/byok-crypto');
+  return {
+    ...actual,
+    encryptApiKey: vi.fn().mockImplementation(
+      (plain: string) => Promise.resolve(new TextEncoder().encode(`encrypted:${plain}`)),
+    ),
+    decryptApiKey: vi.fn().mockImplementation(
+      (blob: Uint8Array) => {
+        const text = new TextDecoder().decode(blob);
+        return Promise.resolve(text.replace('encrypted:', ''));
+      },
+    ),
+    generateMasterKey: vi.fn().mockResolvedValue('encrypted-master-key-base64'),
+    generateWrappedDek: vi.fn().mockResolvedValue('kek:v1:mock-iv:mock-ct'),
+    getActiveKeyVersion: vi.fn().mockResolvedValue(1),
+  };
+});
 
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {
@@ -122,7 +127,7 @@ function seedProviderCredential(id: string, userId: string, provider: string, ke
     id,
     user_id: userId,
     provider,
-    encrypted_value: `encrypted:secret-${id}`,
+    encrypted_value: btoa(`encrypted:secret-${id}`),
     key_version: keyVersion,
   });
 }
@@ -132,8 +137,8 @@ function seedPlatformCredential(id: string, userId: string, platform: string, ke
     id,
     user_id: userId,
     platform,
-    access_token_encrypted: `encrypted:token-${id}`,
-    refresh_token_encrypted: `encrypted:refresh-${id}`,
+    access_token_encrypted: btoa(`encrypted:token-${id}`),
+    refresh_token_encrypted: btoa(`encrypted:refresh-${id}`),
     key_version: keyVersion,
   });
 }

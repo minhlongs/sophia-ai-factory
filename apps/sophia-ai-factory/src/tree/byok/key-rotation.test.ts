@@ -44,6 +44,7 @@ vi.mock('@/tree/byok/byok-crypto', async (importOriginal) => {
     encryptApiKey: vi.fn(),
     decryptApiKey: vi.fn(),
     generateMasterKey: vi.fn().mockResolvedValue('encrypted-key-base64'),
+    generateWrappedDek: vi.fn().mockResolvedValue('kek:v1:mock-iv:mock-ct'),
   };
 });
 
@@ -58,7 +59,8 @@ import {
   getActiveKeyVersion,
   encryptApiKey,
   decryptApiKey,
-  generateMasterKey,
+  generateWrappedDek,
+  packedToText,
 } from '@/tree/byok/byok-crypto';
 
 import { logAuditEvent } from '@/tree/audit/logger/audit-query';
@@ -167,9 +169,9 @@ describe('key-rotation', () => {
       // Mock INSERT result
       db.run.mockResolvedValueOnce({ success: true, meta: { changes: 1 } });
 
-      // Mock generateMasterKey
-      const mockEncryptedKey = 'encrypted-key-base64';
-      (generateMasterKey as any).mockResolvedValue(mockEncryptedKey);
+      // Mock generateWrappedDek
+      const mockEncryptedKey = 'kek:v1:mock-iv:mock-ct';
+      vi.mocked(generateWrappedDek).mockResolvedValue(mockEncryptedKey);
 
       // Configure admin auth mock BEFORE importing route
       const mockUser = { id: 'admin-123', email: 'admin@example.com', role: 'admin' };
@@ -268,12 +270,12 @@ describe('key-rotation', () => {
       };
       const mockProviderCreds = {
         results: [
-          { id: 'pc1', user_id: 'user-1', provider: 'anthropic', encrypted_value: 'val1', key_version: 1 },
+          { id: 'pc1', user_id: 'user-1', provider: 'anthropic', encrypted_value: packedToText(new Uint8Array([1, 2, 3])), key_version: 1 },
         ],
       };
       const mockPlatformCreds = {
         results: [
-          { id: 'plat1', user_id: 'user-1', platform: 'youtube', access_token_encrypted: 'tok1', refresh_token_encrypted: null, key_version: 1 },
+          { id: 'plat1', user_id: 'user-1', platform: 'youtube', access_token_encrypted: packedToText(new Uint8Array([4, 5, 6])), refresh_token_encrypted: null, key_version: 1 },
         ],
       };
 

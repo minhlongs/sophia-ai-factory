@@ -15,6 +15,10 @@ export async function routeCommerceIpn(ipn: IpnPayload): Promise<NextResponse | 
     orderId: ipn.order_id,
     paymentId: ipn.payment_id,
     paymentStatus: ipn.payment_status,
+    priceAmount: ipn.price_amount,
+    priceCurrency: ipn.price_currency,
+    payAmount: ipn.pay_amount,
+    actuallyPaid: ipn.actually_paid,
     paidAmount: ipn.actually_paid,
     paidCurrency: ipn.pay_currency,
   });

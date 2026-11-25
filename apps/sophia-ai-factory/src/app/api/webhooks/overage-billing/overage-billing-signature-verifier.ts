@@ -1,28 +1,28 @@
 /**
  * Signature verification helpers for overage billing webhook
  *
- * Supports Polar, Stripe, and Cloudflare signature formats.
- * Uses timing-safe comparison to prevent timing attacks.
+ * Supports Standard Webhooks and Cloudflare queue HMAC-SHA256 signatures.
+ * Uses Web Crypto / timing-safe comparison and rejects banned Polar-Signature.
  */
 
 import { Webhook } from 'standardwebhooks';
+import { verifyInboundWebhook } from '@/seed/security/signature';
 
 /**
- * Verify webhook signature using timing-safe comparison
- * Supports Polar, Stripe, and Cloudflare signature formats
+ * Verify Standard Webhooks signature using timing-safe comparison.
  */
 export async function verifySignature(
   body: string,
   headers: Record<string, string | undefined>,
-  secret: string
+  secret: string,
 ): Promise<boolean> {
-  // M9 fix: single canonical signature format — raw secret only.
-  // Removed base64 fallback to prevent downgrade attacks where an attacker
-  // sends a signature valid against the base64 form but not the raw form.
+  if (headers['Polar-Signature']) {
+    return false;
+  }
+
   try {
     const wh = new Webhook(secret);
-    const signature = headers['Polar-Signature'] || headers['webhook-signature'];
-
+    const signature = headers['webhook-signature'];
     if (!signature) {
       return false;
     }
@@ -30,7 +30,7 @@ export async function verifySignature(
     wh.verify(body, {
       'webhook-id': headers['webhook-id'] ?? '',
       'webhook-timestamp': headers['webhook-timestamp'] ?? '',
-      'webhook-signature': signature
+      'webhook-signature': signature,
     });
 
     return true;
@@ -40,42 +40,29 @@ export async function verifySignature(
 }
 
 /**
- * Verify HMAC-SHA256 signature with timing-safe comparison
- * Prevents timing attacks on signature validation
+ * Verify HMAC-SHA256 signature over rawBody with Web Crypto constant-time comparison.
  */
 export async function verifyHmacSignature(
   body: string,
   signature: string,
-  secret: string
+  secret: string,
 ): Promise<boolean> {
-  try {
-    const crypto = await import('node:crypto');
-    const expectedHex = crypto.createHmac('sha256', secret).update(body).digest('hex');
-
-    // Convert to buffers for timing-safe comparison
-    const signatureBuf = Buffer.from(signature, 'hex');
-    const expectedBuf = Buffer.from(expectedHex, 'hex');
-
-    // Length check first, then timing-safe comparison
-    return signatureBuf.length === expectedBuf.length &&
-      crypto.timingSafeEqual(signatureBuf, expectedBuf);
-  } catch {
-    // Fallback for environments without node:crypto
-    return false;
-  }
+  const normalized = signature.trim().replace(/^sha256=/i, '');
+  if (!normalized || !secret) return false;
+  return verifyInboundWebhook(body, normalized, secret, { algo: 'SHA-256' });
 }
 
 /**
- * Verify Cloudflare queue event signature using timing-safe comparison
+ * Verify Cloudflare queue event signature asynchronously over rawBody.
  */
-export function verifyCloudflareSignature(
+export async function verifyCloudflareSignature(
+  body: string,
   signature: string | undefined,
-  expectedSecret: string
-): boolean {
+  expectedSecret: string,
+): Promise<boolean> {
   if (!signature || !expectedSecret) {
     return false;
   }
 
-  // Use HMAC-SHA256 with timing-safe comparison
-  return verifyHmacSignature(signature, expectedSecret, expectedSecret) as unknown as boolean;
+  return verifyHmacSignature(body, signature, expectedSecret);
 }

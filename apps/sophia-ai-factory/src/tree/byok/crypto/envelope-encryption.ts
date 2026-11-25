@@ -58,8 +58,13 @@ export async function decryptLegacyApiKey(
     throw new Error('BYOK_DECRYPT_MALFORMED: payload too short');
   }
 
-  const key = await importMasterKey();
-  return decryptPackedWithKey(packedBytes, key, userId);
+  try {
+    const versionKey = await importKeyByVersion(1);
+    return await decryptPackedWithKey(packedBytes, versionKey, userId);
+  } catch {
+    const masterKey = await importMasterKey();
+    return decryptPackedWithKey(packedBytes, masterKey, userId);
+  }
 }
 
 /**
