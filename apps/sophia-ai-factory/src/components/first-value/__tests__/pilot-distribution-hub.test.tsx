@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { ScriptOutput } from '@/seed/ai/script-generator';
 import {
+  buildAeoGeoJsonLd,
   buildMultiChannelDistributionPack,
   buildYouTubeChapters,
 } from '../pilot-distribution-hub-helpers';
@@ -38,11 +39,23 @@ describe('PilotDistributionHub & helpers', () => {
       shortUrl: 'https://pilot.test/api/r/notion1',
       disclosureTag: '#QuảngCáo',
     });
-    expect(pack.channels).toHaveLength(4);
+    expect(pack.channels).toHaveLength(5);
     expect(pack.schedule).toHaveLength(4);
     for (const ch of pack.channels) {
       expect(ch.copyText).toContain('https://pilot.test/api/r/notion1');
     }
+
+    const parsedJsonLd = JSON.parse(
+      buildAeoGeoJsonLd({
+        script: SAMPLE_SCRIPT,
+        ctaText: 'Dùng thử miễn phí',
+        shortUrl: 'https://pilot.test/api/r/notion1',
+        disclosureTag: '#QuảngCáo',
+      }),
+    ) as { '@graph': Array<{ '@type': string }> };
+    const types = parsedJsonLd['@graph'].map((node) => node['@type']);
+    expect(types).toContain('VideoObject');
+    expect(types).toContain('FAQPage');
   });
 
   it('switches channel tabs, copies pack to clipboard, and links to studio uploader', async () => {
@@ -69,6 +82,11 @@ describe('PilotDistributionHub & helpers', () => {
     fireEvent.click(screen.getByTestId('pilot-dist-tab-tiktok'));
     expect(screen.getByTestId('pilot-dist-studio-link').getAttribute('href')).toBe(
       'https://www.tiktok.com/tiktokstudio/upload',
+    );
+
+    fireEvent.click(screen.getByTestId('pilot-dist-tab-aeo_geo'));
+    expect(screen.getByTestId('pilot-dist-studio-link').getAttribute('href')).toBe(
+      'https://medium.com/new-story',
     );
 
     fireEvent.click(screen.getByTestId('pilot-dist-copy-btn'));

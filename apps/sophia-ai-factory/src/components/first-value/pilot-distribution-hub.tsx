@@ -27,6 +27,7 @@ const CHANNEL_LABEL_KEYS: Record<DistributionChannelId, string> = {
   tiktok: 'pilotDistTabTiktok',
   reels: 'pilotDistTabReels',
   community: 'pilotDistTabCommunity',
+  aeo_geo: 'pilotDistTabAeoGeo',
 };
 
 const STUDIO_BTN_KEYS: Record<DistributionChannelId, string> = {
@@ -34,6 +35,7 @@ const STUDIO_BTN_KEYS: Record<DistributionChannelId, string> = {
   tiktok: 'pilotDistOpenTiktok',
   reels: 'pilotDistOpenReels',
   community: 'pilotDistOpenCommunity',
+  aeo_geo: 'pilotDistOpenAeoGeo',
 };
 
 export function PilotDistributionHub(props: PilotDistributionHubProps) {

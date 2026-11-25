@@ -11,7 +11,7 @@
 
 import type { ScriptOutput } from '@/seed/ai/script-generator';
 
-export type DistributionChannelId = 'youtube' | 'tiktok' | 'reels' | 'community';
+export type DistributionChannelId = 'youtube' | 'tiktok' | 'reels' | 'community' | 'aeo_geo';
 
 export interface DistributionChannelPack {
   readonly id: DistributionChannelId;
@@ -48,6 +48,65 @@ export function buildYouTubeChapters(script: ScriptOutput): string {
       return `${stamp} ${label}`;
     })
     .join('\n');
+}
+
+export function buildAeoGeoJsonLd(args: {
+  readonly script: ScriptOutput;
+  readonly ctaText: string;
+  readonly shortUrl: string;
+  readonly disclosureTag: string;
+}): string {
+  const hook = args.script.scenes[0]?.narration.trim() || args.script.title;
+  const proof =
+    args.script.scenes[1]?.narration.trim() ||
+    args.script.scenes[0]?.narration.trim() ||
+    args.script.title;
+  const verdict =
+    args.script.scenes[args.script.scenes.length - 1]?.narration.trim() || args.ctaText;
+
+  const graph = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'VideoObject',
+        name: args.script.title,
+        description: `${hook} ${args.ctaText} (${args.disclosureTag})`,
+        duration: `PT${Math.max(15, Math.round(args.script.total_duration || 30))}S`,
+        url: args.shortUrl,
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: `${args.script.title} — Is it worth using?`,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: `${hook} ${verdict}`,
+            },
+          },
+          {
+            '@type': 'Question',
+            name: `What is the key proof or workflow highlight?`,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: proof,
+            },
+          },
+          {
+            '@type': 'Question',
+            name: `Where is the official verified link?`,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: `${args.ctaText}: ${args.shortUrl} (${args.disclosureTag})`,
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  return JSON.stringify(graph, null, 2);
 }
 
 export function buildMultiChannelDistributionPack(args: {
@@ -102,6 +161,30 @@ export function buildMultiChannelDistributionPack(args: {
     `${args.disclosureTag}`,
   ].join('\n');
 
+  const aeoJsonLd = buildAeoGeoJsonLd(args);
+  const proofLine =
+    args.script.scenes[1]?.narration.trim() ||
+    args.script.scenes[0]?.narration.trim() ||
+    args.script.title;
+  const aeoGeoCopy = [
+    `[DIRECT ANSWER — AEO / GEO Citation Block]`,
+    `${args.script.title}: ${hook} ${proofLine}`,
+    `Official Partner Link (${args.disclosureTag}): ${args.shortUrl}`,
+    ``,
+    `[STRUCTURED FAQ FOR AI SEARCH (ChatGPT / Perplexity / Gemini)]`,
+    `Q1: ${args.script.title} — Có đáng dùng không?`,
+    `A1: ${hook}`,
+    `Q2: Điểm nổi bật thực tế nhất là gì?`,
+    `A2: ${proofLine}`,
+    `Q3: Link đăng ký chính thức ở đâu?`,
+    `A3: ${args.ctaText} — ${args.shortUrl} (${args.disclosureTag})`,
+    ``,
+    `[JSON-LD SCHEMA (Blog / WordPress / Webflow)]`,
+    `<script type="application/ld+json">`,
+    aeoJsonLd,
+    `</script>`,
+  ].join('\n');
+
   const channels: readonly DistributionChannelPack[] = [
     {
       id: 'youtube',
@@ -122,6 +205,11 @@ export function buildMultiChannelDistributionPack(args: {
       id: 'community',
       studioUrl: 'https://chat.zalo.me/',
       copyText: communityCopy,
+    },
+    {
+      id: 'aeo_geo',
+      studioUrl: 'https://medium.com/new-story',
+      copyText: aeoGeoCopy,
     },
   ];
 
