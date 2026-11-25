@@ -4,7 +4,12 @@
  */
 
 import { getD1 } from '@/seed/db/client';
-import { decryptApiKey, encryptApiKey } from '@/tree/byok/byok-crypto';
+import {
+  decryptApiKey,
+  encryptApiKey,
+  packedToText,
+  textToPacked,
+} from '@/tree/byok/byok-crypto';
 import type {
   UserApiKeyRow,
   ProviderCredentialRow,
@@ -90,7 +95,7 @@ export async function reencryptProviderCredentials(keyVersion: number, oldVersio
     for (const row of rows.results) {
       if (!row.key_version) continue;
 
-      const plain = await decryptApiKey(toBytes(new TextEncoder().encode(row.encrypted_value)), row.user_id, row.key_version);
+      const plain = await decryptApiKey(textToPacked(row.encrypted_value), row.user_id, row.key_version);
       const encrypted = await encryptApiKey(plain, row.user_id, keyVersion);
 
       await db
@@ -99,7 +104,7 @@ export async function reencryptProviderCredentials(keyVersion: number, oldVersio
            SET encrypted_value = ?, key_version = ?, updated_at = strftime('%s', 'now')
            WHERE id = ?`,
         )
-        .bind(new TextDecoder().decode(encrypted), keyVersion, row.id)
+        .bind(packedToText(encrypted), keyVersion, row.id)
         .run();
 
       total += 1;

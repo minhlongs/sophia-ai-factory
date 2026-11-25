@@ -33,6 +33,7 @@ vi.mock('@/tree/byok/byok-crypto', async (importOriginal) => {
   return {
     ...actual,
     generateMasterKey: vi.fn().mockResolvedValue('new-encrypted-key-base64'),
+    generateWrappedDek: vi.fn().mockResolvedValue('kek:v1:mock-iv:mock-ct'),
     getActiveKeyVersion: vi.fn().mockResolvedValue(3),
   };
 });

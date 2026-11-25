@@ -56,26 +56,33 @@ export async function rollbackTier(
 ): Promise<void> {
   const dbPlan = TIER_DB_MAPPING[targetTier] ?? 'basic';
   const nowSec = Math.floor(Date.now() / 1000);
-
-  // Update subscription plan (skip if already at target to avoid no-op)
-  await db
-    .prepare(
-      `UPDATE subscriptions SET plan = ?1, updated_at = ?2
-       WHERE user_id = ?3 AND plan != ?1`,
-    )
-    .bind(dbPlan, nowSec, userId)
-    .run();
-
-  // Update organization plan
   const orgId = await resolveOrgId(userId, db);
 
+  // Update both direct user_id rows and org-scoped subscriptions (where user_id may be NULL)
   if (orgId) {
+    await db
+      .prepare(
+        `UPDATE subscriptions
+         SET plan = ?1, tier = ?2, updated_at = ?3
+         WHERE (user_id = ?4 OR org_id = ?5) AND (plan != ?1 OR tier IS NOT ?2)`,
+      )
+      .bind(dbPlan, targetTier, nowSec, userId, orgId)
+      .run();
+
     await db
       .prepare(
         `UPDATE organizations SET plan = ?1, updated_at = ?2
          WHERE id = ?3 AND plan != ?1`,
       )
       .bind(dbPlan, nowSec, orgId)
+      .run();
+  } else {
+    await db
+      .prepare(
+        `UPDATE subscriptions SET plan = ?1, tier = ?2, updated_at = ?3
+         WHERE user_id = ?4 AND (plan != ?1 OR tier IS NOT ?2)`,
+      )
+      .bind(dbPlan, targetTier, nowSec, userId)
       .run();
   }
 

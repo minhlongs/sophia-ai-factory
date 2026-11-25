@@ -24,15 +24,17 @@ export function buildSubscriptionUpdateStatements(
   existingPeriodEnd: string | null | undefined,
   userId?: string
 ): ReturnType<typeof d1.prepare>[] {
+  const preservedEndOnDowngrade =
+    existingPeriodEnd && Date.parse(existingPeriodEnd) > Date.parse(periodEnd)
+      ? existingPeriodEnd
+      : periodEnd
   const stmts = currentSub
     ? wouldDowngrade
       ? [
         d1.prepare('UPDATE subscriptions SET current_period_end=?, updated_at=? WHERE org_id=?')
-          .bind(periodEnd, now, orgId),
+          .bind(preservedEndOnDowngrade, now, orgId),
         d1.prepare('UPDATE organizations SET updated_at=? WHERE id=?')
           .bind(now, orgId),
-        d1.prepare('UPDATE tier_change_events SET resolved=?, resolved_at=?, note=? WHERE org_id=? AND resolved=?')
-          .bind(1, now, 'Blocked: admin-set MASTER tier protected from webhook downgrade', orgId, 0),
       ]
       : [
         d1.prepare('UPDATE subscriptions SET plan=?, status=?, current_period_end=?, updated_at=? WHERE org_id=?')

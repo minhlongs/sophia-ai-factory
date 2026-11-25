@@ -81,6 +81,9 @@ export function createFaultInjectingBinding(
           stmt.bind(...args);
           return this;
         },
+        execute() {
+          throw new Error('Injected transient D1 failure');
+        },
         async run() {
           throw new Error('Injected transient D1 failure');
         },

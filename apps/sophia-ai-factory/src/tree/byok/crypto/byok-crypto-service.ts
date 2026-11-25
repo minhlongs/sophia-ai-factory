@@ -1,7 +1,7 @@
 /**
  * BYOK Key Management Service
  *
- * Implements master key importing, version loading, and D1 version tracking.
+ * Implements master KEK importing, envelope DEK version loading, and D1 version tracking.
  *
  * Layer: tree/byok/crypto
  */
@@ -16,8 +16,23 @@ import {
   ByokInvalidMasterKeyError,
   base64ToBytes,
 } from './types';
+import {
+  KEK_ENVELOPE_PREFIX,
+  ensureKeyVersionRow,
+  generateMasterKey,
+  generateWrappedDek,
+  unwrapDekWithMasterKek,
+  wrapDekWithMasterKek,
+} from './byok-key-version-seeder';
 
-export { ensureKeyVersionRow, generateMasterKey } from './byok-key-version-seeder';
+export {
+  KEK_ENVELOPE_PREFIX,
+  ensureKeyVersionRow,
+  generateMasterKey,
+  generateWrappedDek,
+  unwrapDekWithMasterKek,
+  wrapDekWithMasterKek,
+};
 
 export async function importKeyMaterial(bytes: Uint8Array): Promise<CryptoKey> {
   return crypto.subtle.importKey(
@@ -61,26 +76,34 @@ export async function loadKeyVersion(version: number): Promise<CryptoKey | null>
   }
   if (!db) throw new Error('BYOK_KEY_VERSION_STORE_UNAVAILABLE');
 
-  let row: KeyVersionRow | null;
+  let row: (KeyVersionRow & { key_type?: string }) | null;
   try {
     row = await db
       .prepare(
-        `SELECT version, encrypted_key, rotated_at, is_active
+        `SELECT key_type, version, encrypted_key, rotated_at, is_active
          FROM key_versions
          WHERE version = ?
          LIMIT 1`,
       )
       .bind(version)
-      .first<KeyVersionRow>();
+      .first<KeyVersionRow & { key_type?: string }>();
   } catch {
     throw new Error('BYOK_KEY_VERSION_STORE_UNAVAILABLE');
   }
 
-  if (!row) return null;
+  if (!row || typeof row.encrypted_key !== 'string') return null;
 
   try {
-    return await importKeyMaterial(base64ToBytes(row.encrypted_key));
-  } catch {
+    const dekBytes = await unwrapDekWithMasterKek(
+      row.encrypted_key,
+      row.version ?? version,
+      row.key_type || 'master',
+    );
+    return await importKeyMaterial(dekBytes);
+  } catch (err) {
+    if (err instanceof ByokMissingMasterKeyError || err instanceof ByokInvalidMasterKeyError) {
+      throw err;
+    }
     throw new Error('BYOK_KEY_VERSION_MATERIAL_INVALID');
   }
 }
@@ -103,10 +126,21 @@ export async function getActiveKeyVersion(): Promise<number> {
 }
 
 export async function importKeyByVersion(version: number): Promise<CryptoKey> {
-  if (version === 1) return importMasterKey();
+  let db = null;
+  try {
+    db = await getD1();
+  } catch {
+    db = null;
+  }
+  if (!db) {
+    if (version === 1) return importMasterKey();
+    throw new Error('BYOK_KEY_VERSION_STORE_UNAVAILABLE');
+  }
 
   const key = await loadKeyVersion(version);
   if (key) return key;
+
+  if (version === 1) return importMasterKey();
 
   throw new Error(`BYOK_DECRYPT_VERSION_UNSUPPORTED: version ${version} is outside the dual-decrypt window`);
 }

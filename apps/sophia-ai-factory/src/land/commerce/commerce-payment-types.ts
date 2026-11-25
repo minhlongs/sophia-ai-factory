@@ -9,8 +9,16 @@ export const CommercePaymentSchema = z.object({
   orderId: z.string().min(1),
   paymentId: z.string().min(1),
   paymentStatus: z.enum(['confirmed', 'finished']),
-  /** Amount actually paid, in the payment currency (float from NOWPayments). */
-  paidAmount: z.number().positive().optional(),
+  /** Fiat invoice amount from NOWPayments (`ipn.price_amount`). */
+  priceAmount: z.number().positive(),
+  /** Fiat invoice currency from NOWPayments (`ipn.price_currency`). */
+  priceCurrency: z.string().min(1),
+  /** Expected crypto amount in `pay_currency` (`ipn.pay_amount`). */
+  payAmount: z.number().positive().optional(),
+  /** Actual crypto amount received (`ipn.actually_paid`). */
+  actuallyPaid: z.number().nonnegative().optional(),
+  /** Legacy alias for `actuallyPaid`. */
+  paidAmount: z.number().nonnegative().optional(),
   paidCurrency: z.string().min(1).optional(),
 });
 
@@ -20,6 +28,9 @@ export type PaymentErrorCode =
   | 'INVALID_INPUT'
   | 'DB_UNAVAILABLE'
   | 'ORDER_NOT_FOUND'
+  | 'AMOUNT_MISMATCH'
+  | 'CURRENCY_MISMATCH'
+  | 'UNDERPAID'
   | 'WRITE_FAILED';
 
 export interface PaymentError {

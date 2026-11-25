@@ -32,6 +32,7 @@ const PAYMENT_DISABLED_PREFIXES = [
   '/api/payments',
   '/api/billing',
   '/api/checkout',
+  '/api/coupons',
   '/api/orders',
   '/api/promo',
   '/api/refund-requests',

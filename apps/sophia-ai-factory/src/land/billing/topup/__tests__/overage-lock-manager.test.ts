@@ -32,7 +32,7 @@ function db(over: {
         bind: () => ({
           run: async (): Promise<RunResult> => {
             if (sql.includes('INSERT INTO payment_events')) return over.insert ?? { success: true, meta: { changes: 1 } }
-            if (sql.includes('UPDATE payment_events')) {
+            if (sql.includes('DELETE FROM payment_events') || sql.includes('UPDATE payment_events')) {
               if (over.updateFails) throw new Error('d1 unavailable')
               return { success: true, meta: { changes: 1 } }
             }
@@ -98,7 +98,7 @@ describe('acquireTopupEventLock', () => {
     })
   })
 
-  it('releases a lock abandoned for more than five minutes', async () => {
+  it('releases a lock abandoned for more than five minutes for retry instead of marking processed', async () => {
     const stale = new Date(Date.now() - 6 * 60 * 1000).toISOString()
     const { client } = db({
       insert: { success: true, meta: { changes: 0 } },
@@ -106,7 +106,7 @@ describe('acquireTopupEventLock', () => {
     })
     await expect(acquire(client)).resolves.toEqual({
       acquired: false,
-      response: { success: true, message: 'Stale lock cleared (marked processed)' },
+      response: { success: false, message: 'Stale lock recovery in progress' },
     })
   })
 })

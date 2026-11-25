@@ -170,9 +170,10 @@ describe('upsertUserTier', () => {
     const subInsert = executed.find((q) => q.sql.includes('INSERT OR REPLACE INTO subscriptions'))
     expect(subInsert).toBeDefined()
     expect(subInsert?.sql).toContain("'active'")
-    // bindings: [id, orgId, userId, tier_upper, nowSec]
+    // bindings: [id, orgId, userId, tierUpper, planLower, nowSec]
     expect(subInsert?.bindings[2]).toBe('user-id-32-hex-abc')
     expect(subInsert?.bindings[3]).toBe('PREMIUM')
+    expect(subInsert?.bindings[4]).toBe('premium')
   })
 
   it('falls back to userId for displayName when email is empty', async () => {

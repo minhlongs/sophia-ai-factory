@@ -10,12 +10,17 @@
  * @module forest/dr/d1-dump-builder
  */
 
-/** SQLite system tables we skip — auto-managed by SQLite and re-created by migrations. */
+/**
+ * SQLite system tables and key-wrapping tables excluded from SQL data dumps.
+ * `key_versions` is excluded so R2 SQL backups (`sophia-backups`) preserve strict
+ * KEK/DEK separation from `user_api_keys` ciphertexts alongside Worker Secret `BYOK_MASTER_KEY`.
+ */
 const SQLITE_INTERNAL_TABLES = new Set([
   'sqlite_sequence',
   'sqlite_stat1',
   'sqlite_stat4',
   'd1_migrations',
+  'key_versions',
 ]);
 
 /** Maximum rows per table dump. Hard ceiling to keep Worker CPU bounded. */
