@@ -19,8 +19,11 @@ import {
   buildCapCutPublishCopy,
   buildNarrationTextFromScript,
   buildSrtFromScript,
+  extractThreeShortClipsFromLongScript,
   triggerTextFileDownload,
+  type RepurposedShortClip,
 } from './pilot-capcut-pack-helpers';
+import { renderAndDownloadPilotMp4 } from './pilot-browser-mp4-renderer';
 
 export interface PilotVoiceAndCapCutPackProps {
   readonly artifactId: string;
@@ -46,6 +49,25 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [copiedPack, setCopiedPack] = useState(false);
+  const [renderingClipIdx, setRenderingClipIdx] = useState<number | null>(null);
+  const repurposedClips = extractThreeShortClipsFromLongScript(props.script);
+
+  async function handleExportRepurposedClip(clip: RepurposedShortClip) {
+    setRenderingClipIdx(clip.clipIndex);
+    try {
+      await renderAndDownloadPilotMp4({
+        artifactId: `${props.artifactId}-short-${clip.clipIndex}`,
+        script: clip.script,
+        ctaText: props.ctaText,
+        shortUrl: props.shortUrl,
+        disclosureTag: props.disclosureTag,
+        productImageUrls: props.productImageUrls,
+        aspectRatio: '9:16',
+      });
+    } finally {
+      setRenderingClipIdx(null);
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -236,6 +258,58 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
           </button>
         </div>
       </div>
+
+      {/* 4. 1 Long -> 3 Shorts (9:16 Repurposing at $0 extra AI cost) */}
+      {repurposedClips.length === 3 && (
+        <div className="border-t border-border pt-3" data-testid="pilot-repurpose-3-shorts">
+          <div className="text-xs font-semibold text-foreground">{t('pilotRepurposeTitle')}</div>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">{t('pilotRepurposeHint')}</p>
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {repurposedClips.map((clip) => (
+              <div
+                key={clip.clipIndex}
+                className="flex flex-col justify-between gap-2 rounded-lg border border-border bg-muted/30 p-2.5 text-xs"
+              >
+                <div>
+                  <div className="font-semibold text-foreground">
+                    Short #{clip.clipIndex}: {clip.label}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {clip.script.scenes.length} scene(s) • ~{clip.script.total_duration}s • 9:16
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    data-testid={`pilot-repurpose-mp4-${clip.clipIndex}`}
+                    disabled={props.busy || renderingClipIdx !== null}
+                    onClick={() => void handleExportRepurposedClip(clip)}
+                    className="rounded bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                  >
+                    {renderingClipIdx === clip.clipIndex
+                      ? t('loading')
+                      : t('pilotRepurposeMp4Btn')}
+                  </button>
+                  <button
+                    type="button"
+                    data-testid={`pilot-repurpose-srt-${clip.clipIndex}`}
+                    onClick={() =>
+                      triggerTextFileDownload(
+                        `sophia-short-${clip.clipIndex}-${props.artifactId}.srt`,
+                        buildSrtFromScript(clip.script, props.ctaText),
+                        'application/x-subrip;charset=utf-8',
+                      )
+                    }
+                    className="rounded border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-foreground hover:bg-muted"
+                  >
+                    .srt
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

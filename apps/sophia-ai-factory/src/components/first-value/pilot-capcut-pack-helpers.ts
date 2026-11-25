@@ -72,6 +72,50 @@ export function buildCapCutPublishCopy(args: {
   return lines.join('\n');
 }
 
+export interface RepurposedShortClip {
+  readonly clipIndex: 1 | 2 | 3;
+  readonly label: string;
+  readonly script: ScriptOutput;
+}
+
+/**
+ * Splits a multi-scene (e.g. YouTube Long-Form 16:9) script into 3 distinct
+ * 9:16 Short-Form clips (Hook/Problem, Core Value/Proof, Verdict/Offer) at $0 extra AI cost.
+ */
+export function extractThreeShortClipsFromLongScript(
+  script: ScriptOutput,
+): readonly RepurposedShortClip[] {
+  const scenes = script.scenes;
+  if (scenes.length < 3) return [];
+
+  const chunkSize = Math.max(1, Math.floor(scenes.length / 3));
+  const groups: readonly (typeof scenes)[] = [
+    scenes.slice(0, chunkSize),
+    scenes.slice(chunkSize, chunkSize * 2),
+    scenes.slice(chunkSize * 2),
+  ];
+  const labels = ['Hook & Problem', 'Core Value & Proof', 'Verdict & Offer'] as const;
+
+  return groups.map((group, idx) => {
+    const clipIndex = (idx + 1) as 1 | 2 | 3;
+    const normalizedScenes = group.map((scene, sIdx) => ({
+      ...scene,
+      scene_number: sIdx + 1,
+      duration_estimate: Math.max(3, Math.min(20, Math.round(scene.duration_estimate || 8))),
+    }));
+    const totalDuration = normalizedScenes.reduce((sum, s) => sum + s.duration_estimate, 0);
+    return {
+      clipIndex,
+      label: labels[idx],
+      script: {
+        title: `${script.title} — Short #${clipIndex} (${labels[idx]})`,
+        total_duration: totalDuration,
+        scenes: normalizedScenes,
+      },
+    };
+  });
+}
+
 export function triggerTextFileDownload(
   filename: string,
   content: string,
