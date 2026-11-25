@@ -127,6 +127,7 @@ repomix-output.xml
 !apps/sophia-ai-factory/migrations/0519_pilot_support_requests.sql
 !apps/sophia-ai-factory/migrations/0520_pilot_affiliate_revenue_studio.sql
 !apps/sophia-ai-factory/migrations/0521_pilot_commercial_validation.sql
+!apps/sophia-ai-factory/migrations/0522_pilot_affiliate_performance_tenant_isolation.sql
 backups/*.sql
 **/d1-*.sql
 

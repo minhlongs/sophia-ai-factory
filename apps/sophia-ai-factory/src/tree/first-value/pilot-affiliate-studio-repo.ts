@@ -8,6 +8,7 @@
  */
 
 import type { D1Database } from '@cloudflare/workers-types';
+import { verifyWorkspaceRole } from '@/seed/auth/workspace-access';
 import type {
   AffiliateCampaignPack,
   AffiliateStudioVertical,
@@ -570,7 +571,7 @@ export async function recordPartnerPerformanceReport(
         clicks_count, signups_count, qualified_conversions, pending_commission_cents,
         confirmed_commission_cents, currency, notes, created_at_iso, updated_at_iso)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT (org_id, external_ref_id) DO NOTHING`,
+       ON CONFLICT (org_id, user_id, external_ref_id) DO NOTHING`,
     )
     .bind(
       input.id,
@@ -599,6 +600,7 @@ export async function recordPartnerPerformanceReport(
     provenance: 'customer_reported_partner_statement',
     reportSource: input.reportSource,
     reportPeriod: input.reportPeriod,
+    userId: input.userId,
   });
 
   if (!duplicate) {
@@ -618,7 +620,7 @@ export async function recordPartnerPerformanceReport(
           input.orgId,
           input.campaignId,
           niche,
-          `${input.externalRefId}:pending`,
+          `${input.userId}:${input.externalRefId}:pending`,
           input.pendingCommissionCents,
           currency,
           rawMeta,
@@ -644,7 +646,7 @@ export async function recordPartnerPerformanceReport(
           input.orgId,
           input.campaignId,
           niche,
-          `${input.externalRefId}:confirmed`,
+          `${input.userId}:${input.externalRefId}:confirmed`,
           input.confirmedCommissionCents,
           currency,
           rawMeta,
@@ -658,12 +660,26 @@ export async function recordPartnerPerformanceReport(
   const row = await d1
     .prepare(
       `SELECT * FROM pilot_affiliate_performance_entries
-       WHERE org_id = ? AND external_ref_id = ? LIMIT 1`,
+       WHERE org_id = ? AND user_id = ? AND external_ref_id = ? LIMIT 1`,
     )
-    .bind(input.orgId, input.externalRefId)
+    .bind(input.orgId, input.userId, input.externalRefId)
     .first<PerfDbRow>();
   if (!row) throw new Error('Failed to load recorded partner performance entry');
   return { entry: mapPerfRow(row), duplicate };
+}
+
+export async function getPartnerPerformanceEntryByRef(
+  d1: D1Database,
+  args: { readonly orgId: string; readonly userId: string; readonly externalRefId: string },
+): Promise<PilotAffiliatePerformanceEntry | null> {
+  const row = await d1
+    .prepare(
+      `SELECT * FROM pilot_affiliate_performance_entries
+       WHERE org_id = ? AND user_id = ? AND external_ref_id = ? LIMIT 1`,
+    )
+    .bind(args.orgId, args.userId, args.externalRefId)
+    .first<PerfDbRow>();
+  return row ? mapPerfRow(row) : null;
 }
 
 export async function listPartnerPerformanceEntries(
@@ -679,4 +695,31 @@ export async function listPartnerPerformanceEntries(
     .bind(args.orgId, args.userId, args.limit ?? 30)
     .all<PerfDbRow>();
   return (res.results ?? []).map(mapPerfRow);
+}
+
+/**
+ * Organization-wide performance entry visibility for legitimate ADMIN/OWNER roles.
+ * Fail-closed: verifies workspace RBAC (`ADMIN` minimum) against D1 before reading.
+ */
+export async function listPartnerPerformanceEntriesForOrgAdmin(
+  d1: D1Database,
+  args: { readonly orgId: string; readonly actorUserId: string; readonly limit?: number },
+): Promise<
+  | { readonly authorized: true; readonly entries: readonly PilotAffiliatePerformanceEntry[] }
+  | { readonly authorized: false; readonly entries: readonly [] }
+> {
+  const isAdmin = await verifyWorkspaceRole(args.orgId, args.actorUserId, 'ADMIN', d1);
+  if (!isAdmin) {
+    return { authorized: false, entries: [] };
+  }
+
+  const res = await d1
+    .prepare(
+      `SELECT * FROM pilot_affiliate_performance_entries
+       WHERE org_id = ?
+       ORDER BY created_at_iso DESC LIMIT ?`,
+    )
+    .bind(args.orgId, args.limit ?? 100)
+    .all<PerfDbRow>();
+  return { authorized: true, entries: (res.results ?? []).map(mapPerfRow) };
 }
