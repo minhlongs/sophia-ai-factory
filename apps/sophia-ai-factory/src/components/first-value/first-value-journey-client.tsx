@@ -396,11 +396,7 @@ export function FirstValueJourneyClient({
       category: input.category,
       comment: input.comment,
     });
-    if (data?.feedback) {
-      await loadStatus();
-      return true;
-    }
-    return false;
+    return Boolean(data?.feedback);
   }
 
   async function handleDecision(decision: 'accept_review' | 'reject_review', reason?: string) {
@@ -551,7 +547,6 @@ export function FirstValueJourneyClient({
           <FirstValueFeedbackCard
             busy={busy}
             artifactId={activeReview?.artifactId ?? null}
-            feedbackItems={pilot?.feedbackItems ?? []}
             onSubmitFeedback={handleSubmitFeedback}
           />
           <FirstValueSupportCard

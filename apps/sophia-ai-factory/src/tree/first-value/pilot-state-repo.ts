@@ -451,11 +451,25 @@ function normalizeFeedbackStatus(raw: unknown): 'received' | 'in_progress' | 're
   return 'received';
 }
 
+function mapPilotFeedbackRow(row: Record<string, unknown>): PilotFeedbackStatusItem {
+  const rawReply = row.operator_reply;
+  return {
+    id: String(row.id),
+    rating: Number(row.rating),
+    category: String(row.category),
+    comment: String(row.comment),
+    status: normalizeFeedbackStatus(row.status),
+    operatorReply: typeof rawReply === 'string' && rawReply.trim() ? rawReply : null,
+    createdAtIso: String(row.created_at_iso),
+    resolvedAtIso: typeof row.resolved_at_iso === 'string' ? row.resolved_at_iso : null,
+  };
+}
+
 export async function listPilotFeedbackForUser(
   d1: D1Database,
   input: { readonly orgId: string; readonly userId: string; readonly limit?: number },
 ): Promise<readonly PilotFeedbackStatusItem[]> {
-  const limit = Math.min(Math.max(input.limit ?? 10, 1), 25);
+  const limit = input.limit ?? 10;
   try {
     const res = await d1
       .prepare(
@@ -467,18 +481,7 @@ export async function listPilotFeedbackForUser(
       )
       .bind(input.orgId, input.userId, limit)
       .all<Record<string, unknown>>();
-    return (res.results ?? []).map((row) => ({
-      id: String(row.id ?? ''),
-      rating: Number(row.rating ?? 5),
-      category: String(row.category ?? 'usefulness'),
-      comment: String(row.comment ?? ''),
-      status: normalizeFeedbackStatus(row.status),
-      operatorReply: typeof row.operator_reply === 'string' && row.operator_reply.trim()
-        ? row.operator_reply
-        : null,
-      createdAtIso: String(row.created_at_iso ?? ''),
-      resolvedAtIso: typeof row.resolved_at_iso === 'string' ? row.resolved_at_iso : null,
-    }));
+    return (res.results ?? []).map(mapPilotFeedbackRow);
   } catch {
     const res = await d1
       .prepare(
@@ -490,15 +493,6 @@ export async function listPilotFeedbackForUser(
       )
       .bind(input.orgId, input.userId, limit)
       .all<Record<string, unknown>>();
-    return (res.results ?? []).map((row) => ({
-      id: String(row.id ?? ''),
-      rating: Number(row.rating ?? 5),
-      category: String(row.category ?? 'usefulness'),
-      comment: String(row.comment ?? ''),
-      status: 'received' as const,
-      operatorReply: null,
-      createdAtIso: String(row.created_at_iso ?? ''),
-      resolvedAtIso: null,
-    }));
+    return (res.results ?? []).map(mapPilotFeedbackRow);
   }
 }
