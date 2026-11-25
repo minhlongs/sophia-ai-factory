@@ -8,7 +8,7 @@
  * @module components/first-value/first-value-mp4-affiliate-card
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { DurableFirstValueReview } from '@/tree/first-value/first-value-review-repo';
 import type {
@@ -21,6 +21,8 @@ export interface FirstValueMp4AffiliateCardProps {
   readonly review: DurableFirstValueReview | null;
   readonly busy: boolean;
   readonly consentAccepted?: boolean;
+  readonly defaultDestinationUrl?: string;
+  readonly defaultCtaText?: string;
   readonly heygenConfigured: boolean;
   readonly affiliateLinks: readonly PilotAffiliateLinkSummary[];
   readonly mp4Exports: readonly PilotMp4ExportSummary[];
@@ -61,8 +63,8 @@ export interface FirstValueMp4AffiliateCardProps {
 
 export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProps) {
   const t = useTranslations('firstValue');
-  const [destinationUrl, setDestinationUrl] = useState('');
-  const [ctaText, setCtaText] = useState('');
+  const [destinationUrl, setDestinationUrl] = useState(props.defaultDestinationUrl ?? '');
+  const [ctaText, setCtaText] = useState(props.defaultCtaText ?? '');
   const [networkHint, setNetworkHint] = useState<
     'generic' | 'shopee' | 'tiktok_shop' | 'accesstrade' | 'clickbank' | 'amazon' | 'awin'
   >('generic');
@@ -70,6 +72,18 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
   const [heygenKeyInput, setHeygenKeyInput] = useState('');
   const [renderingMp4, setRenderingMp4] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (props.defaultDestinationUrl) {
+      setDestinationUrl((prev) => (prev.trim() ? prev : props.defaultDestinationUrl ?? ''));
+    }
+  }, [props.defaultDestinationUrl]);
+
+  useEffect(() => {
+    if (props.defaultCtaText) {
+      setCtaText((prev) => (prev.trim() ? prev : props.defaultCtaText ?? ''));
+    }
+  }, [props.defaultCtaText]);
 
   const activeLink =
     (props.review
@@ -79,6 +93,19 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
     null;
   const consentOk = props.consentAccepted ?? true;
   const isAccepted = props.review?.reviewState === 'accepted';
+  const canAutoCreateLink = destinationUrl.trim().length >= 10 && ctaText.trim().length >= 3;
+  const canRenderMp4 = Boolean(isAccepted && (activeLink || canAutoCreateLink));
+
+  async function ensureActiveLink(): Promise<PilotAffiliateLinkSummary | null> {
+    if (activeLink) return activeLink;
+    if (!canAutoCreateLink) return null;
+    return props.onCreateShortlink({
+      destinationUrl: destinationUrl.trim(),
+      ctaText: ctaText.trim(),
+      networkHint,
+      disclosureTag,
+    });
+  }
 
   async function handleCreateLink() {
     if (!destinationUrl.trim() || !ctaText.trim()) return;
@@ -91,15 +118,17 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
   }
 
   async function handleBrowserMp4Export() {
-    if (!props.review || !isAccepted || !activeLink) return;
+    if (!props.review || !isAccepted) return;
     setRenderingMp4(true);
     try {
+      const resolvedLink = await ensureActiveLink();
+      if (!resolvedLink) return;
       const encoded = await renderAndDownloadPilotMp4({
         artifactId: props.review.artifactId,
         script: props.review.script,
-        ctaText: activeLink.ctaText,
-        shortUrl: activeLink.shortUrl,
-        disclosureTag: activeLink.disclosureTag,
+        ctaText: resolvedLink.ctaText,
+        shortUrl: resolvedLink.shortUrl,
+        disclosureTag: resolvedLink.disclosureTag,
       });
       await props.onRecordBrowserMp4({
         artifactId: props.review.artifactId,
@@ -108,9 +137,26 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
         durationSec: encoded.durationSec,
         width: encoded.width,
         height: encoded.height,
-        ctaText: activeLink.ctaText,
-        shortCode: activeLink.shortCode,
-        referralUrl: activeLink.shortUrl,
+        ctaText: resolvedLink.ctaText,
+        shortCode: resolvedLink.shortCode,
+        referralUrl: resolvedLink.shortUrl,
+      });
+    } finally {
+      setRenderingMp4(false);
+    }
+  }
+
+  async function handleHeyGenMp4Submit() {
+    if (!props.review || !isAccepted) return;
+    setRenderingMp4(true);
+    try {
+      const resolvedLink = await ensureActiveLink();
+      if (!resolvedLink) return;
+      await props.onSubmitHeyGenMp4({
+        artifactId: props.review.artifactId,
+        ctaText: resolvedLink.ctaText,
+        shortCode: resolvedLink.shortCode,
+        referralUrl: resolvedLink.shortUrl,
       });
     } finally {
       setRenderingMp4(false);
@@ -242,7 +288,7 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground">
           {t('pilotRenderMp4Heading')}
         </h3>
-        {!isAccepted || !activeLink ? (
+        {!canRenderMp4 ? (
           <p className="text-xs text-amber-600 dark:text-amber-400">{t('pilotMp4Prerequisite')}</p>
         ) : (
           <div className="flex flex-wrap gap-3">
@@ -260,14 +306,7 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
               <button
                 type="button"
                 disabled={!consentOk || props.busy || renderingMp4}
-                onClick={() =>
-                  void props.onSubmitHeyGenMp4({
-                    artifactId: props.review!.artifactId,
-                    ctaText: activeLink.ctaText,
-                    shortCode: activeLink.shortCode,
-                    referralUrl: activeLink.shortUrl,
-                  })
-                }
+                onClick={() => void handleHeyGenMp4Submit()}
                 className="rounded-lg border border-border bg-background px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted disabled:opacity-50"
               >
                 {t('pilotSubmitHeyGenMp4Btn')}

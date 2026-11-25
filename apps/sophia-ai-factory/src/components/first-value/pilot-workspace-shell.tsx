@@ -19,10 +19,12 @@ import React, { useState } from 'react';
 import {
   BarChart3,
   FileText,
+  Film,
   KeyRound,
   LayoutDashboard,
   LifeBuoy,
   Megaphone,
+  Share2,
   Tag,
 } from 'lucide-react';
 import { Link } from '@/navigation';
@@ -50,6 +52,20 @@ const PILOT_SIDEBAR_ITEMS = [
     en: 'Content Factory',
     vi: 'Xưởng nội dung',
     Icon: FileText,
+  },
+  {
+    id: 'video-mp4',
+    href: '#pilot-mp4-affiliate',
+    en: 'Create MP4 Video',
+    vi: 'Tạo Video MP4',
+    Icon: Film,
+  },
+  {
+    id: 'manual-publish',
+    href: '#pilot-manual-publish',
+    en: 'Manual Publish',
+    vi: 'Đăng thủ công',
+    Icon: Share2,
   },
   {
     id: 'revenue',

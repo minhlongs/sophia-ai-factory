@@ -317,6 +317,13 @@ export function AffiliateContentWorkspaceCard({
             >
               {t('exportJsonBtn')}
             </button>
+            <a
+              href="#pilot-mp4-affiliate"
+              data-testid="next-step-create-mp4-link"
+              className="rounded-lg border border-amber-500/60 bg-amber-500/15 px-4 py-2 text-sm font-semibold text-amber-600 transition hover:bg-amber-500/25 dark:text-amber-400"
+            >
+              {t('nextStepCreateMp4Btn')}
+            </a>
             {exportPayload && (
               <>
                 <button

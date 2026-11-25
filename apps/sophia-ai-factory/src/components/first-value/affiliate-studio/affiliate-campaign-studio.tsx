@@ -492,6 +492,8 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
         review={videoScriptReview}
         busy={props.busy}
         consentAccepted={Boolean(props.pilot?.consentAccepted)}
+        defaultDestinationUrl={activeCampaign?.referralUrl ?? activeOffer?.referralUrl ?? ''}
+        defaultCtaText={activeCampaign?.pack.callToAction ?? ''}
         heygenConfigured={Boolean(props.pilot?.heygenByokConfigured)}
         affiliateLinks={props.pilot?.affiliateLinks ?? []}
         mp4Exports={props.pilot?.mp4Exports ?? []}
