@@ -106,7 +106,10 @@ export function buildAeoGeoJsonLd(args: {
     ],
   };
 
-  return JSON.stringify(graph, null, 2);
+  return JSON.stringify(graph, null, 2)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
 }
 
 export function buildMultiChannelDistributionPack(args: {
