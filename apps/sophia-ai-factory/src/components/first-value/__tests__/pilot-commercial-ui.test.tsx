@@ -26,6 +26,7 @@ vi.mock('@/seed/security/use-csrf-token', () => ({
 
 import { FirstValueMp4AffiliateCard } from '../first-value-mp4-affiliate-card';
 import { FirstValueManualPublishCard } from '../first-value-manual-publish-card';
+import { PilotWorkspaceShell } from '../pilot-workspace-shell';
 import {
   buildSlidesFromAcceptedScript,
   renderAndDownloadPilotMp4,
@@ -259,10 +260,59 @@ describe('Pilot Commercial UI Cards & Browser MP4 Renderer', () => {
     );
 
     fireEvent.click(screen.getByText('pilotSubmitHeyGenMp4Btn'));
-    expect(onSubmitHeyGenMp4).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onSubmitHeyGenMp4).toHaveBeenCalledTimes(1));
 
     fireEvent.click(screen.getByText('pilotByokClearBtn (HeyGen)'));
-    expect(onClearHeyGenKey).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onClearHeyGenKey).toHaveBeenCalledTimes(1));
+  });
+
+  it('surfaces Video MP4 in sidebar and auto-mints shortlink + exports MP4 in 1 click from prefilled campaign fields', async () => {
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:https://pilot.local/mp4-1click');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+    const mintedLink: PilotAffiliateLinkSummary = {
+      id: 'pal_auto',
+      artifactId: 'art_ui_1',
+      shortCode: 'abcdefghij',
+      shortUrl: 'https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev/api/r/abcdefghij',
+      destinationUrl: 'https://vc.cabinet.oneroyal.com/links/go/18230',
+      ctaText: 'Khám phá ngay Oneroyal',
+      networkHint: 'generic',
+      subId: 'sp_abcdefghij',
+      disclosureTag: '#QuảngCáo',
+      verifiedClicks: 0,
+      createdAtIso: '2026-11-25T00:00:00Z',
+    };
+    const onCreateShortlink = vi.fn(async () => mintedLink);
+    const onRecordBrowserMp4 = vi.fn(async () => true);
+
+    render(
+      <PilotWorkspaceShell email="ceo@pilot.vn" isVi={true}>
+        <FirstValueMp4AffiliateCard
+          review={makeAcceptedReview()}
+          busy={false}
+          consentAccepted={true}
+          defaultDestinationUrl="https://vc.cabinet.oneroyal.com/links/go/18230"
+          defaultCtaText="Khám phá ngay Oneroyal"
+          heygenConfigured={false}
+          affiliateLinks={[]}
+          mp4Exports={[]}
+          onCreateShortlink={onCreateShortlink}
+          onRecordBrowserMp4={onRecordBrowserMp4}
+          onSaveHeyGenKey={vi.fn(async () => true)}
+          onClearHeyGenKey={vi.fn(async () => true)}
+          onSubmitHeyGenMp4={vi.fn(async () => true)}
+          onPollHeyGenMp4={vi.fn(async () => {})}
+        />
+      </PilotWorkspaceShell>,
+    );
+
+    expect(screen.getAllByText('Tạo Video MP4').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Đăng thủ công').length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByTestId('pilot-export-browser-mp4-btn'));
+    await waitFor(() => expect(onCreateShortlink).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onRecordBrowserMp4).toHaveBeenCalledTimes(1));
   });
 
   it('renders manual publish copy pack and submits honest CUSTOMER_SELF_REPORTED outcomes', async () => {
