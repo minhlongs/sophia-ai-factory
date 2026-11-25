@@ -57,6 +57,11 @@ export async function GET(
   const rawDb = (globalThis as unknown as { __env?: Record<string, unknown> }).__env;
   const d1 = (rawDb?.DB as D1Database | undefined) ?? ((await getD1()) ?? undefined);
 
+  const rateLimit = await checkRateLimit(`r:${ip ?? 'unknown'}`, 100, 60);
+  if (!rateLimit.allowed) {
+    return Response.redirect(isPilot ? resolvePilotRefererOrigin(process.env) : HOMEPAGE_URL, 302);
+  }
+
   if (isPilot) {
     if (!d1) {
       return Response.redirect(resolvePilotRefererOrigin(process.env), 302);
@@ -66,6 +71,7 @@ export async function GET(
       ip,
       country,
       referer,
+      userAgent,
     });
     if (pilotRedirect) {
       return Response.redirect(pilotRedirect.redirectUrl, 302);
@@ -76,17 +82,13 @@ export async function GET(
     });
   }
 
-  const rateLimit = await checkRateLimit(`r:${ip ?? 'unknown'}`, 100, 60);
-  if (!rateLimit.allowed) {
-    return Response.redirect(HOMEPAGE_URL, 302);
-  }
-
   if (d1) {
     const pilotRedirect = await resolveAndRecordPilotShortlinkClick(d1, {
       code,
       ip,
       country,
       referer,
+      userAgent,
     });
     if (pilotRedirect) {
       return Response.redirect(pilotRedirect.redirectUrl, 302);
