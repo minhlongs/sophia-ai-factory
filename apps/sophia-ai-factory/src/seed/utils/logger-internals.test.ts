@@ -375,5 +375,58 @@ describe('logger-internals secret & PII redaction (Issue #183)', () => {
     expect(mocks.captureException.mock.calls[0][0]).toBeInstanceOf(Error);
     expect(mocks.captureException.mock.calls[1][0]).toBeInstanceOf(Error);
   });
+
+  it('handles circular Error.details and Error.hint safely without throwing while still redacting secrets', async () => {
+    const circularDetails: Record<string, unknown> = {
+      'x-api-key': 'circular-api-key-123456',
+      note: `leaked ${SYNTHETIC_SK_OR}`,
+    };
+    circularDetails.self = circularDetails;
+
+    const circularHint: Record<string, unknown> = {
+      authorization: SYNTHETIC_BEARER,
+      token: SYNTHETIC_RESEND,
+    };
+    circularHint.parent = circularHint;
+
+    const errWithCycles = new Error(`Request failed with ${SYNTHETIC_SK}`) as Error & {
+      details?: unknown;
+      hint?: unknown;
+    };
+    errWithCycles.details = circularDetails;
+    errWithCycles.hint = circularHint;
+
+    expect(() => log('error', 'circular error test', { stage: 'sdk' }, errWithCycles)).not.toThrow();
+    await drainLogMicrotask();
+
+    const forbiddenValues = [
+      'circular-api-key-123456',
+      SYNTHETIC_SK_OR,
+      SYNTHETIC_SK,
+      SYNTHETIC_RESEND,
+      'synth_bearer_token_9876543210',
+    ];
+
+    const consoleOutput = String(consoleErrorSpy.mock.calls[0]?.[0] ?? '');
+    expect(consoleOutput).toContain('[Circular]');
+    for (const secret of forbiddenValues) {
+      expect(consoleOutput).not.toContain(secret);
+    }
+
+    expect(mocks.captureException).toHaveBeenCalledTimes(1);
+    const [capturedErr] = mocks.captureException.mock.calls[0];
+    expect(capturedErr).toBeInstanceOf(Error);
+    expect(capturedErr).not.toBe(errWithCycles);
+    const sentrySerialized = JSON.stringify({
+      name: capturedErr.name,
+      message: capturedErr.message,
+      details: (capturedErr as Error & { details?: unknown }).details,
+      hint: (capturedErr as Error & { hint?: unknown }).hint,
+    });
+    expect(sentrySerialized).toContain('[Circular]');
+    for (const secret of forbiddenValues) {
+      expect(sentrySerialized).not.toContain(secret);
+    }
+  });
 });
 

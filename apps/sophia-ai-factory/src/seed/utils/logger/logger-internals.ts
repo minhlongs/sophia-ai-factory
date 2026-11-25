@@ -16,6 +16,14 @@ function scrubUnknown(value: unknown): unknown {
   return scrubPIIDeep(redactSecretKeys(value));
 }
 
+function safeScrubUnknown(value: unknown): unknown {
+  try {
+    return scrubUnknown(value);
+  } catch {
+    return '[ERROR_DETAIL_SCRUB_FAILED]';
+  }
+}
+
 function buildScrubbedError(rawError: unknown): {
   entryError: NonNullable<LogEntry['error']>;
   sentryError: Error;
@@ -26,8 +34,8 @@ function buildScrubbedError(rawError: unknown): {
     const safeMessage = scrubText(rawError.message || '');
     const safeStack = rawError.stack ? scrubText(rawError.stack) : undefined;
     const safeCode = typeof errRecord.code === 'string' ? scrubText(errRecord.code) : errRecord.code;
-    const safeDetails = errRecord.details !== undefined ? scrubUnknown(errRecord.details) : undefined;
-    const safeHint = errRecord.hint !== undefined ? scrubUnknown(errRecord.hint) : undefined;
+    const safeDetails = errRecord.details !== undefined ? safeScrubUnknown(errRecord.details) : undefined;
+    const safeHint = errRecord.hint !== undefined ? safeScrubUnknown(errRecord.hint) : undefined;
 
     const entryError: NonNullable<LogEntry['error']> = {
       name: safeName,
@@ -103,9 +111,14 @@ export const log = (
 
   let scrubbedSentryError: Error | undefined;
   if (error !== undefined && error !== null) {
-    const { entryError, sentryError } = buildScrubbedError(error);
-    entry.error = entryError;
-    scrubbedSentryError = sentryError;
+    try {
+      const { entryError, sentryError } = buildScrubbedError(error);
+      entry.error = entryError;
+      scrubbedSentryError = sentryError;
+    } catch {
+      entry.error = { name: 'Error', message: '[ERROR_SCRUB_FAILED]' };
+      scrubbedSentryError = new Error('[ERROR_SCRUB_FAILED]');
+    }
   }
 
   const breadcrumbMetadata = safeMetadata ? { ...safeMetadata } : {};
