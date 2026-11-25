@@ -593,9 +593,15 @@ describe('pilot operator CLIs (invite & support queue)', () => {
     try {
       const sqlite = new NodeSqliteD1Database(path.join(tmpDir, 'purge.sqlite'));
       for (const mig of [
+        '0001-init.sql',
+        '0003-better-auth.sql',
+        '0004-user-profiles.sql',
+        '0011-user-api-keys.sql',
+        '0076-rename-api-keys-to-user-api-keys.sql',
         '0515_first_value_reviews.sql',
         '0517_customer_pilot_first_value.sql',
         '0519_pilot_support_requests.sql',
+        '0520_pilot_affiliate_revenue_studio.sql',
       ]) {
         const sqlText = fs.readFileSync(
           path.resolve(__dirname, '../../../../migrations', mig),

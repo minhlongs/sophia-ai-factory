@@ -47,6 +47,10 @@ export function buildPurgeUserStatements(userId, orgId, requestId, nowIso) {
   return [
     `DELETE FROM "verification" WHERE identifier IN (SELECT email FROM "user" WHERE id = ${safeUser});`,
     `DELETE FROM user_api_keys WHERE user_id = ${safeUser};`,
+    `DELETE FROM workspace_external_commissions WHERE tenant_id = ${safeOrg};`,
+    `DELETE FROM pilot_affiliate_performance_entries WHERE org_id = ${safeOrg} OR user_id = ${safeUser};`,
+    `DELETE FROM pilot_affiliate_campaigns WHERE org_id = ${safeOrg} OR user_id = ${safeUser};`,
+    `DELETE FROM pilot_affiliate_offers WHERE org_id = ${safeOrg} OR user_id = ${safeUser};`,
     `DELETE FROM first_value_reviews WHERE org_id = ${safeOrg} OR user_id = ${safeUser};`,
     `DELETE FROM pilot_feedback WHERE org_id = ${safeOrg} OR user_id = ${safeUser};`,
     `DELETE FROM pilot_events WHERE org_id = ${safeOrg} OR user_id = ${safeUser};`,

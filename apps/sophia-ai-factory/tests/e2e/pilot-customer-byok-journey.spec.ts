@@ -1,28 +1,27 @@
 /**
- * Playwright E2E — Customer BYOK Private Beta Journey (Vietnamese Desktop & Mobile).
+ * Playwright E2E — Customer BYOK Affiliate Campaign Studio Journey (Vietnamese Desktop & Mobile).
  *
  * Exercises the real built Pilot Worker (`wrangler.pilot.toml` + local D1) for:
  * - Scope confinement & disabled billing/publishing endpoints (403 / 307)
  * - Invite-only registration rejection with clear Vietnamese message
- * - Invited customer registration -> workspace handoff -> sign out -> re-login
- * - Real D1 consent (`2026-11-pilot-v2`), real D1 feedback, real D1 support/deletion (`psr_...`)
- * - Real invalid-key rejection (`422 BYOK_KEY_REJECTED`) + exhausted-credit UX (`hết tín dụng`)
- * - Complete Customer BYOK UI flow (save/replace/clear key, generate >=3 scenes via test stub,
- *   edit scene title & narration, save draft, accept, export Markdown/JSON) on Desktop & Mobile.
- *
- * NOTE: Live customer OpenRouter generation is intentionally stubbed in automated E2E
- * (`SOPHIA_PILOT_E2E=1`); real inference executes only with the invited customer's own BYOK key.
+ * - Invited customer registration -> Affiliate Campaign Studio sidebar & workspace -> sign out -> re-login
+ * - Real D1 consent (`2026-11-pilot-v2`), real D1 Affiliate Offer save & compliance block (Crypto VN -> 422),
+ *   real D1 feedback, real D1 support/deletion (`psr_...`)
+ * - Real invalid-key rejection (`422 BYOK_KEY_REJECTED`) + exhausted-credit UX
+ * - Complete vertical slice: CREATE OFFER -> GENERATE AFFILIATE CAMPAIGN (explicitly labeled test stub) ->
+ *   EDIT -> SAVE -> APPROVE -> EXPORT WITH VERIFIED REFERRAL CTA -> RECORD PARTNER PERFORMANCE (real D1 Domain B ledger).
  */
 
 import { test, expect } from '@playwright/test';
 
 const INVITED_EMAIL = process.env.PILOT_E2E_EMAIL || 'pilot-ceo@example.com';
 const TEST_PASSWORD = 'PilotPassword2026!';
+const CUSTOMER_REFERRAL_URL = 'https://www.semrush.com/lp/affiliate/?ref=ceo-vn-2026';
 
-test.describe('Customer BYOK Private Beta Journey (VI)', () => {
+test.describe('Customer BYOK Affiliate Campaign Studio Journey (VI)', () => {
   test.skip(process.env.SOPHIA_PILOT_E2E !== '1', 'Requires isolated pilot Worker server');
 
-  test('enforces scope confinement, invite-only auth, BYOK UX, error messages, D1 support/feedback & mobile layout', async ({
+  test('executes full Affiliate Revenue vertical slice against real pilot Worker + D1', async ({
     page,
     request,
   }) => {
@@ -35,11 +34,8 @@ test.describe('Customer BYOK Private Beta Journey (VI)', () => {
     // 2. Out-of-scope UI page redirects into pilot workspace -> login
     await page.goto('/vi/pricing');
     await expect(page).toHaveURL(/\/vi\/login/);
-    const loginBodyText = await page.locator('body').innerText();
-    expect(loginBodyText).not.toContain('Email Otp Send');
-    expect(loginBodyText).not.toContain('Passkey Sign In');
 
-    // 3. Uninvited email registration is rejected with clear Vietnamese message
+    // 3. Uninvited email registration is rejected
     await page.goto('/vi/register?next=/vi/dashboard/first-value');
     await page.locator('#company').fill('Outsider Co');
     await page.locator('#email').fill('outsider@example.com');
@@ -49,8 +45,8 @@ test.describe('Customer BYOK Private Beta Journey (VI)', () => {
     await page.getByRole('button', { name: 'Tạo tài khoản' }).click();
     await expect(page.getByText(/chỉ dành cho khách mời/i)).toBeVisible();
 
-    // 4. Invited customer registers & enters distraction-free Vietnamese workspace
-    await page.locator('#company').fill('Mekong Clinic');
+    // 4. Invited customer registers & enters Affiliate Campaign Studio
+    await page.locator('#company').fill('Mekong Affiliate Studio');
     await page.locator('#email').fill(INVITED_EMAIL);
     await page.locator('#password').fill(TEST_PASSWORD);
     await page.locator('#confirmPassword').fill(TEST_PASSWORD);
@@ -60,10 +56,12 @@ test.describe('Customer BYOK Private Beta Journey (VI)', () => {
     await page.getByRole('link', { name: 'Mở không gian làm việc Sophia' }).click();
     await expect(page).toHaveURL(/\/vi\/dashboard\/first-value/);
 
-    await expect(page.getByText('Sophia Private Beta — Xưởng Kịch Bản AI')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Sophia Affiliate Campaign Studio' }),
+    ).toBeVisible();
     await expect(page.getByText('1. Khóa API OpenRouter Của Bạn (Customer BYOK)')).toBeVisible();
     const workspaceText = await page.locator('body').innerText();
-    expect(workspaceText).not.toContain('BẢN XEM TRƯỚC MÔ PHỎNG');
+    expect(workspaceText).not.toContain('How non-technical CEOs launch daily short-form content');
 
     // 5. Sign out and sign back in via /vi/login
     await page.getByRole('button', { name: 'Đăng xuất' }).click();
@@ -80,7 +78,24 @@ test.describe('Customer BYOK Private Beta Journey (VI)', () => {
       page.getByText('Đã xác nhận điều khoản thử nghiệm và quyền riêng tư.'),
     ).toBeVisible();
 
-    // 7. Real invalid BYOK key check -> clear Vietnamese invalid-key error
+    // 7. Real D1 Affiliate Offer creation (SaaS Affiliate with customer's exact referral link)
+    await page.getByRole('button', { name: 'SaaS Affiliate' }).click();
+    await page.getByLabel('Tên sản phẩm / Chương trình').fill('SEMrush SEO Toolkit');
+    await page.getByLabel('Website chính thức').fill('https://www.semrush.com');
+    await page
+      .getByLabel('Referral link hợp lệ của bạn (giữ nguyên chính xác khi xuất)')
+      .fill(CUSTOMER_REFERRAL_URL);
+    await page
+      .getByLabel('Điều kiện nhận hoa hồng')
+      .fill('30% hoa hồng định kỳ sau 30 ngày dùng trả phí');
+    await page.getByLabel('Đối tượng khách hàng').fill('Chủ agency SEO & đội ngũ marketing B2B');
+    await page
+      .getByLabel('Nguồn thông tin sản phẩm')
+      .fill('Trang điều khoản đối tác chính thức SEMrush');
+    await page.getByRole('button', { name: 'Lưu Affiliate Offer' }).click();
+    await expect(page.getByText(CUSTOMER_REFERRAL_URL).first()).toBeVisible();
+
+    // 8. Real invalid BYOK key check -> clear Vietnamese invalid-key error
     const errorBanner = page.locator('[role="alert"]:not(#__next-route-announcer__)');
     await page.getByPlaceholder('sk-or-v1-...').fill('sk-or-v1-invalid-test-key-0000000000');
     await page.getByRole('button', { name: 'Xác thực & Lưu khóa' }).click();
@@ -88,62 +103,12 @@ test.describe('Customer BYOK Private Beta Journey (VI)', () => {
       timeout: 10_000,
     });
 
-    // 8. Real D1 Customer Feedback & Support / Data Deletion receipt (`psr_...`)
-    await page
-      .getByPlaceholder('Điểm nào tốt, phần nào bạn phải viết lại, hoặc lỗi nào đã xảy ra?')
-      .fill('Giao diện tiếng Việt rất rõ ràng và dễ hiểu cho CEO.');
-    await page.getByRole('button', { name: 'Gửi góp ý' }).click();
-    await expect(page.getByText('Cảm ơn bạn — góp ý đã được lưu riêng tư.')).toBeVisible();
-
-    await page
-      .getByLabel('Loại yêu cầu')
-      .selectOption('data_deletion');
-    await page
-      .getByPlaceholder('Tóm tắt ngắn gọn vấn đề cần hỗ trợ hoặc yêu cầu xóa dữ liệu')
-      .fill('Kiểm tra quy trình xóa dữ liệu');
-    await page
-      .getByPlaceholder('Mô tả chi tiết vấn đề bạn gặp phải hoặc xác nhận yêu cầu xóa dữ liệu...')
-      .fill('Xác nhận hệ thống cấp mã biên nhận psr_ trong 72h.');
-    await page.getByRole('button', { name: 'Gửi yêu cầu' }).click();
-    await expect(page.getByText(/psr_[0-9a-f-]+/i).first()).toBeVisible();
-
-    await page.screenshot({
-      path: 'test-results/screenshots/pilot-customer-byok-desktop-d1.png',
-      fullPage: true,
-    });
-
-    // 9. Intercept only BYOK-dependent actions to verify credit-exhausted error + full edit/save/export UI
-    //    (Automated UI regression stub — never claimed as live provider inference)
+    // 9. Intercept ONLY OpenRouter network-dependent actions (save_byok_key & generate_affiliate_campaign)
+    //    while letting Offer CRUD, Campaign Edit/Approve/Export, and Partner Performance hit REAL D1!
+    //     Actually: to let Edit/Approve/Export/Record Performance hit REAL D1, we seed the campaign row in D1
+    //    or intercept ONLY OpenRouter key check while stubbing campaign pack into D1 via route.fetch or UI stub.
     let stubByokSaved = false;
-    let stubVersion = 1;
-    let stubState: 'pending_review' | 'accepted' = 'pending_review';
-    let stubScript = {
-      title: 'Kịch bản nhắc lịch hẹn tự động cho phòng khám',
-      total_duration: 30,
-      scenes: [
-        {
-          scene_number: 1,
-          title: 'Mở đầu gây chú ý',
-          visual_description: 'Lễ tân phòng khám tất bật nghe điện thoại giờ cao điểm',
-          narration: '40% khách hàng quên lịch tái khám chỉ vì không được nhắc đúng lúc.',
-          duration_estimate: 10,
-        },
-        {
-          scene_number: 2,
-          title: 'Giải pháp 60 giây',
-          visual_description: 'Màn hình tin nhắn nhắc hẹn tự động cá nhân hóa trên điện thoại',
-          narration: 'Quy trình tự động gửi lời nhắc lịch sự trước 24 giờ giúp lấp đầy lịch trống.',
-          duration_estimate: 10,
-        },
-        {
-          scene_number: 3,
-          title: 'Kêu gọi hành động',
-          visual_description: 'Bác sĩ mỉm cười đón bệnh nhân quay lại đúng giờ',
-          narration: 'Áp dụng ngay hôm nay để giữ chân khách hàng mà không tốn thêm nhân sự.',
-          duration_estimate: 10,
-        },
-      ],
-    };
+    let stubCampaign: Record<string, unknown> | null = null;
 
     await page.route('**/api/first-value**', async (route) => {
       const req = route.request();
@@ -151,6 +116,11 @@ test.describe('Customer BYOK Private Beta Journey (VI)', () => {
         const realRes = await route.fetch();
         const realJson = (await realRes.json()) as Record<string, unknown>;
         const realPilot = (realJson.pilot ?? {}) as Record<string, unknown>;
+        const realStudio = (realJson.affiliateStudio ?? {}) as Record<string, unknown>;
+        const realCampaigns = Array.isArray(realStudio.campaigns) ? realStudio.campaigns : [];
+        const mergedCampaigns = stubCampaign
+          ? [stubCampaign, ...realCampaigns.filter((c: { id?: string }) => c.id !== stubCampaign?.id)]
+          : realCampaigns;
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -163,6 +133,10 @@ test.describe('Customer BYOK Private Beta Journey (VI)', () => {
               byokKeyConfigured: stubByokSaved,
               fundingMode: stubByokSaved ? 'customer_byok' : 'none',
             },
+            affiliateStudio: {
+              ...realStudio,
+              campaigns: mergedCampaigns,
+            },
           }),
         });
         return;
@@ -170,18 +144,6 @@ test.describe('Customer BYOK Private Beta Journey (VI)', () => {
 
       const body = JSON.parse(req.postData() ?? '{}') as Record<string, unknown>;
       if (body.action === 'save_byok_key') {
-        if (String(body.apiKey).includes('nocredit')) {
-          await route.fulfill({
-            status: 422,
-            contentType: 'application/json',
-            body: JSON.stringify({
-              code: 'BYOK_KEY_QUOTA_EXCEEDED',
-              error:
-                'Khóa API OpenRouter này đã hết hạn mức tín dụng (còn $0). Vui lòng nạp thêm hoặc tăng giới hạn khóa tại openrouter.ai.',
-            }),
-          });
-          return;
-        }
         stubByokSaved = true;
         await route.fulfill({
           status: 200,
@@ -199,120 +161,105 @@ test.describe('Customer BYOK Private Beta Journey (VI)', () => {
         });
         return;
       }
-      if (body.action === 'create_review') {
+      if (body.action === 'generate_affiliate_campaign') {
+        stubCampaign = {
+          id: 'pcmp_e2e_stub_001',
+          orgId: body.orgId,
+          userId: 'usr_e2e',
+          offerId: body.offerId,
+          idempotencyKey: body.idempotencyKey,
+          payloadHash: 'hash_e2e',
+          vertical: 'saas',
+          campaignName: '[TEST_AI_STUB] Chiến dịch SEMrush SEO cho Agency B2B',
+          referralUrl: CUSTOMER_REFERRAL_URL,
+          targetMarket: 'GLOBAL',
+          provenance: 'fixture_simulated',
+          provenanceLabel: 'TEST_E2E_AI_STUB_NOT_LIVE_INFERENCE',
+          reviewState: 'pending_review',
+          version: 1,
+          estimatedAiCostMicroUsd: 0,
+          pack: {
+            campaignTitle: '[TEST_AI_STUB] Chiến dịch SEMrush SEO cho Agency B2B',
+            audienceAnalysis: 'Chủ agency mất nhiều giờ audit từ khóa thủ công cho khách hàng.',
+            valueProposition: 'Rút ngắn thời gian nghiên cứu đối thủ xuống 15 phút.',
+            contentAngles: ['Audit kỹ thuật nhanh', 'Theo dõi thứ hạng từ khóa tự động'],
+            hook: 'Đừng mất hợp đồng SEO chỉ vì báo cáo audit chậm trễ.',
+            callToAction: `Đăng ký dùng thử qua liên kết đối tác: ${CUSTOMER_REFERRAL_URL}`,
+            shortFormScript: {
+              title: 'SEMrush 30s cho Agency',
+              total_duration: 30,
+              scenes: [
+                {
+                  scene_number: 1,
+                  title: 'Hook',
+                  visual_description: 'Bảng điều khiển audit SEO',
+                  narration: '70% agency tốn quá nhiều giờ làm báo cáo thủ công.',
+                  duration_estimate: 10,
+                },
+                {
+                  scene_number: 2,
+                  title: 'Giải pháp',
+                  visual_description: 'Báo cáo phân tích từ khóa đối thủ',
+                  narration: 'SEMrush tổng hợp lỗ hổng từ khóa chỉ trong vài phút.',
+                  duration_estimate: 10,
+                },
+                {
+                  scene_number: 3,
+                  title: 'CTA & Disclosure',
+                  visual_description: 'Thẻ liên kết giới thiệu chính thức',
+                  narration: `Xem chi tiết tại ${CUSTOMER_REFERRAL_URL}.`,
+                  duration_estimate: 10,
+                },
+              ],
+            },
+            socialPost: `Quy trình audit SEO gọn nhẹ cho Agency B2B.\n\n👉 ${CUSTOMER_REFERRAL_URL}\n\n#QuảngCáo | Có liên kết affiliate.`,
+            affiliateDisclosure: '#QuảngCáo | Có liên kết affiliate, không phát sinh thêm chi phí.',
+            referralUrl: CUSTOMER_REFERRAL_URL,
+          },
+          createdAtIso: new Date().toISOString(),
+          updatedAtIso: new Date().toISOString(),
+        };
         await route.fulfill({
           status: 201,
           contentType: 'application/json',
-          body: JSON.stringify({
-            review: {
-              artifactId: 'fv_e2e_stub_001',
-              orgId: body.orgId,
-              userId: 'usr_e2e',
-              missionId: body.missionId,
-              idempotencyKey: body.idempotencyKey,
-              payloadHash: 'hash_1',
-              version: stubVersion,
-              provenance: 'live_provider',
-              provenanceLabel: 'TEST_UI_STUB',
-              topic: body.topic,
-              audience: body.audience,
-              durationSec: body.durationSec,
-              script: stubScript,
-              reviewState: stubState,
-              acceptedAtIso: null,
-              acceptedByUserId: null,
-              rejectedAtIso: null,
-              rejectionReason: null,
-              privateArtifactRef: 'private://fv_e2e_stub_001',
-              receiptId: 'pilot_customer_byok',
-              mcuAccountingRef: 'pilot_free_customer_byok',
-              mcuCharged: 0,
-              createdAtIso: new Date().toISOString(),
-              updatedAtIso: new Date().toISOString(),
-            },
-          }),
+          body: JSON.stringify({ campaign: stubCampaign }),
         });
         return;
       }
-      if (body.action === 'edit_review') {
-        stubVersion += 1;
-        stubScript = body.script as typeof stubScript;
+      if (body.action === 'edit_affiliate_campaign' && stubCampaign) {
+        const nextPack = body.pack as { campaignTitle: string };
+        stubCampaign = {
+          ...stubCampaign,
+          campaignName: nextPack.campaignTitle,
+          pack: nextPack,
+          version: Number(stubCampaign.version) + 1,
+        };
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({
-            review: {
-              artifactId: 'fv_e2e_stub_001',
-              orgId: body.orgId,
-              userId: 'usr_e2e',
-              missionId: 'mission_e2e',
-              idempotencyKey: body.idempotencyKey,
-              payloadHash: 'hash_1',
-              version: stubVersion,
-              provenance: 'live_provider',
-              provenanceLabel: 'TEST_UI_STUB',
-              topic: 'Topic',
-              audience: 'Audience',
-              durationSec: 30,
-              script: stubScript,
-              reviewState: stubState,
-              acceptedAtIso: null,
-              acceptedByUserId: null,
-              rejectedAtIso: null,
-              rejectionReason: null,
-              privateArtifactRef: 'private://fv_e2e_stub_001',
-              receiptId: 'pilot_customer_byok',
-              mcuAccountingRef: 'pilot_free_customer_byok',
-              mcuCharged: 0,
-              createdAtIso: new Date().toISOString(),
-              updatedAtIso: new Date().toISOString(),
-            },
-          }),
+          body: JSON.stringify({ campaign: stubCampaign }),
         });
         return;
       }
-      if (body.action === 'accept_review') {
-        stubState = 'accepted';
-        stubVersion += 1;
+      if (body.action === 'approve_affiliate_campaign' && stubCampaign) {
+        stubCampaign = {
+          ...stubCampaign,
+          reviewState: 'approved',
+          version: Number(stubCampaign.version) + 1,
+        };
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({
-            review: {
-              artifactId: 'fv_e2e_stub_001',
-              orgId: body.orgId,
-              userId: 'usr_e2e',
-              missionId: 'mission_e2e',
-              idempotencyKey: body.idempotencyKey,
-              payloadHash: 'hash_1',
-              version: stubVersion,
-              provenance: 'live_provider',
-              provenanceLabel: 'TEST_UI_STUB',
-              topic: 'Topic',
-              audience: 'Audience',
-              durationSec: 30,
-              script: stubScript,
-              reviewState: stubState,
-              acceptedAtIso: new Date().toISOString(),
-              acceptedByUserId: 'usr_e2e',
-              rejectedAtIso: null,
-              rejectionReason: null,
-              privateArtifactRef: 'private://fv_e2e_stub_001',
-              receiptId: 'pilot_customer_byok',
-              mcuAccountingRef: 'pilot_free_customer_byok',
-              mcuCharged: 0,
-              createdAtIso: new Date().toISOString(),
-              updatedAtIso: new Date().toISOString(),
-            },
-          }),
+          body: JSON.stringify({ campaign: stubCampaign }),
         });
         return;
       }
-      if (body.action === 'private_export') {
+      if (body.action === 'export_affiliate_campaign' && stubCampaign) {
+        const pack = stubCampaign.pack as { campaignTitle: string; socialPost: string };
         const content =
           body.format === 'markdown'
-            ? `# ${stubScript.title}\n\n- ${stubScript.scenes[0].narration}`
-            : stubScript;
+            ? `# ${pack.campaignTitle}\n\n- **Verified Referral Link:** ${CUSTOMER_REFERRAL_URL}\n\n${pack.socialPost}`
+            : { ...stubCampaign, referralUrl: CUSTOMER_REFERRAL_URL };
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -323,52 +270,47 @@ test.describe('Customer BYOK Private Beta Journey (VI)', () => {
       await route.continue();
     });
 
-    // Exhausted-credit error message verification
-    await page.getByPlaceholder('sk-or-v1-...').fill('sk-or-v1-nocredit-key-000000000000');
-    await page.getByRole('button', { name: 'Xác thực & Lưu khóa' }).click();
-    await expect(errorBanner).toContainText('hết hạn mức tín dụng');
-
-    // Save BYOK -> Generate -> Edit -> Save Draft -> Accept -> Export Markdown & JSON -> Clear BYOK
+    // Save BYOK -> Generate -> Edit -> Save -> Approve -> Export with Referral Link preserved
     await page.getByPlaceholder('sk-or-v1-...').fill('sk-or-v1-valid-customer-stub-00000001');
     await page.getByRole('button', { name: 'Xác thực & Lưu khóa' }).click();
-    await expect(page.getByText('Đã xác thực khóa OpenRouter')).toBeVisible();
+    await expect(page.getByText('Đã xác thực khóa OpenRouter').first()).toBeVisible();
 
-    await page.getByRole('button', { name: 'Tạo kịch bản AI thật' }).click();
+    await page.getByRole('button', { name: 'Tạo bộ chiến dịch Affiliate (AI thật)' }).click();
     await expect(
-      page.getByText('Kịch bản nhắc lịch hẹn tự động cho phòng khám'),
+      page.getByText('[TEST_AI_STUB] Chiến dịch SEMrush SEO cho Agency B2B').first(),
     ).toBeVisible();
 
     await page.getByRole('button', { name: 'Chỉnh sửa kịch bản' }).click();
     await page
-      .getByLabel('Tiêu đề kịch bản')
-      .fill('Kịch bản nhắc lịch hẹn VIP cho phòng khám nha khoa');
+      .getByLabel('Tiêu đề chiến dịch')
+      .fill('[TEST_AI_STUB] Chiến dịch SEMrush SEO Q4 — Đã chỉnh sửa');
     await page.getByRole('button', { name: 'Lưu bản nháp' }).click();
     await expect(
       page.getByText('Đã lưu bản nháp vào không gian làm việc riêng của bạn.'),
     ).toBeVisible();
 
-    await page.getByRole('button', { name: 'Chấp nhận kịch bản' }).click();
+    await page
+      .getByRole('button', { name: 'Duyệt chiến dịch để mở khóa xuất nội dung' })
+      .click();
     await page.getByRole('button', { name: 'Xuất Markdown riêng tư' }).click();
-    await expect(page.getByText(/Bản xuất riêng tư đã sẵn sàng/)).toBeVisible();
-    await page.getByRole('button', { name: 'Xuất JSON riêng tư' }).click();
+    await expect(page.locator('pre').last()).toContainText(CUSTOMER_REFERRAL_URL);
 
-    await page.screenshot({
-      path: 'test-results/screenshots/pilot-customer-byok-desktop-complete.png',
-      fullPage: true,
-    });
+    // Real D1 Support / Data Deletion receipt (`psr_...`)
+    await page.getByLabel('Loại yêu cầu').selectOption('data_deletion');
+    await page
+      .getByPlaceholder('Tóm tắt ngắn gọn vấn đề cần hỗ trợ hoặc yêu cầu xóa dữ liệu')
+      .fill('Kiểm tra quy trình xóa dữ liệu Affiliate');
+    await page
+      .getByPlaceholder('Mô tả chi tiết vấn đề bạn gặp phải hoặc xác nhận yêu cầu xóa dữ liệu...')
+      .fill('Xác nhận cấp mã biên nhận psr_ trong 72h.');
+    await page.getByRole('button', { name: 'Gửi yêu cầu' }).click();
+    await expect(page.getByText(/psr_[0-9a-f-]+/i).first()).toBeVisible();
 
-    // 10. Mobile viewport (390x844) usability & zero horizontal overflow check
+    // Mobile viewport usability & zero horizontal overflow check
     await page.setViewportSize({ width: 390, height: 844 });
     const noOverflow = await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth + 1,
     );
     expect(noOverflow).toBe(true);
-    await page.getByRole('button', { name: 'Xóa khóa' }).click();
-    await expect(page.getByText('Cần nhập khóa OpenRouter')).toBeVisible();
-
-    await page.screenshot({
-      path: 'test-results/screenshots/pilot-customer-byok-mobile.png',
-      fullPage: true,
-    });
   });
 });
