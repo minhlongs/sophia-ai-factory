@@ -114,11 +114,12 @@ describe('buildD1Dump', () => {
     expect(dump).toContain("(1, NULL, X'01ff')");
   });
 
-  it('skips SQLite and Cloudflare D1 internal tables including _cf_METADATA', async () => {
+  it('skips SQLite, Cloudflare D1 internal, and key_versions envelope tables', async () => {
     const db = makeMockDb({
       _cf_METADATA: { rows: [{ key: 'internal' }] },
       _cf_KV: { rows: [{ key: 'kv' }] },
       d1_migrations: { rows: [{ id: 1 }] },
+      key_versions: { rows: [{ id: 'kv1', version: 1, encrypted_key: 'kek:v1:iv:ct' }] },
       users: { rows: [{ id: 1, email: 'a@example.com' }] },
     });
 
@@ -126,6 +127,7 @@ describe('buildD1Dump', () => {
     expect(dump).not.toContain('_cf_METADATA');
     expect(dump).not.toContain('_cf_KV');
     expect(dump).not.toContain('d1_migrations');
+    expect(dump).not.toContain('key_versions');
     expect(dump).toContain('INSERT INTO "users"');
     expect(dump).toContain('-- Tables: 1');
   });

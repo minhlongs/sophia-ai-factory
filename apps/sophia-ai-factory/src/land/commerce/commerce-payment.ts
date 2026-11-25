@@ -2,22 +2,14 @@
  * Commerce payment confirmation — the bridge between the protected
  * NOWPayments IPN chain and the commerce order lifecycle.
  *
- * The IPN webhook route (app/api/webhooks/nowpayments) routes commerce
- * order_ids here BEFORE the tier-activation chain, so the protected
- * payment flow (IPN → tier activation) stays untouched.
+ * Enforces:
+ * - Fiat `priceAmount` & `priceCurrency` match `order.amountCents` & `order.currency` (within 1%)
+ * - `checkCryptoPaidAmount(actuallyPaid, payAmount, UNDERPAYMENT_THRESHOLD).status === 'sufficient'`
+ *   before `markOrderPaid`
  *
  * Contract with the webhook route: a non-commerce order_id MUST return
  * failure code ORDER_NOT_FOUND so the route falls through to the standard
- * tier-activation chain. Any other failure code returns HTTP 500.
- *
- * Flow: payment confirmed → order pending→paid (markOrderPaid, idempotent)
- * → enqueue `commerce/payment.confirmed` → forest commerce-fulfillment
- * grants the digital product and emits `revenue/event.recorded`
- * (source='commerce', externalId=`commerce_{productId}_{orderId}`).
- *
- * Idempotent: double IPN is safe — markOrderPaid no-ops on already-paid
- * orders, and the revenue event id is deduped downstream by the ingestion
- * lock. Financial code: Result<T,E> everywhere, zero throw.
+ * tier-activation chain.
  *
  * @module land/commerce/commerce-payment
  */
@@ -25,6 +17,8 @@ import { inngest } from '@/seed/inngest/client';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { checkCryptoPaidAmount } from '@/land/billing/ipn-amount-check';
+import { UNDERPAYMENT_THRESHOLD } from '@/land/billing/nowpayments-ipn-underpaid';
 import { getOrder, markOrderPaid } from './commerce-order';
 import {
   CommercePaymentSchema,
@@ -41,6 +35,8 @@ export {
   type PaymentError,
   type PaymentOk,
 };
+
+const FIAT_PRICE_TOLERANCE_RATIO = 0.01;
 
 /**
  * Apply a NOWPayments payment confirmation to a commerce order.
@@ -64,8 +60,6 @@ export async function confirmCommercePayment(
         message: `Commerce order ${data.orderId} not found`,
       });
     }
-    // getOrder only fails with NOT_FOUND (handled above), DB_UNAVAILABLE,
-    // or WRITE_FAILED — map to the payment error surface.
     const code = orderResult.error.code === 'WRITE_FAILED' ? 'WRITE_FAILED' : 'DB_UNAVAILABLE';
     return failure({ code, message: orderResult.error.message });
   }
@@ -78,13 +72,61 @@ export async function confirmCommercePayment(
     });
   }
 
+  const expectedCurrency = order.currency.trim().toUpperCase();
+  const receivedCurrency = data.priceCurrency.trim().toUpperCase();
+  if (receivedCurrency !== expectedCurrency) {
+    logger.warn('[commerce] Payment currency mismatch — rejecting confirmation', {
+      orderId: data.orderId,
+      paymentId: data.paymentId,
+      expectedCurrency,
+      receivedCurrency,
+    });
+    return failure({
+      code: 'CURRENCY_MISMATCH',
+      message: `Order ${data.orderId} expects currency ${expectedCurrency}, received ${receivedCurrency}`,
+    });
+  }
+
+  const receivedPriceCents = data.priceAmount * 100;
+  const maxDiffCents = Math.max(1, order.amountCents * FIAT_PRICE_TOLERANCE_RATIO);
+  if (Math.abs(receivedPriceCents - order.amountCents) > maxDiffCents) {
+    logger.warn('[commerce] Fiat price mismatch — rejecting confirmation', {
+      orderId: data.orderId,
+      paymentId: data.paymentId,
+      expectedCents: order.amountCents,
+      receivedCents: receivedPriceCents,
+    });
+    return failure({
+      code: 'AMOUNT_MISMATCH',
+      message: `Order ${data.orderId} expects ${order.amountCents} cents, received ${Math.round(receivedPriceCents)} cents`,
+    });
+  }
+
+  const effectiveActuallyPaid = data.actuallyPaid ?? data.paidAmount;
+  const cryptoCheck = checkCryptoPaidAmount(
+    effectiveActuallyPaid,
+    data.payAmount,
+    UNDERPAYMENT_THRESHOLD,
+  );
+  if (cryptoCheck.status !== 'sufficient') {
+    logger.warn('[commerce] Crypto payment verification failed — rejecting confirmation', {
+      orderId: data.orderId,
+      paymentId: data.paymentId,
+      status: cryptoCheck.status,
+      payAmount: data.payAmount,
+      actuallyPaid: effectiveActuallyPaid,
+    });
+    return failure({
+      code: 'UNDERPAID',
+      message: `Crypto paid amount insufficient or unverified (${cryptoCheck.status}) for order ${data.orderId}`,
+    });
+  }
+
   const paid = await markOrderPaid(data.orderId, data.paymentId);
   if (!paid.ok) {
     return failure({ code: 'WRITE_FAILED', message: paid.error.message });
   }
 
-  // Enqueue fulfillment. Inngest delivery + downstream locks make the whole
-  // chain safe on redelivery; a send failure is surfaced for caller retry.
   try {
     await inngest.send({
       name: 'commerce/payment.confirmed',

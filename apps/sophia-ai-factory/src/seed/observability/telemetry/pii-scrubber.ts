@@ -6,8 +6,8 @@
 
 // Patterns ordered by specificity: specific token prefixes first, generic last
 const PATTERNS: [RegExp, string][] = [
-  // BYOK API keys (OpenAI/Anthropic style)
-  [/sk-[a-zA-Z0-9]{20,}/g, '[REDACTED-SK]'],
+  // BYOK API keys (OpenRouter sk-or-v1-*, Anthropic sk-ant-*, OpenAI sk-*)
+  [/sk-[a-zA-Z0-9_-]{16,}/g, '[REDACTED-SK]'],
   // Publishable keys (pk_live_... pk_test_... Stripe/etc patterns include underscores)
   [/pk_[a-zA-Z0-9_]{20,}/g, '[REDACTED-PK]'],
   // JWTs (header.payload.signature — eyJ prefix)

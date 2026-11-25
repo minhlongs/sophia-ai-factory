@@ -7,10 +7,12 @@ import { describe, it, expect } from 'vitest';
 import { scrubPII, scrubPIIDeep } from './pii-scrubber';
 
 describe('scrubPII', () => {
-  it('redacts OpenAI/Anthropic sk- keys', () => {
-    const input = 'key is sk-abcdefghijklmnopqrstuvwxyz123456';
+  it('redacts OpenAI/Anthropic/OpenRouter sk- keys including hyphenated prefixes', () => {
+    const input = 'key is sk-abcdefghijklmnopqrstuvwxyz123456 and sk-or-v1-abc123def456ghi789 and sk-ant-api03-xyz9876543210000';
     expect(scrubPII(input)).toContain('[REDACTED-SK]');
     expect(scrubPII(input)).not.toContain('sk-abcde');
+    expect(scrubPII(input)).not.toContain('sk-or-v1-');
+    expect(scrubPII(input)).not.toContain('sk-ant-api03-');
   });
 
   it('redacts publishable pk_ keys', () => {

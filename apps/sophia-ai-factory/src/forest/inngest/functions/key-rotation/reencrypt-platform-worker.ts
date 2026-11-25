@@ -4,9 +4,14 @@
  */
 
 import { getD1 } from '@/seed/db/client';
-import { decryptApiKey, encryptApiKey } from '@/tree/byok/byok-crypto';
+import {
+  decryptApiKey,
+  encryptApiKey,
+  packedToText,
+  textToPacked,
+} from '@/tree/byok/byok-crypto';
 import type { PlatformCredentialRow } from './types';
-import { BATCH_SIZE, toBytes } from './reencrypt-worker';
+import { BATCH_SIZE } from './reencrypt-worker';
 
 export async function reencryptPlatformCredentials(
   keyVersion: number,
@@ -36,7 +41,7 @@ export async function reencryptPlatformCredentials(
       if (!row.key_version) continue;
 
       const accessToken = await decryptApiKey(
-        toBytes(new TextEncoder().encode(row.access_token_encrypted)),
+        textToPacked(row.access_token_encrypted),
         row.user_id,
         row.key_version,
       );
@@ -45,11 +50,11 @@ export async function reencryptPlatformCredentials(
       let encryptedRefresh: string | null = null;
       if (row.refresh_token_encrypted) {
         const refreshToken = await decryptApiKey(
-          toBytes(new TextEncoder().encode(row.refresh_token_encrypted)),
+          textToPacked(row.refresh_token_encrypted),
           row.user_id,
           row.key_version,
         );
-        encryptedRefresh = new TextDecoder().decode(
+        encryptedRefresh = packedToText(
           await encryptApiKey(refreshToken, row.user_id, keyVersion),
         );
       }
@@ -60,7 +65,7 @@ export async function reencryptPlatformCredentials(
            SET access_token_encrypted = ?, refresh_token_encrypted = ?, key_version = ?, updated_at = datetime('now')
            WHERE id = ?`,
         )
-        .bind(new TextDecoder().decode(encryptedAccess), encryptedRefresh, keyVersion, row.id)
+        .bind(packedToText(encryptedAccess), encryptedRefresh, keyVersion, row.id)
         .run();
 
       total += 1;

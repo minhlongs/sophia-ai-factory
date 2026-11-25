@@ -4,7 +4,7 @@
  */
 
 import { getD1 } from '@/seed/db/client';
-import { generateMasterKey } from '@/tree/byok/byok-crypto';
+import { generateWrappedDek } from '@/tree/byok/byok-crypto';
 import { inngest } from '@/seed/inngest/client';
 
 export interface LatestKeyVersionRow {
@@ -42,7 +42,7 @@ export async function createNewVersionAndFireEvent(
     .first<{ next_version: number }>();
 
   const keyVersion = nextVersionRow?.next_version ?? oldVersion + 1;
-  const encryptedKey = await generateMasterKey();
+  const encryptedKey = await generateWrappedDek(keyVersion, 'master');
 
   await db
     .prepare(

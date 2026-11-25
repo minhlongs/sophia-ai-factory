@@ -2,6 +2,11 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { createServerClient } from '@/seed/db/client';
+import {
+  verifyWorkspaceAccess,
+  verifyWorkspaceRole,
+} from '@/seed/auth/workspace/access-verifier';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import {
@@ -34,6 +39,13 @@ export async function fetchOwnershipAction(): Promise<AccountOwnershipDetails | 
 export async function toggleSupportAccessAction(orgId: string, enable: boolean) {
   const user = await getCurrentUser();
   if (!user) throw new Error('UNAUTHORIZED');
+
+  const db = createServerClient();
+  const isOwner = await verifyWorkspaceRole(orgId, user.id, 'OWNER', db);
+  if (!isOwner) {
+    throw new Error('FORBIDDEN: Workspace OWNER role required');
+  }
+
   try {
     const result = await toggleSupportAccess(user.id, orgId, enable);
     revalidatePath('/settings');
@@ -49,6 +61,13 @@ export async function toggleSupportAccessAction(orgId: string, enable: boolean) 
 export async function listTeamMembersAction(orgId: string): Promise<TeamMember[]> {
   const user = await getCurrentUser();
   if (!user) return [];
+
+  const db = createServerClient();
+  const hasAccess = await verifyWorkspaceAccess(orgId, user.id, db);
+  if (!hasAccess) {
+    throw new Error('FORBIDDEN: Not a workspace member');
+  }
+
   return listTeamMembers(user.id, orgId);
 }
 
@@ -56,6 +75,13 @@ export async function inviteTeamMemberAction(rawInput: unknown): Promise<TeamMem
   const user = await getCurrentUser();
   if (!user) throw new Error('UNAUTHORIZED');
   const parsed = inviteSchema.parse(rawInput);
+
+  const db = createServerClient();
+  const canManage = await verifyWorkspaceRole(parsed.orgId, user.id, 'ADMIN', db);
+  if (!canManage) {
+    throw new Error('FORBIDDEN: Workspace ADMIN or OWNER role required');
+  }
+
   const result = await inviteTeamMember(user.id, parsed.orgId, parsed.email, parsed.role);
   revalidatePath('/settings');
   revalidatePath('/[locale]/settings');
@@ -67,6 +93,13 @@ export async function updateTeamMemberRoleAction(rawInput: unknown): Promise<boo
   const user = await getCurrentUser();
   if (!user) throw new Error('UNAUTHORIZED');
   const parsed = updateRoleSchema.parse(rawInput);
+
+  const db = createServerClient();
+  const canManage = await verifyWorkspaceRole(parsed.orgId, user.id, 'ADMIN', db);
+  if (!canManage) {
+    throw new Error('FORBIDDEN: Workspace ADMIN or OWNER role required');
+  }
+
   const result = await updateTeamMemberRole(user.id, parsed.orgId, parsed.memberId, parsed.role);
   revalidatePath('/settings');
   revalidatePath('/[locale]/settings');
@@ -78,6 +111,13 @@ export async function removeTeamMemberAction(rawInput: unknown): Promise<boolean
   const user = await getCurrentUser();
   if (!user) throw new Error('UNAUTHORIZED');
   const parsed = removeMemberSchema.parse(rawInput);
+
+  const db = createServerClient();
+  const canManage = await verifyWorkspaceRole(parsed.orgId, user.id, 'ADMIN', db);
+  if (!canManage) {
+    throw new Error('FORBIDDEN: Workspace ADMIN or OWNER role required');
+  }
+
   const result = await removeTeamMember(user.id, parsed.orgId, parsed.memberId);
   revalidatePath('/settings');
   revalidatePath('/[locale]/settings');

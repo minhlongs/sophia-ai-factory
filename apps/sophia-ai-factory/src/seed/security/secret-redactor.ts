@@ -16,18 +16,19 @@ const SECRET_PATTERNS: readonly RegExp[] = [
   // OpenAI / OpenRouter / Anthropic / Stripe style sk-* or rk-* keys
   /\b(?:sk|rk|pk)_(?:live|test|or|ant|proj)?[_-]?[A-Za-z0-9_-]{12,}\b/g,
   /\bsk-[A-Za-z0-9_-]{16,}\b/g,
-  // ElevenLabs / generic xi-api-key values or hex tokens >= 32 chars
+  // ElevenLabs / generic xi-api-key values or Resend re_* keys
   /\bxi_[A-Za-z0-9_-]{16,}\b/g,
+  /\bre_[A-Za-z0-9_-]{16,}\b/g,
   // JWT tokens (3 base64url segments starting with eyJ)
   /\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g,
   // Telegram bot tokens (digits:alphanumeric)
   /\b\d{8,11}:[A-Za-z0-9_-]{30,45}\b/g,
   // Inline key=value or "apiKey": "..." patterns
-  /((?:api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|checksum[_-]?key|ipn[_-]?secret|private[_-]?key|authorization)["']?\s*[:=]\s*["']?)([^"'\s,}]{8,})/gi,
+  /((?:x[_-]?api[_-]?key|x[_-]?auth[_-]?token|api[_-]?key|access[_-]?token|refresh[_-]?token|auth[_-]?token|client[_-]?secret|checksum[_-]?key|ipn[_-]?secret|private[_-]?key|authorization)["']?\s*[:=]\s*["']?)([^"'\s,}]{8,})/gi,
 ];
 
 const SENSITIVE_FIELD_NAME =
-  /(?:^|[_-])(?:api[_-]?key|apikey|access[_-]?token|refresh[_-]?token|client[_-]?secret|secret|password|authorization|xi-api-key|x-api-key|checksum[_-]?key|ipn[_-]?secret|private[_-]?key|encrypted[_-]?key)(?:$|[_-])/i;
+  /(?:^|[_-])(?:api[_-]?key|apikey|access[_-]?token|refresh[_-]?token|auth[_-]?token|x-auth-token|client[_-]?secret|secret|password|authorization|xi-api-key|x-api-key|checksum[_-]?key|ipn[_-]?secret|private[_-]?key|encrypted[_-]?key)(?:$|[_-])/i;
 
 /**
  * Scrubs known credential and token formats from an arbitrary string.

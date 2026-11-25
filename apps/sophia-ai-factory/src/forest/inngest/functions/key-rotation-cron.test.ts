@@ -19,8 +19,8 @@ const { mockLogAuditEvent } = vi.hoisted(() => ({
 const { mockInngestSend } = vi.hoisted(() => ({
   mockInngestSend: vi.fn().mockResolvedValue({}),
 }));
-const { mockGenerateMasterKey } = vi.hoisted(() => ({
-  mockGenerateMasterKey: vi.fn().mockResolvedValue('encrypted-key-base64'),
+const { mockGenerateWrappedDek } = vi.hoisted(() => ({
+  mockGenerateWrappedDek: vi.fn().mockResolvedValue('kek:v1:mock-iv:mock-ct'),
 }));
 const { mockLogger } = vi.hoisted(() => ({
   mockLogger: {
@@ -54,7 +54,7 @@ vi.mock('@/tree/audit/logger/audit-query', () => ({
 vi.mock('@/tree/byok/byok-crypto', () => ({
   decryptApiKey: vi.fn(),
   encryptApiKey: vi.fn(),
-  generateMasterKey: mockGenerateMasterKey,
+  generateWrappedDek: mockGenerateWrappedDek,
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({ logger: mockLogger }));
@@ -167,8 +167,8 @@ describe('keyRotationCron', () => {
     expect(res.oldVersion).toBe(2);
     expect(res.ageDays).toBeGreaterThanOrEqual(90);
 
-    // Verify master key was generated
-    expect(mockGenerateMasterKey).toHaveBeenCalled();
+    // Verify wrapped DEK was generated
+    expect(mockGenerateWrappedDek).toHaveBeenCalledWith(3, 'master');
 
     // Verify new version was inserted
     const prepareCalls = db.prepare.mock.calls as Array<[string]>;

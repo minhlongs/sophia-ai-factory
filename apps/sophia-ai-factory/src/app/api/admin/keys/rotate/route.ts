@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { inngest } from '@/seed/inngest/client';
 import { getD1 } from '@/seed/db/client';
 import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin';
-import { generateMasterKey } from '@/tree/byok/byok-crypto';
+import { generateWrappedDek } from '@/tree/byok/byok-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { logAuditEvent } from '@/tree/audit/logger/audit-query';
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       .first<{ next_version: number }>();
 
     const keyVersion = nextVersionRow?.next_version ?? 1;
-    const encryptedKey = await generateMasterKey();
+    const encryptedKey = await generateWrappedDek(keyVersion, 'master');
 
     // 3. Insert new key version (active by default)
     await db
