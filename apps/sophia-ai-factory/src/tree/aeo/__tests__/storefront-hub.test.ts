@@ -1,7 +1,7 @@
 /**
  * @vitest-environment node
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import {
   buildDefaultStorefrontHub,
@@ -10,6 +10,14 @@ import {
   escapeHubJsonLd,
 } from '../storefront-hub-builder';
 import { GET as getHubMd } from '@/app/hub/[handle]/md/route';
+import AffiliateStorefrontHubPage from '@/app/hub/[handle]/page';
+
+const mockNotFound = vi.fn(() => {
+  throw new Error('NEXT_NOT_FOUND');
+});
+vi.mock('next/navigation', () => ({
+  notFound: () => mockNotFound(),
+}));
 
 describe('Public Crypto + SaaS Affiliate Storefront Hub (/hub/[handle])', () => {
   it('builds escaped CollectionPage JSON-LD and Markdown with Telegram Concierge & GEO links', () => {
@@ -41,5 +49,14 @@ describe('Public Crypto + SaaS Affiliate Storefront Hub (/hub/[handle])', () => 
       params: Promise.resolve({ handle: 'bad handle!' }),
     });
     expect(badRes.status).toBe(400);
+
+    const pageEl = await AffiliateStorefrontHubPage({
+      params: Promise.resolve({ handle: 'alex-saas' }),
+    });
+    expect(pageEl).toBeTruthy();
+
+    await expect(
+      AffiliateStorefrontHubPage({ params: Promise.resolve({ handle: 'bad handle!' }) }),
+    ).rejects.toThrow('NEXT_NOT_FOUND');
   });
 });
