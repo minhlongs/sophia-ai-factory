@@ -56,6 +56,14 @@ describe('PilotDistributionHub & helpers', () => {
     const types = parsedJsonLd['@graph'].map((node) => node['@type']);
     expect(types).toContain('VideoObject');
     expect(types).toContain('FAQPage');
+
+    const minimalPack = buildMultiChannelDistributionPack({
+      script: { title: 'Minimal', total_duration: 0, scenes: [] },
+      ctaText: 'CTA',
+      shortUrl: 'https://pilot.test/api/r/min',
+      disclosureTag: '#ad',
+    });
+    expect(minimalPack.channels).toHaveLength(5);
   });
 
   it('switches channel tabs, copies pack to clipboard, and links to studio uploader', async () => {

@@ -142,7 +142,7 @@ export function buildMultiChannelDistributionPack(args: {
   const tiktokCopy = [
     `${hook}`,
     `👉 ${args.ctaText} (Link ở Bio / Bình luận ghim)`,
-    `${args.disclosureTag} #tiktokmademebuyit #review #affiliate`,
+    `${args.disclosureTag} #saas #crypto #review #affiliate`,
     ``,
     `[PINNED COMMENT]`,
     `${args.ctaText}: ${args.shortUrl} (${args.disclosureTag})`,
