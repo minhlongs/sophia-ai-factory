@@ -59,6 +59,13 @@ describe('byok-crypto', () => {
       await expect(encryptApiKey('sk-test')).rejects.toBeInstanceOf(ByokMissingMasterKeyError)
     })
 
+    it('trims leading/trailing whitespace and newlines on BYOK_MASTER_KEY', async () => {
+      process.env.BYOK_MASTER_KEY = `  ${TEST_MASTER_KEY}\n`
+      const encrypted = await encryptApiKey('sk-or-v1-trim-test-000001', 'usr_trim_1')
+      const decrypted = await decryptApiKey(encrypted, 'usr_trim_1')
+      expect(decrypted).toBe('sk-or-v1-trim-test-000001')
+    })
+
     it('throws ByokInvalidMasterKeyError on non-base64 value', async () => {
       process.env.BYOK_MASTER_KEY = '!!!not-base64!!!'
       await expect(encryptApiKey('sk-test')).rejects.toBeInstanceOf(ByokInvalidMasterKeyError)

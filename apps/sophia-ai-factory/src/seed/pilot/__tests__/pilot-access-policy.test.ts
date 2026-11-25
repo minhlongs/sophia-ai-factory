@@ -32,6 +32,9 @@ import {
   assertAccessPoliciesSafeAndExact,
   buildAccessSingleEmailPolicyPayload,
   buildCustomerUrlsAndVietnameseInvite,
+  DEFAULT_PILOT_OPERATOR_EMAILS,
+  parseInviteCliArgs,
+  resolveAuthorizedPilotEmails,
   validateSinglePilotEmail,
 } from '../../../../scripts/pilot-invite-customer.mjs';
 import {
@@ -486,24 +489,88 @@ describe('pilot operator CLIs (invite & support queue)', () => {
     expect(() => validateSinglePilotEmail('*@company.vn')).toThrow(/Wildcard/);
     expect(() => validateSinglePilotEmail('everyone')).toThrow(/Everyone/);
     expect(() => validateSinglePilotEmail('not-an-email')).toThrow(/Invalid email/);
+    expect(parseInviteCliArgs(['khach@congty.vn', '--dry-run'])).toEqual({
+      dryRun: true,
+      email: 'khach@congty.vn',
+    });
+    expect(() => parseInviteCliArgs(['khach@congty.vn', '--dryrun'])).toThrow(/Unknown CLI flag/);
+    expect(() => parseInviteCliArgs(['a@b.com', 'c@d.com'])).toThrow(/exactly 1/);
 
-    const policy = {
-      id: '5ad49a50-b19a-4cc9-a43d-d2455e92fa42',
-      ...buildAccessSingleEmailPolicyPayload('khach@congty.vn'),
-    };
-    expect(() => assertAccessPoliciesSafeAndExact([policy], 'khach@congty.vn')).not.toThrow();
-    expect(() =>
-      assertAccessPoliciesSafeAndExact(
-        [{ id: 'other', decision: 'bypass', include: [{ everyone: {} }] }],
+    const prevOperatorEnv = process.env.PILOT_OPERATOR_EMAILS;
+    try {
+      delete process.env.PILOT_OPERATOR_EMAILS;
+      const authorized = resolveAuthorizedPilotEmails('khach@congty.vn');
+      expect(authorized).toEqual([...DEFAULT_PILOT_OPERATOR_EMAILS, 'khach@congty.vn']);
+      expect(resolveAuthorizedPilotEmails('billwill.mentor@gmail.com')).toEqual([
+        ...DEFAULT_PILOT_OPERATOR_EMAILS,
+      ]);
+
+      process.env.PILOT_OPERATOR_EMAILS = '   ';
+      expect(resolveAuthorizedPilotEmails('khach@congty.vn')).toEqual([
+        ...DEFAULT_PILOT_OPERATOR_EMAILS,
         'khach@congty.vn',
-      ),
-    ).toThrow();
-    expect(() =>
-      assertAccessPoliciesSafeAndExact(
-        [{ ...policy, include: [{ email_domain: { domain: 'congty.vn' } }] }],
-        'khach@congty.vn',
-      ),
-    ).toThrow(/Forbidden broad include rule/);
+      ]);
+      delete process.env.PILOT_OPERATOR_EMAILS;
+      expect(resolveAuthorizedPilotEmails('khach@congty.vn', '')).toEqual(['khach@congty.vn']);
+
+      const policy = {
+        id: '5ad49a50-b19a-4cc9-a43d-d2455e92fa42',
+        ...buildAccessSingleEmailPolicyPayload('khach@congty.vn'),
+      };
+      expect(() => assertAccessPoliciesSafeAndExact([policy], 'khach@congty.vn')).not.toThrow();
+      expect(() => assertAccessPoliciesSafeAndExact([policy], authorized)).not.toThrow();
+      expect(() =>
+        assertAccessPoliciesSafeAndExact(
+          [buildAccessSingleEmailPolicyPayload('billwill.mentor@gmail.com'), policy].slice(0, 1).map((p) => ({
+            id: '5ad49a50-b19a-4cc9-a43d-d2455e92fa42',
+            ...p,
+          })),
+          [...DEFAULT_PILOT_OPERATOR_EMAILS, 'billwill.mentor@gmail.com'],
+        ),
+      ).not.toThrow();
+      expect(() =>
+        assertAccessPoliciesSafeAndExact(
+          [policy, { id: 'extra-policy', decision: 'allow', include: [{ email: { email: 'x@y.com' } }] }],
+          authorized,
+        ),
+      ).toThrow(/exclusively target Access policy/);
+      expect(() =>
+        assertAccessPoliciesSafeAndExact(
+          [{ ...policy, include: [null] }],
+          authorized,
+        ),
+      ).toThrow(/Malformed include rule/);
+      expect(() =>
+        assertAccessPoliciesSafeAndExact(
+          [{ ...policy, include: [{ login_method: { id: '6d34ddc8-ac66-4489-ac4e-4e8dc784aacd' } }] }],
+          authorized,
+        ),
+      ).toThrow(/Forbidden non-email include selector/);
+      expect(() =>
+        assertAccessPoliciesSafeAndExact(
+          [{ ...policy, include: [{ email: { email: 'khach@congty.vn' } }] }],
+          authorized,
+        ),
+      ).toThrow(/exactly 3 exact email rule/);
+      expect(() =>
+        assertAccessPoliciesSafeAndExact(
+          [{ id: 'other', decision: 'bypass', include: [{ everyone: {} }] }],
+          'khach@congty.vn',
+        ),
+      ).toThrow();
+      expect(() =>
+        assertAccessPoliciesSafeAndExact(
+          [{ ...policy, include: [{ email_domain: { domain: 'congty.vn' } }] }],
+          'khach@congty.vn',
+        ),
+      ).toThrow(/Forbidden broad include rule/);
+    } finally {
+      if (prevOperatorEnv === undefined) {
+        delete process.env.PILOT_OPERATOR_EMAILS;
+      } else {
+        process.env.PILOT_OPERATOR_EMAILS = prevOperatorEnv;
+      }
+    }
 
     const handoff = buildCustomerUrlsAndVietnameseInvite('khach@congty.vn');
     expect(handoff.workspaceUrl).toBe(
@@ -512,6 +579,7 @@ describe('pilot operator CLIs (invite & support queue)', () => {
     expect(handoff.registerUrl).toContain('/vi/register?next=/vi/dashboard/first-value');
     expect(handoff.loginUrl).toContain('/vi/login?next=/vi/dashboard/first-value');
     expect(handoff.inviteVi).toContain('khach@congty.vn');
+    expect(handoff.inviteVi).toContain('GitHub');
     expect(handoff.inviteVi).toContain('OpenRouter');
   });
 
@@ -525,9 +593,15 @@ describe('pilot operator CLIs (invite & support queue)', () => {
     try {
       const sqlite = new NodeSqliteD1Database(path.join(tmpDir, 'purge.sqlite'));
       for (const mig of [
+        '0001-init.sql',
+        '0003-better-auth.sql',
+        '0004-user-profiles.sql',
+        '0011-user-api-keys.sql',
+        '0076-rename-api-keys-to-user-api-keys.sql',
         '0515_first_value_reviews.sql',
         '0517_customer_pilot_first_value.sql',
         '0519_pilot_support_requests.sql',
+        '0520_pilot_affiliate_revenue_studio.sql',
       ]) {
         const sqlText = fs.readFileSync(
           path.resolve(__dirname, '../../../../migrations', mig),

@@ -29,7 +29,7 @@ function isDuplicateKeyVersionError(error: unknown): boolean {
 }
 
 export async function importKekFromEnv(): Promise<CryptoKey> {
-  const raw = process.env.BYOK_MASTER_KEY;
+  const raw = process.env.BYOK_MASTER_KEY?.trim();
   if (!raw) throw new ByokMissingMasterKeyError();
 
   let bytes: Uint8Array;

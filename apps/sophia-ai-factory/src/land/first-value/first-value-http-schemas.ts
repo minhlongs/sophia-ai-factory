@@ -6,6 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { PilotAffiliateStudioActionSchemas } from './pilot-affiliate-studio-schemas';
 
 export const PRIVATE_HEADERS = {
   'Cache-Control': 'private, no-store',
@@ -156,6 +157,7 @@ export const FirstValuePostSchema = z.discriminatedUnion('action', [
     format: z.enum(['json', 'markdown']).default('json'),
     idempotencyKey: z.string().min(8).max(128).trim().optional(),
   }),
+  ...PilotAffiliateStudioActionSchemas,
 ]);
 
 export type FirstValuePostPayload = z.infer<typeof FirstValuePostSchema>;

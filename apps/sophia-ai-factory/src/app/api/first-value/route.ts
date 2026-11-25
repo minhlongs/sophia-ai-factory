@@ -12,6 +12,7 @@
  */
 
 import type { NextRequest, NextResponse } from 'next/server';
+import { generateAffiliateCampaignPack } from '@/seed/ai/affiliate-campaign-generator';
 import { generateScript } from '@/seed/ai/script-generator';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
@@ -94,6 +95,7 @@ function buildLiveDeps(): FirstValueHttpDeps {
           referer,
         },
       ),
+    generateLiveAffiliateCampaign: (input) => generateAffiliateCampaignPack(input),
   };
 }
 

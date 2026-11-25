@@ -457,7 +457,9 @@ describe('FirstValueSupportCard & PilotWorkspaceShell', () => {
     );
 
     expect(screen.getByText('Private Beta')).toBeTruthy();
-    expect(screen.getByText('Hỗ trợ & Xóa dữ liệu')).toBeTruthy();
+    expect(screen.getAllByText('Hỗ trợ & Xóa dữ liệu').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Affiliate Offers').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Doanh thu & Hoa hồng').length).toBeGreaterThan(0);
     expect(screen.getByText('customer@example.test')).toBeTruthy();
     expect(screen.getByText('Pilot Child Content')).toBeTruthy();
 
@@ -467,6 +469,7 @@ describe('FirstValueSupportCard & PilotWorkspaceShell', () => {
       </PilotWorkspaceShell>,
     );
     expect(screen.getByText('Support & Deletion')).toBeTruthy();
+    expect(screen.getAllByText('Revenue Analytics').length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
     await waitFor(() => {
       expect(mockSignOut).toHaveBeenCalledTimes(1);
@@ -474,16 +477,33 @@ describe('FirstValueSupportCard & PilotWorkspaceShell', () => {
   });
 });
 
-describe('FirstValueJourneyClient Customer BYOK live pilot flow', () => {
+describe('FirstValueJourneyClient Customer BYOK Affiliate Campaign Studio flow', () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
   });
 
-  it('drives BYOK save -> consent -> live generate -> support request -> BYOK clear over /api/first-value', async () => {
+  it('drives BYOK save -> consent -> add offer -> generate campaign -> edit -> approve -> export -> record performance -> support request -> BYOK clear over /api/first-value', async () => {
     let byokSaved = false;
     let consented = false;
-    const review = makeReview('pending_review');
+    const offers: Array<{
+      id: string;
+      orgId: string;
+      userId: string;
+      vertical: 'crypto' | 'saas';
+      productName: string;
+      officialWebsiteUrl: string;
+      referralUrl: string;
+      commissionTerms: string;
+      targetAudience: string;
+      targetMarket: string;
+      productInfoSource: string;
+      status: 'active';
+      createdAtIso: string;
+      updatedAtIso: string;
+    }> = [];
+    const campaigns: Array<Record<string, unknown>> = [];
+    const performanceEntries: Array<Record<string, unknown>> = [];
 
     const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       if (!init?.method || init.method === 'GET') {
@@ -501,6 +521,28 @@ describe('FirstValueJourneyClient Customer BYOK live pilot flow', () => {
               consentAccepted: consented,
               supportRequests: [],
             }),
+            affiliateStudio: {
+              offers,
+              campaigns,
+              performanceEntries,
+              revenue: {
+                partnerFeedStatus: 'NOT_CONNECTED',
+                connectedNetworks: [],
+                totalCampaigns: campaigns.length,
+                approvedCampaigns: campaigns.filter((c) => c.reviewState === 'approved').length,
+                clicksCount: performanceEntries.length > 0 ? 42 : null,
+                clicksSource: performanceEntries.length > 0 ? 'PARTNER_REPORTED' : 'NOT_CONNECTED',
+                signupsCount: performanceEntries.length > 0 ? 5 : 0,
+                qualifiedConversions: performanceEntries.length > 0 ? 2 : 0,
+                pendingCommissionUsd: performanceEntries.length > 0 ? 30 : 0,
+                confirmedCommissionUsd: performanceEntries.length > 0 ? 60 : 0,
+                estimatedAiCostUsd: campaigns.length * 0.02,
+                netRevenueUsd: performanceEntries.length > 0 ? 59.98 : 0,
+                currency: 'USD',
+                isMultiCurrency: false,
+                domainBReconciliation: null,
+              },
+            },
           }),
           { status: 200, headers: { 'content-type': 'application/json' } },
         );
@@ -519,8 +561,100 @@ describe('FirstValueJourneyClient Customer BYOK live pilot flow', () => {
         consented = true;
         return new Response(JSON.stringify({ consent: { accepted: true } }), { status: 200 });
       }
-      if (body.action === 'create_review') {
-        return new Response(JSON.stringify({ review }), { status: 201 });
+      if (body.action === 'save_affiliate_offer') {
+        const offer = {
+          id: 'poff_live_1',
+          orgId: 'org_pilot_1',
+          userId: 'u_1',
+          vertical: 'saas' as const,
+          productName: String(body.productName),
+          officialWebsiteUrl: String(body.officialWebsiteUrl),
+          referralUrl: String(body.referralUrl),
+          commissionTerms: String(body.commissionTerms),
+          targetAudience: String(body.targetAudience),
+          targetMarket: String(body.targetMarket),
+          productInfoSource: String(body.productInfoSource),
+          status: 'active' as const,
+          createdAtIso: '2026-11-25T00:00:00Z',
+          updatedAtIso: '2026-11-25T00:00:00Z',
+        };
+        offers.push(offer);
+        return new Response(JSON.stringify({ offer }), { status: 201 });
+      }
+      if (body.action === 'generate_affiliate_campaign') {
+        const camp = {
+          id: 'pcmp_live_1',
+          orgId: 'org_pilot_1',
+          userId: 'u_1',
+          offerId: 'poff_live_1',
+          idempotencyKey: 'idem_c1',
+          payloadHash: 'hash_c1',
+          vertical: 'saas',
+          campaignName: 'SEMrush SEO Agency Growth Campaign',
+          referralUrl: 'https://www.semrush.com/?ref=ceo-partner-99',
+          targetMarket: 'US',
+          provenance: 'live_provider',
+          provenanceLabel: 'LIVE_PROVIDER_INFERENCE',
+          reviewState: 'pending_review',
+          version: 1,
+          estimatedAiCostMicroUsd: 20000,
+          pack: {
+            campaignTitle: 'SEMrush SEO Agency Growth Campaign',
+            audienceAnalysis: 'SEO agencies need faster keyword audits.',
+            valueProposition: 'Audit client sites in 10 minutes.',
+            contentAngles: ['Agency audit speed', 'Client reporting clarity'],
+            hook: 'Stop losing SEO retainers to slow audits.',
+            callToAction: 'Start with SEMrush: https://www.semrush.com/?ref=ceo-partner-99',
+            shortFormScript: {
+              title: 'SEMrush 30s Breakdown',
+              total_duration: 30,
+              scenes: [
+                { scene_number: 1, title: 'Hook', visual_description: 'Audit dashboard', narration: 'Hook narration', duration_estimate: 10 },
+                { scene_number: 2, title: 'Demo', visual_description: 'Keyword gap', narration: 'Demo narration', duration_estimate: 10 },
+                { scene_number: 3, title: 'CTA', visual_description: 'Partner link card', narration: 'CTA https://www.semrush.com/?ref=ceo-partner-99', duration_estimate: 10 },
+              ],
+            },
+            socialPost: 'Try SEMrush via https://www.semrush.com/?ref=ceo-partner-99\n\n#ad | Affiliate link included.',
+            affiliateDisclosure: '#ad | Affiliate link included.',
+            referralUrl: 'https://www.semrush.com/?ref=ceo-partner-99',
+          },
+          createdAtIso: '2026-11-25T00:00:00Z',
+          updatedAtIso: '2026-11-25T00:00:00Z',
+        };
+        campaigns.push(camp);
+        return new Response(JSON.stringify({ campaign: camp }), { status: 201 });
+      }
+      if (body.action === 'edit_affiliate_campaign') {
+        const pack = body.pack as { campaignTitle: string };
+        campaigns[0] = { ...campaigns[0], campaignName: pack.campaignTitle, pack, version: 2 };
+        return new Response(JSON.stringify({ campaign: campaigns[0] }), { status: 200 });
+      }
+      if (body.action === 'approve_affiliate_campaign') {
+        campaigns[0] = { ...campaigns[0], reviewState: 'approved', version: 3 };
+        return new Response(JSON.stringify({ campaign: campaigns[0] }), { status: 200 });
+      }
+      if (body.action === 'export_affiliate_campaign') {
+        return new Response(
+          JSON.stringify({
+            export: {
+              content: '# Exported Bundle\nVerified Referral Link: https://www.semrush.com/?ref=ceo-partner-99',
+            },
+          }),
+          { status: 200 },
+        );
+      }
+      if (body.action === 'record_partner_performance') {
+        const entry = {
+          id: 'pperf_1',
+          externalRefId: body.externalRefId,
+          reportSource: body.reportSource,
+          reportPeriod: body.reportPeriod,
+          confirmedCommissionCents: 6000,
+          pendingCommissionCents: 3000,
+          currency: 'USD',
+        };
+        performanceEntries.push(entry);
+        return new Response(JSON.stringify({ performanceEntry: entry }), { status: 201 });
       }
       if (body.action === 'submit_support_request') {
         return new Response(
@@ -540,29 +674,82 @@ describe('FirstValueJourneyClient Customer BYOK live pilot flow', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<FirstValueJourneyClient orgId="org_pilot_1" />);
+    render(<FirstValueJourneyClient orgId="org_pilot_1" initialPilotMode />);
 
     await waitFor(() => {
-      expect(screen.getByDisplayValue('openai/gpt-4o-mini')).toBeTruthy();
+      expect(screen.getByText('openai/gpt-4o-mini')).toBeTruthy();
     });
 
-    // Save BYOK key
+    // 1. Save BYOK key
     fireEvent.change(screen.getByPlaceholderText('pilotByokPlaceholder'), {
       target: { value: 'sk-or-v1-live-customer-pilot-key-00001' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'pilotByokSaveBtn' }));
-    await waitFor(() => expect(screen.getByText('pilotByokReadyBadge')).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText('pilotByokReadyBadge').length).toBeGreaterThan(0));
 
-    // Accept pilot terms
+    // 2. Accept pilot terms
     fireEvent.click(screen.getByRole('checkbox'));
     fireEvent.click(screen.getByRole('button', { name: 'pilotConsentBtn' }));
     await waitFor(() => expect(screen.getByText('pilotConsentAccepted')).toBeTruthy());
 
-    // Generate live AI script
-    fireEvent.click(screen.getByRole('button', { name: 'pilotGenerateBtn' }));
-    await waitFor(() => expect(screen.getByText('Initial Script Title')).toBeTruthy());
+    // 3. Add SaaS Affiliate Offer
+    fireEvent.change(screen.getByPlaceholderText('affProductNamePlaceholder'), {
+      target: { value: 'SEMrush SEO Toolkit' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('https://example.com'), {
+      target: { value: 'https://www.semrush.com' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('https://example.com/?via=your-partner-code'), {
+      target: { value: 'https://www.semrush.com/?ref=ceo-partner-99' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('affCommissionTermsPlaceholder'), {
+      target: { value: '30% recurring monthly commission' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('affTargetAudiencePlaceholder'), {
+      target: { value: 'SEO agency founders' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('affInfoSourcePlaceholder'), {
+      target: { value: 'Official SEMrush partner terms' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'affSaveOfferBtn' }));
+    await waitFor(() => expect(screen.getAllByText('SEMrush SEO Toolkit').length).toBeGreaterThan(0));
 
-    // Submit support request
+    // 4. Generate Affiliate Campaign
+    fireEvent.click(screen.getByRole('button', { name: 'affGenerateCampaignBtn' }));
+    await waitFor(() =>
+      expect(screen.getAllByText('SEMrush SEO Agency Growth Campaign').length).toBeGreaterThan(0),
+    );
+
+    // 5. Edit -> Save -> Approve -> Export with preserved referral URL
+    fireEvent.click(screen.getByRole('button', { name: 'editScriptBtn' }));
+    fireEvent.change(screen.getByLabelText('affCampaignTitleLabel'), {
+      target: { value: 'SEMrush Q4 Agency Campaign' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'saveEditsBtn' }));
+    await waitFor(() => expect(screen.getByText('draftSavedNotice')).toBeTruthy());
+
+    fireEvent.click(screen.getByRole('button', { name: 'affApproveCampaignBtn' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'exportMarkdownBtn' })).toBeTruthy());
+
+    fireEvent.click(screen.getByRole('button', { name: 'exportMarkdownBtn' }));
+    await waitFor(() =>
+      expect(screen.getByText(/Verified Referral Link: https:\/\/www\.semrush\.com\/\?ref=ceo-partner-99/)).toBeTruthy(),
+    );
+
+    // 6. Record Partner Performance
+    fireEvent.change(screen.getByPlaceholderText('affPerfSourcePlaceholder'), {
+      target: { value: 'Impact Official Partner CSV' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('2026-11-W4'), {
+      target: { value: '2026-11' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('stmt-2026-11-01'), {
+      target: { value: 'imp-stmt-001' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'affRecordPerfBtn' }));
+    await waitFor(() => expect(screen.getByText('imp-stmt-001')).toBeTruthy());
+
+    // 7. Submit support request & clear BYOK key
     fireEvent.change(screen.getByPlaceholderText('supportSubjectPlaceholder'), {
       target: { value: 'Question about scenes' },
     });
@@ -572,9 +759,8 @@ describe('FirstValueJourneyClient Customer BYOK live pilot flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'supportSubmitBtn' }));
     await waitFor(() => expect(screen.getByText('psr_live-0001')).toBeTruthy());
 
-    // Clear BYOK key
     fireEvent.click(screen.getByRole('button', { name: 'pilotByokClearBtn' }));
-    await waitFor(() => expect(screen.getByText('pilotByokMissingBadge')).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText('pilotByokMissingBadge').length).toBeGreaterThan(0));
   });
 
   it('suppresses simulated 0-MCU banner on first paint when initialPilotMode=true', () => {
@@ -582,6 +768,6 @@ describe('FirstValueJourneyClient Customer BYOK live pilot flow', () => {
     render(<FirstValueJourneyClient orgId="org_pilot_1" initialPilotMode />);
     expect(screen.queryByText('simulatedBadge')).toBeNull();
     expect(screen.getByText('pilotByokTitle')).toBeTruthy();
-    expect(screen.getByDisplayValue('openai/gpt-4o-mini')).toBeTruthy();
+    expect(screen.getByText('openai/gpt-4o-mini')).toBeTruthy();
   });
 });

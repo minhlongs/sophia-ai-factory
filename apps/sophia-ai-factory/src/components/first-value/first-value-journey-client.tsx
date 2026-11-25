@@ -10,12 +10,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import type { AffiliateStudioSnapshot } from '@/land/first-value/pilot-affiliate-studio-revenue';
 import type { FirstValueCostPreview } from '@/seed/ai/cost/first-value-cost-preview';
 import type { ScriptOutput } from '@/seed/ai/script-generator';
 import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 import type { HonestValidationReceipt } from '@/tree/byok/honest-validation-receipt';
 import type { DurableFirstValueReview } from '@/tree/first-value/first-value-review-repo';
 import type { PilotStatusSnapshot } from '@/seed/pilot/pilot-access-policy';
+import { AffiliateCampaignStudio } from './affiliate-studio/affiliate-campaign-studio';
 import { FirstValueByokCard } from './first-value-byok-card';
 import {
   FirstValueFeedbackCard,
@@ -35,6 +37,7 @@ interface StatusResponse {
   readonly receipt: HonestValidationReceipt | null;
   readonly recentReviews: readonly DurableFirstValueReview[];
   readonly pilot?: PilotStatusSnapshot;
+  readonly affiliateStudio?: AffiliateStudioSnapshot;
 }
 
 function CostPreviewBox({ costPreview }: { readonly costPreview: FirstValueCostPreview }) {
@@ -195,8 +198,8 @@ export function FirstValueJourneyClient({
   const [costPreview, setCostPreview] = useState<FirstValueCostPreview | null>(null);
   const [activeReview, setActiveReview] = useState<DurableFirstValueReview | null>(null);
   const [exportPayload, setExportPayload] = useState<string | null>(null);
-  const [topic, setTopic] = useState('How non-technical CEOs launch daily short-form content');
-  const [audience, setAudience] = useState('SMB Founders');
+  const [topic, setTopic] = useState('SaaS & Crypto Affiliate Campaign Angle');
+  const [audience, setAudience] = useState('SaaS Buyers & Digital Teams');
   const [durationSec, setDurationSec] = useState(30);
   const [model, setModel] = useState(
     initialPilotMode ? 'openai/gpt-4o-mini' : 'google/gemini-2-5-flash',
@@ -453,6 +456,28 @@ export function FirstValueJourneyClient({
           pilot.quota.remainingGenerations > 0,
       )
     : Boolean(orgId && status?.receipt && inputsValid);
+
+  if (isLivePilot) {
+    return (
+      <AffiliateCampaignStudio
+        orgId={orgId}
+        pilot={pilot}
+        studio={status?.affiliateStudio ?? null}
+        byokConfigured={effectiveByokConfigured}
+        receipt={status?.receipt ?? null}
+        busy={busy}
+        errorMessage={errorMessage}
+        errorPrefix={t('errorPrefix')}
+        postAction={postAction}
+        onReloadStatus={loadStatus}
+        onAcceptPilotTerms={handleAcceptPilotTerms}
+        onSavePilotKey={handleSavePilotKey}
+        onClearPilotKey={handleClearPilotKey}
+        onSubmitFeedback={handleSubmitFeedback}
+        onSubmitSupportRequest={handleSubmitSupportRequest}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
