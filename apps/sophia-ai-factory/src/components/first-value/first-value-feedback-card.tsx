@@ -11,12 +11,14 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import type { PilotFeedbackSummary } from '@/seed/pilot/pilot-access-policy';
 
 export type PilotFeedbackCategory = 'usefulness' | 'editing_friction' | 'bug_report' | 'other';
 
 export interface FirstValueFeedbackCardProps {
   readonly busy: boolean;
   readonly artifactId: string | null;
+  readonly feedbackItems?: readonly PilotFeedbackSummary[];
   readonly onSubmitFeedback: (input: {
     readonly rating: number;
     readonly category: PilotFeedbackCategory;
@@ -27,6 +29,7 @@ export interface FirstValueFeedbackCardProps {
 export function FirstValueFeedbackCard({
   busy,
   artifactId,
+  feedbackItems = [],
   onSubmitFeedback,
 }: FirstValueFeedbackCardProps) {
   const t = useTranslations('firstValue');
@@ -122,6 +125,56 @@ export function FirstValueFeedbackCard({
         <p className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
           {t('feedbackSubmittedSuccess')}
         </p>
+      )}
+
+      {feedbackItems.length > 0 && (
+        <div className="mt-5 border-t border-border pt-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground">
+            {t('feedbackHistoryTitle')}
+          </h3>
+          <div className="mt-2.5 space-y-2.5">
+            {feedbackItems.map((item) => {
+              const statusLabel =
+                item.status === 'resolved'
+                  ? t('feedbackStatusResolved')
+                  : item.status === 'in_progress'
+                    ? t('feedbackStatusInProgress')
+                    : t('feedbackStatusReceived');
+              const statusTone =
+                item.status === 'resolved'
+                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                  : item.status === 'in_progress'
+                    ? 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                    : 'border-border bg-muted text-muted-foreground';
+              return (
+                <div
+                  key={item.id}
+                  className="rounded-lg border border-border bg-background p-3 text-xs"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-mono text-muted-foreground">
+                      {item.rating}/5 • {item.createdAtIso.slice(0, 10)}
+                    </span>
+                    <span
+                      className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusTone}`}
+                    >
+                      {statusLabel}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 whitespace-pre-line text-foreground">{item.comment}</p>
+                  {item.operatorReply && (
+                    <div className="mt-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-2 text-foreground">
+                      <span className="font-semibold text-emerald-700 dark:text-emerald-300">
+                        {t('feedbackOperatorReplyLabel')}:{' '}
+                      </span>
+                      {item.operatorReply}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
     </section>
   );

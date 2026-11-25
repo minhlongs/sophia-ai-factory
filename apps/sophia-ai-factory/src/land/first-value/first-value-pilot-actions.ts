@@ -50,6 +50,7 @@ import {
   getPilotConsent,
   getPilotQuotaStatus,
   hasPilotEvent,
+  listPilotFeedbackForUser,
   recordPilotConsent,
   recordPilotEvent,
   recordPilotFeedback,
@@ -201,6 +202,17 @@ export async function buildPilotStatusSnapshot(
     // Graceful fallback when support queue migration is absent on legacy envs
   }
 
+  let feedbackItems: PilotStatusSnapshot['feedbackItems'] = [];
+  try {
+    feedbackItems = await listPilotFeedbackForUser(d1, {
+      orgId: args.orgId,
+      userId: args.userId,
+      limit: 10,
+    });
+  } catch {
+    // Graceful fallback when pilot_feedback table is absent on legacy envs
+  }
+
   const baseOrigin = resolvePilotRefererOrigin(env);
   const affiliateLinks = await listPilotAffiliateLinks(d1, {
     orgId: args.orgId,
@@ -229,6 +241,7 @@ export async function buildPilotStatusSnapshot(
     heygenByokConfigured: hasByokHeyGen,
     quota,
     supportRequests,
+    feedbackItems,
     affiliateLinks,
     mp4Exports,
     manualPublishes,

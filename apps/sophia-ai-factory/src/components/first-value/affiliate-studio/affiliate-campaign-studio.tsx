@@ -540,6 +540,7 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
       <FirstValueFeedbackCard
         busy={props.busy}
         artifactId={activeCampaign?.id ?? null}
+        feedbackItems={props.pilot?.feedbackItems ?? []}
         onSubmitFeedback={props.onSubmitFeedback}
       />
 

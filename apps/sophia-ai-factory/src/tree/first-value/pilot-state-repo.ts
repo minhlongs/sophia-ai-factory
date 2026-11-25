@@ -434,3 +434,65 @@ export async function recordPilotFeedback(
     createdAtIso: input.nowIso,
   };
 }
+
+export interface PilotFeedbackStatusItem {
+  readonly id: string;
+  readonly rating: number;
+  readonly category: string;
+  readonly comment: string;
+  readonly status: 'received' | 'in_progress' | 'resolved';
+  readonly operatorReply: string | null;
+  readonly createdAtIso: string;
+  readonly resolvedAtIso: string | null;
+}
+
+function normalizeFeedbackStatus(raw: unknown): 'received' | 'in_progress' | 'resolved' {
+  if (raw === 'in_progress' || raw === 'resolved') return raw;
+  return 'received';
+}
+
+function mapPilotFeedbackRow(row: Record<string, unknown>): PilotFeedbackStatusItem {
+  const rawReply = row.operator_reply;
+  return {
+    id: String(row.id),
+    rating: Number(row.rating),
+    category: String(row.category),
+    comment: String(row.comment),
+    status: normalizeFeedbackStatus(row.status),
+    operatorReply: typeof rawReply === 'string' && rawReply.trim() ? rawReply : null,
+    createdAtIso: String(row.created_at_iso),
+    resolvedAtIso: typeof row.resolved_at_iso === 'string' ? row.resolved_at_iso : null,
+  };
+}
+
+export async function listPilotFeedbackForUser(
+  d1: D1Database,
+  input: { readonly orgId: string; readonly userId: string; readonly limit?: number },
+): Promise<readonly PilotFeedbackStatusItem[]> {
+  const limit = input.limit ?? 10;
+  try {
+    const res = await d1
+      .prepare(
+        `SELECT id, rating, category, comment, status, operator_reply, created_at_iso, resolved_at_iso
+         FROM pilot_feedback
+         WHERE org_id = ? AND user_id = ?
+         ORDER BY created_at_iso DESC
+         LIMIT ?`,
+      )
+      .bind(input.orgId, input.userId, limit)
+      .all<Record<string, unknown>>();
+    return (res.results ?? []).map(mapPilotFeedbackRow);
+  } catch {
+    const res = await d1
+      .prepare(
+        `SELECT id, rating, category, comment, created_at_iso
+         FROM pilot_feedback
+         WHERE org_id = ? AND user_id = ?
+         ORDER BY created_at_iso DESC
+         LIMIT ?`,
+      )
+      .bind(input.orgId, input.userId, limit)
+      .all<Record<string, unknown>>();
+    return (res.results ?? []).map(mapPilotFeedbackRow);
+  }
+}
