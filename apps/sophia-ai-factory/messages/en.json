@@ -9835,7 +9835,7 @@
     "pilotReportedCommissionLabel": "Actual Reconciled Commission (optional)",
     "pilotLeaveBlankIfNone": "Leave blank if none yet",
     "pilotEvidenceNoteLabel": "Reconciliation Source Note (optional)",
-    "pilotEvidenceNotePlaceholder": "Example: Reconciled from ClickBank / Shopee Affiliate dashboard today",
+    "pilotEvidenceNotePlaceholder": "Example: Reconciled from PartnerStack / Impact / Crypto Exchange dashboard today",
     "pilotSaveManualPublishBtn": "Record Manual Post & Real Metrics",
     "pilotManualPublishSavedNotice": "Manual publish evidence saved (CUSTOMER_SELF_REPORTED).",
     "pilotManualPublishHistoryTitle": "Your Recorded Posts & Reconciled Outcomes",

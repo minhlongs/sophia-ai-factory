@@ -64,7 +64,7 @@ export function buildCapCutPublishCopy(args: {
     `${args.script.title}`,
     `${hook}`,
     `${args.ctaText}`,
-    `${args.disclosureTag} #affiliate #review #tiktokmademebuyit`,
+    `${args.disclosureTag} #saas #crypto #review #affiliate`,
     ``,
     `[PINNED COMMENT / LINK]`,
     `${args.ctaText}: ${args.shortUrl} (${args.disclosureTag})`,
