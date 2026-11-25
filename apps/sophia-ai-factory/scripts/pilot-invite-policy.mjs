@@ -2,11 +2,10 @@
  * Pure policy builders, CLI arg validators, email validators, and Zero Trust
  * readback assertions for the Private Beta invitation & subpath bypass provisioner.
  *
- * Enforces:
- * - Exact email format + preserved operator allowlist alongside the single invited customer
- * - Zero wildcards / Everyone / Bypass on the main Pilot App (`11a89148-d86e-4d3e-a1d4-e12edbeb6f75`)
- * - Strictly scoped public redirect bypass ONLY on `/api/r/*` so external viewers on
- *   TikTok / YouTube Shorts can click referral shortlinks without hitting CF Access.
+ * Enforces exact email format, preserves operator emails alongside the invited
+ * customer email, blocks wildcards/Everyone/Bypass/extra policies on the main
+ * Pilot App (`11a89148-d86e-4d3e-a1d4-e12edbeb6f75`), and scopes public redirect
+ * bypass strictly to `/api/r/*`.
  */
 
 export const PILOT_CF_ACCOUNT_ID = 'f691e83094f776311a1bfe3f8b126f1c';
@@ -43,6 +42,31 @@ export function validateSinglePilotEmail(raw) {
   return trimmed;
 }
 
+export function parseInviteCliArgs(argv) {
+  const args = Array.isArray(argv) ? argv : [];
+  const allowedFlags = new Set(['--dry-run', '--ensure-shortlink-bypass']);
+  const unknownFlags = args.filter((a) => String(a).startsWith('-') && !allowedFlags.has(a));
+  if (unknownFlags.length > 0) {
+    throw new Error(`Unknown CLI flag(s): ${unknownFlags.join(', ')}`);
+  }
+  const onlyBypass = args.includes('--ensure-shortlink-bypass');
+  const positional = args.filter((a) => !String(a).startsWith('-'));
+  if (onlyBypass) {
+    return {
+      dryRun: args.includes('--dry-run'),
+      onlyBypass: true,
+      email: null,
+    };
+  }
+  if (positional.length !== 1) {
+    throw new Error('Expected exactly 1 invited customer email argument.');
+  }
+  return {
+    dryRun: args.includes('--dry-run'),
+    email: validateSinglePilotEmail(positional[0]),
+  };
+}
+
 export function extractExistingOperatorEmails(existingPolicies) {
   const aliasSet = new Set(KNOWN_OPERATOR_EMAIL_ALIASES);
   const found = [];
@@ -60,11 +84,12 @@ export function extractExistingOperatorEmails(existingPolicies) {
 
 export function resolveAuthorizedPilotEmails(customerEmail, operatorEmailsOverride) {
   const validCustomer = validateSinglePilotEmail(customerEmail);
+  const envOperators = process.env.PILOT_OPERATOR_EMAILS?.trim();
   const rawOperators =
     operatorEmailsOverride !== undefined
       ? operatorEmailsOverride
-      : process.env.PILOT_OPERATOR_EMAILS !== undefined
-        ? process.env.PILOT_OPERATOR_EMAILS
+      : envOperators
+        ? envOperators
         : DEFAULT_PILOT_OPERATOR_EMAILS;
 
   const operatorEntries = Array.isArray(rawOperators)
@@ -125,7 +150,12 @@ export function assertShortlinkBypassPoliciesExact(policies) {
     throw new Error(`Expected exactly 1 policy on /api/r/* bypass app, got ${policies?.length ?? 0}.`);
   }
   const pol = policies[0];
-  if (pol?.decision !== 'bypass' || !Array.isArray(pol.include) || pol.include.length !== 1 || !('everyone' in pol.include[0])) {
+  if (
+    pol?.decision !== 'bypass' ||
+    !Array.isArray(pol.include) ||
+    pol.include.length !== 1 ||
+    !('everyone' in pol.include[0])
+  ) {
     throw new Error('Subpath /api/r/* bypass app policy readback did not match expected bypass rule.');
   }
 }
@@ -158,9 +188,14 @@ export function assertAccessPoliciesSafeAndExact(policies, expectedEmailsOrCusto
       }
     }
   }
-  const target = policies.find((p) => p.id === PILOT_ACCESS_POLICY_ID);
-  if (!target) {
-    throw new Error(`Target Access policy ${PILOT_ACCESS_POLICY_ID} missing in readback.`);
+  if (policies.length !== 1 || policies[0]?.id !== PILOT_ACCESS_POLICY_ID) {
+    throw new Error(
+      `Expected exclusively target Access policy ${PILOT_ACCESS_POLICY_ID}, found ${policies.length} policy(ies).`,
+    );
+  }
+  const target = policies[0];
+  if ((target.require ?? []).length > 0 || (target.exclude ?? []).length > 0) {
+    throw new Error('Target Access policy must not carry unexpected require/exclude rules.');
   }
   const expectedEmails = Array.isArray(expectedEmailsOrCustomer)
     ? Array.from(new Set(expectedEmailsOrCustomer.map((item) => validateSinglePilotEmail(item))))
@@ -193,14 +228,14 @@ export function buildCustomerUrlsAndVietnameseInvite(email) {
   const inviteVi = [
     'Chào bạn,',
     '',
-    `Mời bạn trải nghiệm riêng Sophia AI Factory (Private Beta 7 ngày — $0 phí nền tảng, tối đa 20 lượt tạo kịch bản AI thật + xuất video MP4 + link Affiliate) dành riêng cho email ${validEmail}.`,
+    `Mời bạn trải nghiệm riêng Sophia AI Factory (Private Beta 7 ngày — $0 phí nền tảng, tối đa 20 lượt tạo kịch bản/chiến dịch AI thật + xuất video MP4 + link Affiliate) dành riêng cho email ${validEmail}.`,
     '',
     `1. Mở liên kết đăng ký / bắt đầu: ${registerUrl}`,
     `   (Nếu đã tạo mật khẩu trước đó, đăng nhập tại: ${loginUrl})`,
-    `2. Trên màn hình bảo mật Cloudflare Access, bấm nút "GitHub" để vào thẳng 1 chạm (hoặc nhập đúng email ${validEmail} để nhận mã PIN 6 số dự phòng).`,
+    `2. Trên màn hình bảo mật Cloudflare Access, bấm nút "GitHub" để vào thẳng 1 chạm (nếu tài khoản GitHub của bạn dùng đúng email ${validEmail}), hoặc nhập ${validEmail} vào ô bên dưới để nhận mã PIN 6 số.`,
     '3. Tạo tài khoản Sophia bằng đúng email được mời, tick đồng ý điều khoản Private Beta.',
     '4. Tại mục số 1, dán khóa OpenRouter của bạn (sk-or-v1-...) và bấm "Xác thực & Lưu khóa" (mã hóa AES-256-GCM, Founder không tài trợ AI, bạn xóa khóa bất cứ lúc nào).',
-    '5. Nhập chủ đề + đối tượng -> Tạo kịch bản AI thật -> Duyệt kịch bản -> Gắn CTA & Link Affiliate để nhận Shortlink đếm click thật -> Bấm "Tạo & Tải Video MP4 9:16" để đăng lên TikTok / Shorts / Reels và ghi nhận kết quả thực tế.',
+    '5. Tạo chiến dịch/kịch bản AI thật -> Duyệt kịch bản -> Gắn CTA & Link Affiliate để nhận Shortlink đếm click thật -> Bấm "Tạo & Tải Video MP4 9:16" để đăng lên TikTok / Shorts / Reels và ghi nhận kết quả thực tế.',
     '',
     'Cần hỗ trợ hoặc xóa toàn bộ dữ liệu thử nghiệm: gửi trực tiếp tại khung "Yêu cầu Hỗ trợ & Xóa dữ liệu" ở cuối trang làm việc để nhận mã biên nhận xử lý trong 72 giờ.',
   ].join('\n');

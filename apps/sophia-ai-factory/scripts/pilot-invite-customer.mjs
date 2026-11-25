@@ -4,17 +4,17 @@
  *
  * Modes:
  *   1. `node scripts/pilot-invite-customer.mjs <exact-email> [--dry-run]`
- *      Reads live operator emails on Policy `5ad49a50-b19a-4cc9-a43d-d2455e92fa42`
- *      so operator/GitHub SSO emails are never accidentally overwritten, adds the
- *      single invited customer email, updates Worker secret `PILOT_ALLOWED_EMAILS`,
- *      and ensures + probes the scoped `/api/r/*` public redirect bypass.
+ *      Preserves active operator emails on Policy `5ad49a50-b19a-4cc9-a43d-d2455e92fa42`,
+ *      validates GitHub + OTP IdPs (`auto_redirect_to_identity=false`), updates
+ *      `PILOT_ALLOWED_EMAILS` with rollback on failure, ensures `/api/r/*` subpath
+ *      bypass, and verifies live HTTP edge perimeter.
  *   2. `node scripts/pilot-invite-customer.mjs --ensure-shortlink-bypass [--dry-run]`
  *      Ensures ONLY the scoped `/api/r/*` Cloudflare Access subpath bypass app exists
  *      and probes live HTTP edge behavior without modifying the invited email list.
  */
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,6 +27,8 @@ import {
   buildShortlinkSubpathBypassPolicyPayload,
   DEFAULT_PILOT_OPERATOR_EMAILS,
   extractExistingOperatorEmails,
+  KNOWN_OPERATOR_EMAIL_ALIASES,
+  parseInviteCliArgs,
   PILOT_ACCESS_APP_ID,
   PILOT_ACCESS_POLICY_ID,
   PILOT_BASE_URL,
@@ -45,6 +47,8 @@ export {
   buildShortlinkSubpathBypassPolicyPayload,
   DEFAULT_PILOT_OPERATOR_EMAILS,
   extractExistingOperatorEmails,
+  KNOWN_OPERATOR_EMAIL_ALIASES,
+  parseInviteCliArgs,
   PILOT_ACCESS_APP_ID,
   PILOT_ACCESS_POLICY_ID,
   PILOT_BASE_URL,
@@ -56,6 +60,7 @@ export {
 
 const APP_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const REQUEST_TIMEOUT_MS = 15_000;
+const MAX_TRANSIENT_RETRIES = 2;
 
 export function resolveAccessToken() {
   if (process.env.CLOUDFLARE_ACCESS_TOKEN?.trim()) {
@@ -71,20 +76,40 @@ export function resolveAccessToken() {
 
 async function cfAccountAccessApi(token, method, subPath, body) {
   const url = `https://api.cloudflare.com/client/v4/accounts/${PILOT_CF_ACCOUNT_ID}/access${subPath}`;
-  const res = await fetch(url, {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  });
-  const json = await res.json();
-  if (!res.ok || !json?.success) {
-    throw new Error(`Cloudflare Access ${method} ${subPath} failed (HTTP ${res.status}).`);
+  let lastErr = null;
+  for (let attempt = 0; attempt <= MAX_TRANSIENT_RETRIES; attempt += 1) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, 500 * 2 ** (attempt - 1)));
+    }
+    let res;
+    let rawText = '';
+    try {
+      res = await fetch(url, {
+        method,
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined,
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+      rawText = await res.text();
+    } catch (netErr) {
+      lastErr = netErr instanceof Error ? netErr : new Error(String(netErr));
+      continue;
+    }
+    let json = null;
+    try {
+      json = rawText ? JSON.parse(rawText) : null;
+    } catch {
+      json = null;
+    }
+    if (res.ok && json?.success) {
+      return json.result;
+    }
+    lastErr = new Error(`Cloudflare Access ${method} ${subPath} failed (HTTP ${res.status}).`);
+    if (res.status !== 429 && res.status < 500) {
+      throw lastErr;
+    }
   }
-  return json.result;
+  throw lastErr ?? new Error(`Cloudflare Access ${method} ${subPath} failed.`);
 }
 
 export async function verifyLiveShortlinkBypassPerimeter(fetchImpl = fetch, maxAttempts = 4) {
@@ -174,42 +199,37 @@ export async function ensureShortlinkBypassApp(token) {
   };
 }
 
-function updateAndVerifyWorkerAllowlistSecret(authorizedEmails) {
-  const secretValue = Array.isArray(authorizedEmails)
-    ? authorizedEmails.join(',')
-    : String(authorizedEmails);
-  const env = {
-    ...process.env,
-    CLOUDFLARE_API_TOKEN: process.env.CLOUDFLARE_WORKER_API_TOKEN ?? '',
-  };
-  execFileSync(
-    'npx',
-    ['wrangler', 'secret', 'put', 'PILOT_ALLOWED_EMAILS', '--config', 'wrangler.pilot.toml'],
-    {
-      cwd: APP_ROOT,
-      input: `${secretValue}\n`,
-      encoding: 'utf8',
-      env,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    },
-  );
+function listWorkerSecrets() {
+  const env = { ...process.env, CLOUDFLARE_API_TOKEN: process.env.CLOUDFLARE_WORKER_API_TOKEN ?? '' };
   const listRaw = execFileSync(
     'npx',
     ['wrangler', 'secret', 'list', '--config', 'wrangler.pilot.toml', '--format', 'json'],
     { cwd: APP_ROOT, encoding: 'utf8', env, stdio: ['ignore', 'pipe', 'pipe'] },
   );
   const secrets = JSON.parse(listRaw);
-  if (!Array.isArray(secrets) || !secrets.some((s) => s?.name === 'PILOT_ALLOWED_EMAILS')) {
-    throw new Error('Worker secret readback failed: PILOT_ALLOWED_EMAILS not found on sophia-ai-factory-pilot.');
+  if (!Array.isArray(secrets)) {
+    throw new Error('Unexpected response from wrangler secret list.');
   }
+  return secrets;
+}
+
+function putWorkerAllowlistSecret(authorizedEmails) {
+  const secretValue = Array.isArray(authorizedEmails)
+    ? authorizedEmails.join(',')
+    : String(authorizedEmails);
+  const env = { ...process.env, CLOUDFLARE_API_TOKEN: process.env.CLOUDFLARE_WORKER_API_TOKEN ?? '' };
+  execFileSync(
+    'npx',
+    ['wrangler', 'secret', 'put', 'PILOT_ALLOWED_EMAILS', '--config', 'wrangler.pilot.toml'],
+    { cwd: APP_ROOT, input: `${secretValue}\n`, encoding: 'utf8', env, stdio: ['pipe', 'pipe', 'pipe'] },
+  );
 }
 
 async function main(argv) {
-  const dryRun = argv.includes('--dry-run');
-  const onlyBypass = argv.includes('--ensure-shortlink-bypass');
+  const parsed = parseInviteCliArgs(argv);
 
-  if (onlyBypass) {
-    if (dryRun) {
+  if (parsed.onlyBypass) {
+    if (parsed.dryRun) {
       process.stdout.write(
         `${JSON.stringify(
           {
@@ -232,11 +252,10 @@ async function main(argv) {
     return;
   }
 
-  const emailArg = argv.find((a) => !a.startsWith('--'));
-  const email = validateSinglePilotEmail(emailArg);
+  const email = parsed.email;
   const bundle = buildCustomerUrlsAndVietnameseInvite(email);
 
-  if (dryRun) {
+  if (parsed.dryRun) {
     const authorizedEmails = resolveAuthorizedPilotEmails(email);
     const payload = buildAccessSingleEmailPolicyPayload(email, {
       operatorEmails: authorizedEmails.filter((item) => item !== email),
@@ -259,13 +278,22 @@ async function main(argv) {
   }
 
   const token = resolveAccessToken();
-  const policiesBefore = await cfAccountAccessApi(
-    token,
-    'GET',
-    `/apps/${PILOT_ACCESS_APP_ID}/policies`,
-  );
+  const appMeta = await cfAccountAccessApi(token, 'GET', `/apps/${PILOT_ACCESS_APP_ID}`);
+  if (appMeta?.auto_redirect_to_identity === true || !Array.isArray(appMeta?.allowed_idps) || appMeta.allowed_idps.length < 2) {
+    throw new Error('Cloudflare Access App must keep GitHub + OTP allowed_idps configured with auto_redirect_to_identity=false.');
+  }
+  listWorkerSecrets();
+  const policiesBefore = await cfAccountAccessApi(token, 'GET', `/apps/${PILOT_ACCESS_APP_ID}/policies`);
+  const previousTarget =
+    Array.isArray(policiesBefore) && policiesBefore.length === 1
+      ? policiesBefore.find((p) => p?.id === PILOT_ACCESS_POLICY_ID)
+      : null;
+  if (!previousTarget) {
+    throw new Error(`Expected single pre-existing Access policy ${PILOT_ACCESS_POLICY_ID}.`);
+  }
+
   const preservedOperators =
-    process.env.PILOT_OPERATOR_EMAILS !== undefined
+    process.env.PILOT_OPERATOR_EMAILS?.trim()
       ? undefined
       : extractExistingOperatorEmails(policiesBefore);
   const authorizedEmails = resolveAuthorizedPilotEmails(email, preservedOperators);
@@ -273,19 +301,39 @@ async function main(argv) {
     operatorEmails: authorizedEmails.filter((item) => item !== email),
   });
 
-  await cfAccountAccessApi(
-    token,
-    'PUT',
-    `/apps/${PILOT_ACCESS_APP_ID}/policies/${PILOT_ACCESS_POLICY_ID}`,
-    payload,
-  );
-  const policiesAfter = await cfAccountAccessApi(
-    token,
-    'GET',
-    `/apps/${PILOT_ACCESS_APP_ID}/policies`,
-  );
-  assertAccessPoliciesSafeAndExact(policiesAfter, authorizedEmails);
-  updateAndVerifyWorkerAllowlistSecret(authorizedEmails);
+  let workerSecretMutated = false;
+  await cfAccountAccessApi(token, 'PUT', `/apps/${PILOT_ACCESS_APP_ID}/policies/${PILOT_ACCESS_POLICY_ID}`, payload);
+  try {
+    const policiesAfter = await cfAccountAccessApi(token, 'GET', `/apps/${PILOT_ACCESS_APP_ID}/policies`);
+    assertAccessPoliciesSafeAndExact(policiesAfter, authorizedEmails);
+    putWorkerAllowlistSecret(authorizedEmails);
+    workerSecretMutated = true;
+    const secrets = listWorkerSecrets();
+    if (!secrets.some((s) => s?.name === 'PILOT_ALLOWED_EMAILS')) {
+      throw new Error('Worker secret readback failed: PILOT_ALLOWED_EMAILS not found on sophia-ai-factory-pilot.');
+    }
+  } catch (err) {
+    if (!workerSecretMutated) {
+      const rollbackPayload = {
+        name: previousTarget.name ?? 'Sophia Pilot Authorized Emails',
+        decision: previousTarget.decision ?? 'allow',
+        include: previousTarget.include ?? [],
+        exclude: previousTarget.exclude ?? [],
+        require: previousTarget.require ?? [],
+        precedence: previousTarget.precedence ?? 1,
+      };
+      await cfAccountAccessApi(
+        token,
+        'PUT',
+        `/apps/${PILOT_ACCESS_APP_ID}/policies/${PILOT_ACCESS_POLICY_ID}`,
+        rollbackPayload,
+      ).catch((rbErr) => {
+        process.stderr.write(`[pilot-invite-customer] WARN: Access rollback failed (${rbErr instanceof Error ? rbErr.message : String(rbErr)}).\n`);
+      });
+    }
+    throw err;
+  }
+
   const shortlinkBypass = await ensureShortlinkBypassApp(token);
   const perimeter = await verifyLiveShortlinkBypassPerimeter();
 
@@ -307,7 +355,7 @@ async function main(argv) {
   );
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (process.argv[1] && realpathSync(fileURLToPath(import.meta.url)) === realpathSync(resolve(process.argv[1]))) {
   main(process.argv.slice(2)).catch((err) => {
     process.stderr.write(`[pilot-invite-customer] ERROR: ${err instanceof Error ? err.message : String(err)}\n`);
     process.exit(1);

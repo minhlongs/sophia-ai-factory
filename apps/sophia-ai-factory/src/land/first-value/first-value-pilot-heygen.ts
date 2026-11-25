@@ -25,6 +25,7 @@ import { classifyHttpStatus, FailureKind } from '@/seed/types/failure-kind';
 import type { ProbeResult } from '@/tree/byok/provider-probe';
 import { validateHeyGen } from '@/tree/byok/validators/provider-rules';
 import { getReviewById } from '@/tree/first-value/first-value-review-repo';
+import { getPilotAffiliateCampaignById } from '@/tree/first-value/pilot-affiliate-studio-repo';
 import {
   getPilotAffiliateLinkByCodeForUser,
   getPilotMp4ExportByIdForUser,
@@ -33,6 +34,41 @@ import {
   updatePilotMp4ExportStatus,
 } from '@/tree/first-value/pilot-commercial-repo';
 import { getPilotConsent } from '@/tree/first-value/pilot-state-repo';
+import type { ScriptOutput } from '@/seed/ai/script-generator';
+
+export async function resolveApprovedPilotScriptArtifact(
+  d1: D1Database,
+  args: { readonly artifactId: string; readonly orgId: string; readonly userId: string },
+): Promise<
+  | { readonly found: true; readonly approved: true; readonly artifactId: string; readonly script: ScriptOutput }
+  | { readonly found: true; readonly approved: false }
+  | { readonly found: false }
+> {
+  const review = await getReviewById(d1, args).catch(() => null);
+  if (review) {
+    if (review.reviewState !== 'accepted') {
+      return { found: true, approved: false };
+    }
+    return { found: true, approved: true, artifactId: review.artifactId, script: review.script };
+  }
+  const campaign = await getPilotAffiliateCampaignById(d1, {
+    campaignId: args.artifactId,
+    orgId: args.orgId,
+    userId: args.userId,
+  }).catch(() => null);
+  if (campaign) {
+    if (campaign.reviewState !== 'approved') {
+      return { found: true, approved: false };
+    }
+    return {
+      found: true,
+      approved: true,
+      artifactId: campaign.id,
+      script: campaign.pack.shortFormScript,
+    };
+  }
+  return { found: false };
+}
 import { assertSafeHeyGenMediaUrl } from './pilot-heygen-byok-client';
 import { jsonPrivate, type FirstValuePostPayload } from './first-value-http-schemas';
 import { safeRecordPilotEvent, type PilotLiveUser } from './first-value-pilot-actions';
@@ -207,18 +243,25 @@ export async function handleSubmitHeyGenMp4(
     return jsonPrivate({ code: 'SHORTLINK_NOT_FOUND', error: 'Create your pilot referral shortlink first' }, 404);
   }
 
-  const review = await getReviewById(d1, { artifactId: payload.artifactId, orgId: payload.orgId, userId: user.id });
-  if (!review || review.reviewState !== 'accepted') {
+  const resolved = await resolveApprovedPilotScriptArtifact(d1, {
+    artifactId: payload.artifactId,
+    orgId: payload.orgId,
+    userId: user.id,
+  });
+  if (!resolved.found || !resolved.approved) {
     return jsonPrivate(
-      { code: review ? 'SCRIPT_NOT_ACCEPTED' : 'ARTIFACT_NOT_FOUND', error: review ? 'Accept the script first' : 'Review artifact not found' },
-      review ? 409 : 404,
+      {
+        code: resolved.found ? 'SCRIPT_NOT_ACCEPTED' : 'ARTIFACT_NOT_FOUND',
+        error: resolved.found ? 'Accept or approve the script first' : 'Review or campaign artifact not found',
+      },
+      resolved.found ? 409 : 404,
     );
   }
 
   // Deduplicate in-flight HeyGen renders on the same artifact so double-clicks never burn customer credits twice
   const existingExports = await listPilotMp4Exports(d1, { orgId: payload.orgId, userId: user.id });
   const inFlight = existingExports.find(
-    (e) => e.artifactId === review.artifactId && e.renderMode === 'heygen_byok_mp4' && e.status === 'processing',
+    (e) => e.artifactId === resolved.artifactId && e.renderMode === 'heygen_byok_mp4' && e.status === 'processing',
   );
   if (inFlight) {
     return jsonPrivate(
@@ -233,12 +276,12 @@ export async function handleSubmitHeyGenMp4(
   }
 
   const nowIso = new Date(deps.nowMs ? deps.nowMs() : Date.now()).toISOString();
-  const fullNarration = [...review.script.scenes.map((s) => s.narration), `${ownedLink.ctaText}. ${ownedLink.shortUrl}`].join(' ');
+  const fullNarration = [...resolved.script.scenes.map((s) => s.narration), `${ownedLink.ctaText}. ${ownedLink.shortUrl}`].join(' ');
   await safeRecordPilotEvent(d1, {
     orgId: payload.orgId,
     userId: user.id,
     eventName: 'MP4_EXPORT_REQUESTED',
-    artifactId: review.artifactId,
+    artifactId: resolved.artifactId,
     metadata: { renderMode: 'heygen_byok_mp4', shortCode: ownedLink.shortCode },
     nowIso,
   });
@@ -248,12 +291,12 @@ export async function handleSubmitHeyGenMp4(
       userId: user.id,
       apiKey: heygenKey,
       script: fullNarration.slice(0, 4000),
-      title: review.script.title,
+      title: resolved.script.title,
     });
     const mp4Export = await recordPilotMp4Export(d1, {
       orgId: payload.orgId,
       userId: user.id,
-      artifactId: review.artifactId,
+      artifactId: resolved.artifactId,
       renderMode: 'heygen_byok_mp4',
       heygenJobId: submitted.videoId,
       status: 'processing',
@@ -268,7 +311,7 @@ export async function handleSubmitHeyGenMp4(
       orgId: payload.orgId,
       userId: user.id,
       eventName: 'MP4_EXPORT_FAILED',
-      artifactId: review.artifactId,
+      artifactId: resolved.artifactId,
       metadata: { renderMode: 'heygen_byok_mp4', errorCode: 'HEYGEN_SUBMIT_FAILED' },
       nowIso,
     });

@@ -11,6 +11,7 @@ const mockSetUserApiKey = vi.fn();
 const mockClearUserApiKey = vi.fn();
 const mockProbeProviderKey = vi.fn();
 const mockGenerateScript = vi.fn();
+const mockGenerateAffiliateCampaign = vi.fn();
 const mockHandleFirstValueGet = vi.fn();
 const mockHandleFirstValuePost = vi.fn();
 
@@ -55,6 +56,10 @@ vi.mock('@/tree/byok/provider-probe', () => ({
 
 vi.mock('@/seed/ai/script-generator', () => ({
   generateScript: (...args: unknown[]) => mockGenerateScript(...args),
+}));
+
+vi.mock('@/seed/ai/affiliate-campaign-generator', () => ({
+  generateAffiliateCampaignPack: (...args: unknown[]) => mockGenerateAffiliateCampaign(...args),
 }));
 
 vi.mock('@/land/first-value/first-value-http-handler', () => ({
@@ -359,5 +364,28 @@ describe('/api/first-value live dependency wiring', () => {
         minScenes: 3,
       },
     );
+
+    mockGenerateAffiliateCampaign.mockResolvedValueOnce({ campaignTitle: 'Camp' });
+    await captured.deps?.generateLiveAffiliateCampaign?.({
+      offer: {
+        vertical: 'saas',
+        productName: 'SEMrush',
+        officialWebsiteUrl: 'https://semrush.com',
+        referralUrl: 'https://semrush.com/?ref=1',
+        commissionTerms: '30%',
+        targetAudience: 'Agencies',
+        targetMarket: 'US',
+        productInfoSource: 'Docs',
+      },
+      durationSec: 30,
+      locale: 'vi',
+      userId: 'u_1',
+      apiKey: 'sk-or-test-key',
+      model: 'openai/gpt-4o-mini',
+      maxTokens: 2048,
+      maxRetries: 1,
+      timeoutMs: 30000,
+    });
+    expect(mockGenerateAffiliateCampaign).toHaveBeenCalledTimes(1);
   });
 });

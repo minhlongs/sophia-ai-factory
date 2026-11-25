@@ -28,8 +28,24 @@ import { jsonPrivate, type FirstValuePostPayload } from './first-value-http-sche
 import { safeRecordPilotEvent, type PilotLiveUser } from './first-value-pilot-actions';
 import {
   enforcePilotCommercialConsentGuard,
+  resolveApprovedPilotScriptArtifact,
   type PilotCommercialDeps,
 } from './first-value-pilot-heygen';
+import { getPilotAffiliateCampaignById } from '@/tree/first-value/pilot-affiliate-studio-repo';
+
+async function doesOwnedArtifactExist(
+  d1: D1Database,
+  args: { readonly artifactId: string; readonly orgId: string; readonly userId: string },
+): Promise<boolean> {
+  const review = await getReviewById(d1, args).catch(() => null);
+  if (review) return true;
+  const campaign = await getPilotAffiliateCampaignById(d1, {
+    campaignId: args.artifactId,
+    orgId: args.orgId,
+    userId: args.userId,
+  }).catch(() => null);
+  return Boolean(campaign);
+}
 
 export {
   enforcePilotCommercialConsentGuard,
@@ -69,13 +85,13 @@ export async function handleCreateAffiliateShortlink(
   }
 
   if (payload.artifactId) {
-    const ownedReview = await getReviewById(d1, {
+    const exists = await doesOwnedArtifactExist(d1, {
       artifactId: payload.artifactId,
       orgId: payload.orgId,
       userId: user.id,
     });
-    if (!ownedReview) {
-      return jsonPrivate({ code: 'ARTIFACT_NOT_FOUND', error: 'Review artifact not found' }, 404);
+    if (!exists) {
+      return jsonPrivate({ code: 'ARTIFACT_NOT_FOUND', error: 'Review or campaign artifact not found' }, 404);
     }
   }
 
@@ -146,17 +162,17 @@ export async function handleRecordBrowserMp4Export(
     );
   }
 
-  const review = await getReviewById(d1, {
+  const resolved = await resolveApprovedPilotScriptArtifact(d1, {
     artifactId: payload.artifactId,
     orgId: payload.orgId,
     userId: user.id,
   });
-  if (!review) {
-    return jsonPrivate({ code: 'ARTIFACT_NOT_FOUND', error: 'Review artifact not found' }, 404);
+  if (!resolved.found) {
+    return jsonPrivate({ code: 'ARTIFACT_NOT_FOUND', error: 'Review or campaign artifact not found' }, 404);
   }
-  if (review.reviewState !== 'accepted') {
+  if (!resolved.approved) {
     return jsonPrivate(
-      { code: 'SCRIPT_NOT_ACCEPTED', error: 'Accept the script before exporting MP4 video.' },
+      { code: 'SCRIPT_NOT_ACCEPTED', error: 'Accept or approve the script before exporting MP4 video.' },
       409,
     );
   }
@@ -233,13 +249,13 @@ export async function handleRecordManualPublish(
 
   const baseOrigin = resolvePilotRefererOrigin(deps.env ?? process.env);
   if (payload.artifactId) {
-    const ownedReview = await getReviewById(d1, {
+    const exists = await doesOwnedArtifactExist(d1, {
       artifactId: payload.artifactId,
       orgId: payload.orgId,
       userId: user.id,
     });
-    if (!ownedReview) {
-      return jsonPrivate({ code: 'ARTIFACT_NOT_FOUND', error: 'Review artifact not found' }, 404);
+    if (!exists) {
+      return jsonPrivate({ code: 'ARTIFACT_NOT_FOUND', error: 'Review or campaign artifact not found' }, 404);
     }
   }
   if (payload.mp4ExportId) {

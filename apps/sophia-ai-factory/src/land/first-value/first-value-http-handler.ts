@@ -66,6 +66,20 @@ import {
   handleSaveHeyGenByokKey,
   handleSubmitHeyGenMp4,
 } from './first-value-pilot-commercial';
+import {
+  handleApproveAffiliateCampaign,
+  handleArchiveAffiliateOffer,
+  handleEditAffiliateCampaign,
+  handleExportAffiliateCampaign,
+  handleGenerateAffiliateCampaign,
+  handleSaveAffiliateOffer,
+} from './pilot-affiliate-studio-actions';
+import {
+  buildAffiliateStudioSnapshot,
+  handleRecordPartnerPerformance,
+} from './pilot-affiliate-studio-revenue';
+import type { AffiliateCampaignPack } from '@/seed/ai/affiliate-campaign-prompt';
+import type { GenerateAffiliateCampaignInput } from '@/seed/ai/affiliate-campaign-generator';
 import type { ProbeResult } from '@/tree/byok/provider-probe';
 import type { PilotEnvSource } from '@/seed/pilot/pilot-access-policy';
 import type { ScriptOutput } from '@/seed/ai/script-generator';
@@ -109,6 +123,9 @@ export interface FirstValueHttpDeps {
     readonly errorMessage?: string;
   }>;
   readonly generateLiveScript?: (input: LiveScriptGeneratorInput) => Promise<ScriptOutput>;
+  readonly generateLiveAffiliateCampaign?: (
+    input: GenerateAffiliateCampaignInput,
+  ) => Promise<AffiliateCampaignPack>;
 }
 
 function toContractArtifact(rec: DurableFirstValueReview): FirstValueScriptArtifact {
@@ -222,6 +239,12 @@ export async function handleFirstValueGet(
     },
   });
 
+  const affiliateStudio = await buildAffiliateStudioSnapshot(d1, {
+    orgId,
+    userId: user.id,
+    maxGenerations: pilot.quota.maxGenerations,
+  });
+
   return jsonPrivate(
     {
       orgId,
@@ -230,6 +253,7 @@ export async function handleFirstValueGet(
       receipt,
       recentReviews,
       pilot,
+      affiliateStudio,
       publicPublished: false,
       paidInferenceExecuted: false,
     },
@@ -661,6 +685,38 @@ async function dispatchDurableAction(
     return handleSubmitSupportRequest(d1, user, data, {
       nowMs: deps.nowMs,
     });
+  }
+  const studioDeps = {
+    env: deps.pilotEnv,
+    lookupOpenRouterByokKey: deps.lookupOpenRouterByokKey,
+    generateLiveAffiliateCampaign: deps.generateLiveAffiliateCampaign,
+    nowMs: deps.nowMs,
+  };
+  if (data.action === 'save_affiliate_offer') {
+    return handleSaveAffiliateOffer(d1, user, data, studioDeps);
+  }
+  if (data.action === 'archive_affiliate_offer') {
+    return handleArchiveAffiliateOffer(d1, user, data, studioDeps);
+  }
+  if (data.action === 'generate_affiliate_campaign') {
+    return handleGenerateAffiliateCampaign(d1, user, data, idempotencyHeader, studioDeps);
+  }
+  if (data.action === 'edit_affiliate_campaign') {
+    return handleEditAffiliateCampaign(d1, user, data, idempotencyHeader, studioDeps);
+  }
+  if (data.action === 'approve_affiliate_campaign') {
+    return handleApproveAffiliateCampaign(d1, user, data, idempotencyHeader, studioDeps);
+  }
+  if (data.action === 'export_affiliate_campaign') {
+    return handleExportAffiliateCampaign(d1, user, data, idempotencyHeader, studioDeps);
+  }
+  if (data.action === 'record_partner_performance') {
+    return handleRecordPartnerPerformance(
+      d1,
+      user,
+      data,
+      deps.nowMs ? deps.nowMs() : Date.now(),
+    );
   }
   if (data.action === 'create_review') {
     return handleCreateReview(d1, user, data, idempotencyHeader, deps);
