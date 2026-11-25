@@ -158,11 +158,17 @@ describe('Sentry breadcrumb integration', () => {
         }),
       })
     );
-    // Also capture the exception to Sentry
+    // Also capture a scrubbed Error copy to Sentry (never the raw Error reference)
     expect(mocks.captureException).toHaveBeenCalledWith(
-      err,
+      expect.objectContaining({
+        name: 'Error',
+        message: 'test error',
+      }),
       expect.objectContaining({ extra: expect.anything() })
     );
+    const capturedErr = mocks.captureException.mock.calls[0][0];
+    expect(capturedErr).toBeInstanceOf(Error);
+    expect(capturedErr).not.toBe(err);
   });
 
   it('adds fatal logs as breadcrumbs with fatal severity', async () => {
@@ -243,3 +249,131 @@ describe('Sentry breadcrumb integration', () => {
     vi.doUnmock('@sentry/nextjs');
   });
 });
+
+describe('logger-internals secret & PII redaction (Issue #183)', () => {
+  const SYNTHETIC_SK = 'sk-proj-synthetic1234567890abcdef';
+  const SYNTHETIC_SK_OR = 'sk-or-v1-synthetic1234567890abcdef123456';
+  const SYNTHETIC_RESEND = 're_synthetic_1234567890abcdef1234';
+  const SYNTHETIC_JWT = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMTIzIn0.c2lnbmF0dXJlMTIzNDU2';
+  const SYNTHETIC_BEARER = 'Bearer synth_bearer_token_9876543210';
+  const SYNTHETIC_EMAIL = 'ceo-test@example.com';
+
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    (globalThis as typeof globalThis & { __betterStackBuffer?: unknown }).__betterStackBuffer = undefined;
+    (globalThis as typeof globalThis & { __betterStackFlushScheduled?: unknown }).__betterStackFlushScheduled = undefined;
+    process.env.BETTER_STACK_LOGS_TOKEN = 'test-token';
+    await flushBetterStackBuffer();
+    mocks.pushBatch.mockClear();
+    mocks.addBreadcrumb.mockClear();
+    mocks.captureException.mockClear();
+    mocks.forwardToSentry.mockClear();
+  });
+
+  it('redacts Bearer tokens, sk-*, sk-or-*, re_*, JWTs, hyphenated headers, and nested metadata across all sinks', async () => {
+    const rawErr = new Error(
+      `Upstream failed for ${SYNTHETIC_EMAIL}: ${SYNTHETIC_BEARER} ${SYNTHETIC_SK} ${SYNTHETIC_SK_OR} ${SYNTHETIC_RESEND} ${SYNTHETIC_JWT}`
+    );
+    rawErr.stack = `Error: boom ${SYNTHETIC_SK_OR}\n    at fetchWithKey (${SYNTHETIC_RESEND}:1:1)\n    at auth (${SYNTHETIC_BEARER}:2:2)`;
+
+    log(
+      'error',
+      `Request failed with ${SYNTHETIC_BEARER} and ${SYNTHETIC_RESEND}`,
+      {
+        'x-api-key': 'synth-x-api-key-value-9999',
+        'x-auth-token': 'synth-x-auth-token-value-8888',
+        nested: {
+          headers: {
+            'x-api-key': 'nested-api-key-7777',
+            'x-auth-token': 'nested-auth-token-6666',
+            authorization: SYNTHETIC_BEARER,
+          },
+          providerKey: SYNTHETIC_SK_OR,
+          email: SYNTHETIC_EMAIL,
+        },
+        safeField: 'pilot-ok',
+      },
+      rawErr
+    );
+    await drainLogMicrotask();
+
+    const forbiddenValues = [
+      SYNTHETIC_SK,
+      SYNTHETIC_SK_OR,
+      SYNTHETIC_RESEND,
+      SYNTHETIC_JWT,
+      'synth_bearer_token_9876543210',
+      'synth-x-api-key-value-9999',
+      'synth-x-auth-token-value-8888',
+      'nested-api-key-7777',
+      'nested-auth-token-6666',
+      SYNTHETIC_EMAIL,
+    ];
+
+    // 1. Structured console error output
+    const consoleOutput = String(consoleErrorSpy.mock.calls[0]?.[0] ?? '');
+    for (const secret of forbiddenValues) {
+      expect(consoleOutput).not.toContain(secret);
+    }
+
+    // 2. Better Stack transport payload
+    expect(mocks.pushBatch).toHaveBeenCalledTimes(1);
+    const betterStackSerialized = JSON.stringify(mocks.pushBatch.mock.calls[0][0]);
+    for (const secret of forbiddenValues) {
+      expect(betterStackSerialized).not.toContain(secret);
+    }
+
+    // 3. Sentry breadcrumb
+    expect(mocks.addBreadcrumb).toHaveBeenCalledTimes(1);
+    const breadcrumbSerialized = JSON.stringify(mocks.addBreadcrumb.mock.calls[0][0]);
+    for (const secret of forbiddenValues) {
+      expect(breadcrumbSerialized).not.toContain(secret);
+    }
+
+    // 4. Sentry captureException receives scrubbed Error copy, not raw Error
+    expect(mocks.captureException).toHaveBeenCalledTimes(1);
+    const [capturedError, capturedCtx] = mocks.captureException.mock.calls[0];
+    expect(capturedError).toBeInstanceOf(Error);
+    expect(capturedError).not.toBe(rawErr);
+    const sentrySerialized = JSON.stringify({
+      name: capturedError.name,
+      message: capturedError.message,
+      stack: capturedError.stack,
+      ctx: capturedCtx,
+    });
+    for (const secret of forbiddenValues) {
+      expect(sentrySerialized).not.toContain(secret);
+    }
+  });
+
+  it('scrubs non-Error string and object throwables before logging and Sentry forwarding', async () => {
+    log('error', 'string throwable', { stage: 'test' }, `raw failure ${SYNTHETIC_SK_OR} ${SYNTHETIC_RESEND}`);
+    log('error', 'object throwable', { stage: 'test' }, {
+      'x-api-key': 'obj-throw-key-123456',
+      detail: `leaked ${SYNTHETIC_BEARER}`,
+    });
+    await drainLogMicrotask();
+
+    const allConsole = consoleErrorSpy.mock.calls.map((c: unknown[]) => String(c[0] ?? '')).join('\n');
+    const allSentry = mocks.captureException.mock.calls
+      .map((c: unknown[]) => {
+        const err = c[0] as Error;
+        return JSON.stringify({ name: err.name, message: err.message, stack: err.stack });
+      })
+      .join('\n');
+
+    for (const secret of [SYNTHETIC_SK_OR, SYNTHETIC_RESEND, 'obj-throw-key-123456', 'synth_bearer_token_9876543210']) {
+      expect(allConsole).not.toContain(secret);
+      expect(allSentry).not.toContain(secret);
+    }
+    expect(mocks.captureException).toHaveBeenCalledTimes(2);
+    expect(mocks.captureException.mock.calls[0][0]).toBeInstanceOf(Error);
+    expect(mocks.captureException.mock.calls[1][0]).toBeInstanceOf(Error);
+  });
+});
+

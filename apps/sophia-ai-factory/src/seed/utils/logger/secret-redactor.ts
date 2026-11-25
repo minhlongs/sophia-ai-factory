@@ -1,6 +1,6 @@
 import { redactSecrets } from '@/seed/security/secret-redactor';
 
-const SECRET_KEY_RE = /(?:^|_)(?:secret|password|passwd|token|api[_-]?key|cron[_-]?secret|auth[_-]?token|access[_-]?key|private[_-]?key|signing[_-]?key)(?:$|_)/i;
+const SECRET_KEY_RE = /(?:^|[_-])(?:secret|password|passwd|token|authorization|apikey|api[_-]?key|cron[_-]?secret|auth[_-]?token|access[_-]?key|private[_-]?key|signing[_-]?key)(?:$|[_-])/i;
 
 export function redactSecretKeys(value: unknown): unknown {
   if (value === null || value === undefined) return value;
