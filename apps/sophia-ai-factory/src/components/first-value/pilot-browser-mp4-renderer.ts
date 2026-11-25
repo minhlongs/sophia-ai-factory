@@ -51,9 +51,17 @@ async function loadProductImages(urls?: readonly string[]): Promise<HTMLImageEle
       (url) =>
         new Promise<HTMLImageElement | null>((resolve) => {
           const img = new Image();
+          let settled = false;
+          const finish = (value: HTMLImageElement | null) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            resolve(value);
+          };
+          const timer = setTimeout(() => finish(null), 5000);
           img.crossOrigin = 'anonymous';
-          img.onload = () => resolve(img);
-          img.onerror = () => resolve(null);
+          img.onload = () => finish(img);
+          img.onerror = () => finish(null);
           img.src = url;
         }),
     ),
@@ -105,9 +113,14 @@ function drawSlideOnCanvas(
   if (productImages.length > 0) {
     const img = productImages[slide.accentIndex % productImages.length];
     if (img) {
-      drawCoverImage(ctx, img, width, height, 1.04 + (slide.accentIndex % 3) * 0.03);
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.58)';
-      ctx.fillRect(0, 0, width, height);
+      try {
+        drawCoverImage(ctx, img, width, height, 1.04 + (slide.accentIndex % 3) * 0.03);
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.58)';
+        ctx.fillRect(0, 0, width, height);
+      } catch {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, width, height);
+      }
     }
   }
 
@@ -143,8 +156,12 @@ function drawSlideOnCanvas(
   ctx.font = 'bold 11px JetBrains Mono, monospace';
   ctx.fillText(slide.referralShortUrl.slice(0, 44), 24, height - 44);
 
-  const imageData = ctx.getImageData(0, 0, width, height);
-  return new Uint8Array(imageData.data.buffer, imageData.data.byteOffset, imageData.data.byteLength);
+  try {
+    const imageData = ctx.getImageData(0, 0, width, height);
+    return new Uint8Array(imageData.data.buffer, imageData.data.byteOffset, imageData.data.byteLength);
+  } catch {
+    return renderDeterministicRgbaSlide(slide, width, height);
+  }
 }
 
 export function buildSlidesFromAcceptedScript(args: {

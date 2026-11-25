@@ -8,7 +8,7 @@
  * @module components/first-value/first-value-mp4-affiliate-card
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { DurableFirstValueReview } from '@/tree/first-value/first-value-review-repo';
 import type {
@@ -74,6 +74,17 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
   const [renderingMp4, setRenderingMp4] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [productImageUrls, setProductImageUrls] = useState<readonly string[]>([]);
+  const productImageUrlsRef = useRef<readonly string[]>([]);
+  productImageUrlsRef.current = productImageUrls;
+
+  useEffect(() => {
+    return () => {
+      if (typeof URL === 'undefined' || typeof URL.revokeObjectURL !== 'function') return;
+      for (const url of productImageUrlsRef.current) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (props.defaultDestinationUrl) {

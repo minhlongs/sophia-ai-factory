@@ -13,11 +13,18 @@ import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { synthesizeEdgeTts } from '@/forest/edge-tts';
 
+const ALLOWED_PILOT_VOICES = [
+  'vi-VN-HoaiMyNeural',
+  'vi-VN-NamMinhNeural',
+  'en-US-JennyNeural',
+  'en-US-GuyNeural',
+] as const;
+
 const PilotVoiceRequestSchema = z.object({
   text: z.string().trim().min(5).max(3000),
   locale: z.enum(['vi', 'en']).default('vi'),
   gender: z.enum(['female', 'male']).default('female'),
-  voice: z.string().trim().min(3).max(80).optional(),
+  voice: z.enum(ALLOWED_PILOT_VOICES).optional(),
   filename: z.string().trim().min(1).max(80).optional(),
 });
 
@@ -47,10 +54,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const result = await synthesizeEdgeTts(parsed.data.text, parsed.data.locale, {
-    gender: parsed.data.gender,
-    voice: parsed.data.voice,
-  });
+  let result: Awaited<ReturnType<typeof synthesizeEdgeTts>>;
+  try {
+    result = await synthesizeEdgeTts(parsed.data.text, parsed.data.locale, {
+      gender: parsed.data.gender,
+      voice: parsed.data.voice,
+    });
+  } catch {
+    return NextResponse.json({ error: 'Voice synthesis failed' }, { status: 500 });
+  }
 
   const ext = result.mimeType === 'audio/mpeg' ? 'mp3' : 'wav';
   const safeName = `${sanitizeFilename(parsed.data.filename)}.${ext}`;
