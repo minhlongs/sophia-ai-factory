@@ -91,7 +91,7 @@ export async function loadKeyVersion(version: number): Promise<CryptoKey | null>
     throw new Error('BYOK_KEY_VERSION_STORE_UNAVAILABLE');
   }
 
-  if (!row) return null;
+  if (!row || typeof row.encrypted_key !== 'string') return null;
 
   try {
     const dekBytes = await unwrapDekWithMasterKek(
@@ -126,7 +126,12 @@ export async function getActiveKeyVersion(): Promise<number> {
 }
 
 export async function importKeyByVersion(version: number): Promise<CryptoKey> {
-  const db = await getD1().catch(() => null);
+  let db = null;
+  try {
+    db = await getD1();
+  } catch {
+    db = null;
+  }
   if (!db) {
     if (version === 1) return importMasterKey();
     throw new Error('BYOK_KEY_VERSION_STORE_UNAVAILABLE');
