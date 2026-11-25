@@ -75,7 +75,10 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [productImageUrls, setProductImageUrls] = useState<readonly string[]>([]);
   const productImageUrlsRef = useRef<readonly string[]>([]);
-  productImageUrlsRef.current = productImageUrls;
+
+  useEffect(() => {
+    productImageUrlsRef.current = productImageUrls;
+  }, [productImageUrls]);
 
   useEffect(() => {
     return () => {
