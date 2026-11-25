@@ -41,7 +41,11 @@ import {
   type SupportRequestKind,
   type SupportSubmissionReceipt,
 } from '../first-value-support-card';
-import { AffiliateCampaignGeneratorCard } from './affiliate-campaign-generator-card';
+import {
+  AffiliateCampaignGeneratorCard,
+  resolveDefaultContentLocaleForMarket,
+  type CampaignContentLocale,
+} from './affiliate-campaign-generator-card';
 import { AffiliateContentWorkspaceCard } from './affiliate-content-workspace-card';
 import { AffiliateOffersCard, type NewAffiliateOfferInput } from './affiliate-offers-card';
 import { AffiliateOverviewCard } from './affiliate-overview-card';
@@ -99,9 +103,6 @@ export interface AffiliateCampaignStudioProps {
 }
 
 export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
-  const locale: 'vi' | 'en' =
-    typeof window !== 'undefined' && window.location.pathname.startsWith('/en') ? 'en' : 'vi';
-
   const offers = props.studio?.offers ?? [];
   const campaigns = props.studio?.campaigns ?? [];
   const entries = props.studio?.performanceEntries ?? [];
@@ -153,8 +154,13 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
     return false;
   }
 
-  async function handleGenerateCampaign(durationSec: number): Promise<void> {
+  async function handleGenerateCampaign(
+    durationSec: number,
+    contentLocale?: CampaignContentLocale,
+  ): Promise<void> {
     if (!activeOffer) return;
+    const effectiveLocale =
+      contentLocale ?? resolveDefaultContentLocaleForMarket(activeOffer.targetMarket);
     const key = `aff-gen-${crypto.randomUUID()}`;
     const res = await props.postAction(
       {
@@ -162,7 +168,7 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
         orgId: props.orgId,
         offerId: activeOffer.id,
         durationSec,
-        locale,
+        locale: effectiveLocale,
         provenance: 'live_provider',
         idempotencyKey: key,
       },
@@ -178,6 +184,7 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
 
   async function handleSaveEdit(pack: AffiliateCampaignPack): Promise<boolean> {
     if (!activeCampaign) return false;
+    const effectiveLocale = resolveDefaultContentLocaleForMarket(activeCampaign.targetMarket);
     const key = `aff-edit-${crypto.randomUUID()}`;
     const res = await props.postAction(
       {
@@ -186,7 +193,7 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
         campaignId: activeCampaign.id,
         expectedVersion: activeCampaign.version,
         pack,
-        locale,
+        locale: effectiveLocale,
         idempotencyKey: key,
       },
       key,

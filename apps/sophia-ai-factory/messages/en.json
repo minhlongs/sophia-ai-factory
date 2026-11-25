@@ -9901,7 +9901,10 @@
     "affConfirmedInputLabel": "Confirmed",
     "affCurrencyLabel": "Currency",
     "affRecordPerfBtn": "Record Performance Report",
-    "affRecordPerfSaved": "Partner performance report recorded to commission ledger."
+    "affRecordPerfSaved": "Partner performance report recorded to commission ledger.",
+    "affContentLangLabel": "Campaign Content Language",
+    "affContentLangEn": "English (EN — default for US/EU/JP/GLOBAL)",
+    "affContentLangVi": "Vietnamese (VI — for VN market)"
   },
   "publishGate": {
     "metaTitle": "Compliance Publish Gate (Simulation)",

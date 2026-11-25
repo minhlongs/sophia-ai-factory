@@ -10,12 +10,20 @@
  * @module components/first-value/affiliate-studio/affiliate-campaign-generator-card
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type {
   PilotAffiliateCampaignRecord,
   PilotAffiliateOfferRecord,
 } from '@/tree/first-value/pilot-affiliate-studio-repo';
+
+export type CampaignContentLocale = 'en' | 'vi';
+
+export function resolveDefaultContentLocaleForMarket(
+  targetMarket: string | null | undefined,
+): CampaignContentLocale {
+  return (targetMarket ?? '').trim().toUpperCase() === 'VN' ? 'vi' : 'en';
+}
 
 export interface AffiliateCampaignGeneratorCardProps {
   readonly selectedOffer: PilotAffiliateOfferRecord | null;
@@ -25,7 +33,7 @@ export interface AffiliateCampaignGeneratorCardProps {
   readonly canGenerate: boolean;
   readonly busy: boolean;
   readonly onSelectCampaign: (campaignId: string) => void;
-  readonly onGenerate: (durationSec: number) => Promise<void>;
+  readonly onGenerate: (durationSec: number, contentLocale: CampaignContentLocale) => Promise<void>;
 }
 
 export function AffiliateCampaignGeneratorCard({
@@ -40,6 +48,12 @@ export function AffiliateCampaignGeneratorCard({
 }: AffiliateCampaignGeneratorCardProps) {
   const t = useTranslations('firstValue');
   const [durationSec, setDurationSec] = useState(30);
+  const defaultLocale = resolveDefaultContentLocaleForMarket(selectedOffer?.targetMarket);
+  const [contentLocale, setContentLocale] = useState<CampaignContentLocale>(defaultLocale);
+
+  useEffect(() => {
+    setContentLocale(resolveDefaultContentLocaleForMarket(selectedOffer?.targetMarket));
+  }, [selectedOffer?.id, selectedOffer?.targetMarket]);
 
   return (
     <section id="campaigns" className="rounded-xl border border-border bg-card p-5">
@@ -80,10 +94,22 @@ export function AffiliateCampaignGeneratorCard({
                 className="w-28 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
               />
             </label>
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+              {t('affContentLangLabel')}
+              <select
+                value={contentLocale}
+                disabled={busy}
+                onChange={(e) => setContentLocale(e.target.value as CampaignContentLocale)}
+                className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+              >
+                <option value="en">{t('affContentLangEn')}</option>
+                <option value="vi">{t('affContentLangVi')}</option>
+              </select>
+            </label>
             <button
               type="button"
               disabled={busy || !canGenerate}
-              onClick={() => void onGenerate(durationSec)}
+              onClick={() => void onGenerate(durationSec, contentLocale)}
               className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
             >
               {busy ? t('loading') : t('affGenerateCampaignBtn')}

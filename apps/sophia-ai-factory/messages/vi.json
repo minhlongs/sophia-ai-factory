@@ -9902,7 +9902,10 @@
     "affConfirmedInputLabel": "Đã xác nhận",
     "affCurrencyLabel": "Tiền tệ",
     "affRecordPerfBtn": "Lưu báo cáo kết quả",
-    "affRecordPerfSaved": "Đã ghi nhận báo cáo đối tác vào sổ cái doanh thu."
+    "affRecordPerfSaved": "Đã ghi nhận báo cáo đối tác vào sổ cái doanh thu.",
+    "affContentLangLabel": "Ngôn ngữ nội dung chiến dịch",
+    "affContentLangEn": "Tiếng Anh (EN — mặc định cho US/EU/JP/GLOBAL)",
+    "affContentLangVi": "Tiếng Việt (VI — dành cho thị trường VN)"
   },
   "publishGate": {
     "metaTitle": "Cổng Duyệt Đăng Tuân Thủ (Mô Phỏng)",

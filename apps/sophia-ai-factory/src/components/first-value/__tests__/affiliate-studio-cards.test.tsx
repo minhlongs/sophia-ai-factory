@@ -3,7 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AffiliateOverviewCard } from '../affiliate-studio/affiliate-overview-card';
 import { AffiliateOffersCard, normalizeOfferUrlInput } from '../affiliate-studio/affiliate-offers-card';
-import { AffiliateCampaignGeneratorCard } from '../affiliate-studio/affiliate-campaign-generator-card';
+import {
+  AffiliateCampaignGeneratorCard,
+  resolveDefaultContentLocaleForMarket,
+} from '../affiliate-studio/affiliate-campaign-generator-card';
 import { AffiliateContentWorkspaceCard } from '../affiliate-studio/affiliate-content-workspace-card';
 import { AffiliateRevenueDashboardCard } from '../affiliate-studio/affiliate-revenue-dashboard-card';
 import type { PilotAffiliateCampaignRecord, PilotAffiliateOfferRecord } from '@/tree/first-value/pilot-affiliate-studio-repo';
@@ -187,9 +190,18 @@ describe('Affiliate Studio UI Cards branch coverage', () => {
       />,
     );
 
+    expect(resolveDefaultContentLocaleForMarket('US')).toBe('en');
+    expect(resolveDefaultContentLocaleForMarket('EU')).toBe('en');
+    expect(resolveDefaultContentLocaleForMarket('VN')).toBe('vi');
+
     fireEvent.change(screen.getByLabelText('durationLabel'), { target: { value: '45' } });
     fireEvent.click(screen.getByRole('button', { name: 'affGenerateCampaignBtn' }));
-    await waitFor(() => expect(onGen).toHaveBeenCalledWith(45));
+    await waitFor(() => expect(onGen).toHaveBeenCalledWith(45, 'en'));
+
+    // Customer can explicitly override content language to VI even for US offer
+    fireEvent.change(screen.getByLabelText('affContentLangLabel'), { target: { value: 'vi' } });
+    fireEvent.click(screen.getByRole('button', { name: 'affGenerateCampaignBtn' }));
+    await waitFor(() => expect(onGen).toHaveBeenCalledWith(45, 'vi'));
 
     fireEvent.click(screen.getByRole('button', { name: 'affOpenWorkspaceBtn' }));
     expect(onSelect).toHaveBeenCalledWith('pcmp_2');

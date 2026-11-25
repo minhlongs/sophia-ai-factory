@@ -107,6 +107,14 @@ function runPilotD1Sql(sql) {
 function main(argv) {
   const [subcommand = 'list', ...rest] = argv;
 
+  if (subcommand === 'feedback') {
+    const rows = runPilotD1Sql(
+      `SELECT f.id, f.org_id, f.user_id, u.email AS user_email, f.artifact_id, f.rating, f.category, f.comment, f.created_at_iso FROM pilot_feedback f LEFT JOIN "user" u ON u.id = f.user_id ORDER BY f.created_at_iso DESC LIMIT 50;`,
+    );
+    process.stdout.write(`${JSON.stringify({ count: rows.length, feedback: rows }, null, 2)}\n`);
+    return;
+  }
+
   if (subcommand === 'list') {
     const statusFlag = rest.find((arg) => arg.startsWith('--status='));
     const rawStatus = statusFlag ? statusFlag.split('=')[1] : null;
