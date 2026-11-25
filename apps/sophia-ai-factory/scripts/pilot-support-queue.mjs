@@ -109,7 +109,7 @@ function main(argv) {
 
   if (subcommand === 'feedback') {
     const rows = runPilotD1Sql(
-      `SELECT f.id, f.org_id, f.user_id, u.email AS user_email, f.artifact_id, f.rating, f.category, f.comment, f.created_at_iso FROM pilot_feedback f LEFT JOIN "user" u ON u.id = f.user_id ORDER BY f.created_at_iso DESC LIMIT 50;`,
+      `SELECT f.id, f.org_id, f.user_id, u.email AS user_email, f.artifact_id, f.rating, f.category, f.comment, CASE WHEN f.screenshot_data_url IS NOT NULL AND length(f.screenshot_data_url) > 0 THEN 1 ELSE 0 END AS has_screenshot, length(f.screenshot_data_url) AS screenshot_bytes, f.created_at_iso FROM pilot_feedback f LEFT JOIN "user" u ON u.id = f.user_id ORDER BY f.created_at_iso DESC LIMIT 50;`,
     );
     process.stdout.write(`${JSON.stringify({ count: rows.length, feedback: rows }, null, 2)}\n`);
     return;

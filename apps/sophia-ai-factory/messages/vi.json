@@ -9905,7 +9905,11 @@
     "affRecordPerfSaved": "Đã ghi nhận báo cáo đối tác vào sổ cái doanh thu.",
     "affContentLangLabel": "Ngôn ngữ nội dung chiến dịch",
     "affContentLangEn": "Tiếng Anh (EN — mặc định cho US/EU/JP/GLOBAL)",
-    "affContentLangVi": "Tiếng Việt (VI — dành cho thị trường VN)"
+    "affContentLangVi": "Tiếng Việt (VI — dành cho thị trường VN)",
+    "feedbackScreenshotLabel": "Ảnh chụp màn hình minh họa (tùy chọn — PNG/JPG/WebP, tối đa 500KB)",
+    "feedbackScreenshotInvalidType": "Chỉ hỗ trợ ảnh định dạng PNG, JPG hoặc WebP.",
+    "feedbackScreenshotTooLarge": "Ảnh vượt quá 500KB — vui lòng chọn ảnh nhẹ hơn hoặc chụp lại vùng lỗi.",
+    "feedbackScreenshotRemoveBtn": "Gỡ ảnh"
   },
   "publishGate": {
     "metaTitle": "Cổng Duyệt Đăng Tuân Thủ (Mô Phỏng)",

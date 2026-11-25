@@ -187,9 +187,31 @@ describe('FirstValueFeedbackCard', () => {
         rating: 4,
         category: 'editing_friction',
         comment: 'Great draft, minor tweak needed',
+        screenshotDataUrl: null,
       });
       expect(screen.getByText('feedbackSubmittedSuccess')).toBeTruthy();
     });
+
+    // Reject unsupported file type and oversized image, accept valid PNG
+    const fileInput = screen.getByLabelText('feedbackScreenshotLabel') as HTMLInputElement;
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['bad'], 'doc.pdf', { type: 'application/pdf' })] },
+    });
+    expect(screen.getByText('feedbackScreenshotInvalidType')).toBeTruthy();
+
+    fireEvent.change(fileInput, {
+      target: { files: [new File([new Uint8Array(600 * 1024)], 'big.png', { type: 'image/png' })] },
+    });
+    expect(screen.getByText('feedbackScreenshotTooLarge')).toBeTruthy();
+
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['pngbytes'], 'bug.png', { type: 'image/png' })] },
+    });
+    await waitFor(() => {
+      expect(screen.getByText('bug.png')).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'feedbackScreenshotRemoveBtn' }));
+    expect(screen.queryByText('bug.png')).toBeNull();
 
     fireEvent.change(textarea, { target: { value: 'Follow-up note' } });
     expect(screen.queryByText('feedbackSubmittedSuccess')).toBeNull();

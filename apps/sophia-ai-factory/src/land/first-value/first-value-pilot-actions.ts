@@ -768,6 +768,7 @@ export async function handleSubmitFeedback(
       rating: payload.rating,
       category: payload.category,
       comment: payload.comment,
+      screenshotDataUrl: payload.screenshotDataUrl ?? null,
       nowIso,
     });
   } catch {

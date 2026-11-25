@@ -387,6 +387,7 @@ export function FirstValueJourneyClient({
     readonly rating: number;
     readonly category: PilotFeedbackCategory;
     readonly comment: string;
+    readonly screenshotDataUrl?: string | null;
   }): Promise<boolean> {
     const data = await postAction({
       action: 'submit_feedback',
@@ -395,6 +396,7 @@ export function FirstValueJourneyClient({
       rating: input.rating,
       category: input.category,
       comment: input.comment,
+      ...(input.screenshotDataUrl ? { screenshotDataUrl: input.screenshotDataUrl } : {}),
     });
     return Boolean(data?.feedback);
   }

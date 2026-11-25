@@ -9904,7 +9904,11 @@
     "affRecordPerfSaved": "Partner performance report recorded to commission ledger.",
     "affContentLangLabel": "Campaign Content Language",
     "affContentLangEn": "English (EN — default for US/EU/JP/GLOBAL)",
-    "affContentLangVi": "Vietnamese (VI — for VN market)"
+    "affContentLangVi": "Vietnamese (VI — for VN market)",
+    "feedbackScreenshotLabel": "Attach screenshot (optional — PNG/JPG/WebP, max 500KB)",
+    "feedbackScreenshotInvalidType": "Only PNG, JPEG, or WebP images are supported.",
+    "feedbackScreenshotTooLarge": "Image exceeds 500KB — please attach a smaller screenshot.",
+    "feedbackScreenshotRemoveBtn": "Remove image"
   },
   "publishGate": {
     "metaTitle": "Compliance Publish Gate (Simulation)",

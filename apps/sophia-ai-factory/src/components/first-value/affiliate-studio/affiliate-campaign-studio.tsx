@@ -94,6 +94,7 @@ export interface AffiliateCampaignStudioProps {
     readonly rating: number;
     readonly category: PilotFeedbackCategory;
     readonly comment: string;
+    readonly screenshotDataUrl?: string | null;
   }) => Promise<boolean>;
   readonly onSubmitSupportRequest: (input: {
     readonly requestType: SupportRequestKind;

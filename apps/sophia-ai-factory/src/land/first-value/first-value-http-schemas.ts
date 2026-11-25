@@ -109,6 +109,15 @@ export const FirstValuePostSchema = z.discriminatedUnion('action', [
     rating: z.number().int().min(1).max(5),
     category: z.enum(['usefulness', 'editing_friction', 'bug_report', 'other']),
     comment: z.string().trim().min(1).max(2000),
+    screenshotDataUrl: z
+      .string()
+      .max(700_000)
+      .regex(
+        /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/,
+        'Screenshot must be a PNG, JPEG, or WebP image (max 500KB)',
+      )
+      .optional()
+      .nullable(),
   }),
   z.object({
     action: z.literal('save_byok_key'),
