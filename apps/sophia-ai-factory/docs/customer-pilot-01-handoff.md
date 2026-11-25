@@ -21,10 +21,10 @@
    - **Khóa OpenRouter của bạn (Customer BYOK) & Nhà cung cấp AI:** Bạn nhập khóa OpenRouter cá nhân (`sk-or-v1-...`) ngay tại mục số 1; khóa được mã hóa AES-256-GCM và chỉ giải mã tạm thời để gửi brief tới OpenRouter (`openai/gpt-4o-mini`). Không nhập mật khẩu cá nhân, thẻ thanh toán hay dữ liệu nhạy cảm vào ô brief.
    - **Lưu trữ, Hỗ trợ & Xóa dữ liệu:** Lưu tối đa 7 ngày trong cơ sở dữ liệu thử nghiệm biệt lập (`sophia-pilot-db`). Bạn có thể xóa khóa BYOK bất cứ lúc nào hoặc gửi yêu cầu tại mục **Hỗ trợ & Xóa dữ liệu** ngay trong ứng dụng (`#support-deletion`) để nhận mã biên nhận `psr_...` (xử lý trong vòng 72 giờ).
 4. **🔑 Kết nối khóa OpenRouter (BYOK):** Dán khóa API OpenRouter của bạn vào ô **1. Khóa API OpenRouter Của Bạn** và nhấn **Xác thực & Lưu khóa**.
-5. **✍️ Nhập yêu cầu nội dung (Business Brief):** Điền Chủ đề, Đối tượng khách hàng và Thời lượng mong muốn (ví dụ 30 giây).
-6. **✨ Tạo kịch bản AI thật:** Nhấn **Tạo kịch bản AI thật** (tối đa 20 lượt trong đợt thử nghiệm). Hệ thống tạo kịch bản gồm tối thiểu 3 phân cảnh (tên cảnh, hình ảnh, lời thoại).
-7. **✏️ Xem, Chỉnh sửa & Lưu bản nháp:** Nhấn **Chỉnh sửa kịch bản** để điều chỉnh tiêu đề kịch bản, tên phân cảnh, mô tả hình ảnh hoặc lời thoại, rồi nhấn **Lưu bản nháp**.
-8. **✅ Duyệt & Xuất nội dung:** Nhấn **Chấp nhận kịch bản**, sau đó chọn **Xuất Markdown riêng tư**, **Xuất JSON riêng tư**, **Sao chép nội dung** hoặc **Tải tệp xuống**.
+5. **🏷️ Chọn lĩnh vực & Thêm Affiliate Offer:** Chọn **Crypto Affiliate** (chỉ hỗ trợ thị trường hợp lệ US, EU, JP — chặn VN/SG và không cam kết lợi nhuận) hoặc **SaaS Affiliate**, nhập tên sản phẩm, website chính thức, **referral link hợp lệ của bạn**, điều kiện nhận hoa hồng, đối tượng/thị trường và nguồn thông tin, rồi nhấn **Lưu Affiliate Offer**.
+6. **✨ Tạo chiến dịch Affiliate bằng AI:** Nhấn **Tạo bộ chiến dịch Affiliate (AI thật)** để nhận phân tích đối tượng, value proposition, góc nội dung, kịch bản short-form, hook/CTA, bài đăng social, affiliate disclosure và bảo toàn nguyên vẹn referral link của bạn.
+7. **✏️ Content Factory Workspace — Chỉnh sửa, Duyệt & Xuất thủ công:** Chỉnh sửa nội dung, nhấn **Lưu bản nháp**, sau đó nhấn **Duyệt chiến dịch để mở khóa xuất nội dung** và chọn **Xuất Markdown riêng tư** hoặc **Xuất JSON riêng tư** để đăng thủ công.
+8. **📊 Theo dõi Doanh thu & Hoa hồng:** Xem trạng thái đối tác (`NOT_CONNECTED` khi chưa nối webhook postback) hoặc ghi nhận báo cáo đối tác có mã đối soát chính thức để theo dõi Clicks, Signups, Chuyển đổi, Hoa hồng chờ duyệt, Hoa hồng đã xác nhận, Chi phí AI và Doanh thu ròng.
 9. **💬 Gửi góp ý, báo lỗi hoặc yêu cầu hỗ trợ/xóa dữ liệu:** Dùng khung **Góp ý & Báo lỗi thử nghiệm** hoặc khung **Yêu cầu Hỗ trợ & Xóa dữ liệu** ngay bên dưới trang.
 
 ### 🇬🇧 Step-by-step Guide (Customer)
@@ -37,10 +37,10 @@
    - **Customer BYOK & AI Provider Transfer:** Enter your own OpenRouter API key (`sk-or-v1-...`) in Card 1 (stored encrypted with AES-256-GCM). Your brief is transmitted to OpenRouter (`openai/gpt-4o-mini`) solely to generate your script. Never enter passwords, payment data, or sensitive personal data.
    - **Retention, Support & Deletion:** Stored in an isolated pilot database (`sophia-pilot-db`) for 7 days. Remove your BYOK key anytime or submit a Support / Data Deletion request directly in the in-app **Support & Data Deletion** panel (`#support-deletion`) to receive a verifiable `psr_...` receipt ID (completed within 72 hours).
 4. **🔑 Connect Your OpenRouter Key (BYOK):** Paste your OpenRouter key in **1. Your OpenRouter API Key (Customer BYOK)** and click **Verify & Save Key**.
-5. **✍️ Enter a Business Brief:** Fill in Topic, Target Audience, and Duration (e.g., 30 seconds).
-6. **✨ Generate Your First Real AI Script:** Click **Generate Live AI Script** (up to 20 generations in this pilot) to produce a validated script with at least 3 scenes (scene name, visuals, narration).
-7. **✏️ Review, Edit & Save Draft:** Click **Edit Script** to refine the script title, scene names, visual notes, or narration, then click **Save Draft**.
-8. **✅ Approve & Export:** Click **Explicitly Accept Script**, then choose **Export Private Markdown**, **Export Private JSON**, **Copy Export**, or **Download File**.
+5. **🏷️ Select Vertical & Add Your Affiliate Offer:** Choose **Crypto Affiliate** (assessed markets US, EU, JP only — VN/SG blocked, zero guaranteed-return claims) or **SaaS Affiliate**, enter product name, official website, **your approved referral link**, commission terms, target audience/market, and product info source, then click **Save Affiliate Offer**.
+6. **✨ Generate Your Affiliate Campaign:** Click **Generate Live AI Affiliate Campaign** to create audience analysis, value proposition, content angles, short-form script, hook/CTA, ready-to-post social copy, mandatory disclosure, and exact referral link preservation.
+7. **✏️ Content Factory Workspace — Edit, Approve & Export:** Edit and click **Save Draft**, then click **Approve Campaign to Unlock Export** and export Markdown or JSON for manual publishing.
+8. **📊 Track Revenue & Commissions:** View partner feed status (`NOT_CONNECTED` when no live postback webhook is connected) or record verified partner statements with reference IDs to track Clicks, Signups, Qualified Conversions, Pending Commissions, Confirmed Commissions, Estimated AI Cost, and Net Revenue.
 9. **💬 Share Feedback or Request Support / Deletion:** Use the **Pilot Feedback & Issue Report** card or the **Support & Data Deletion Request** card on the same page.
 
 ---
@@ -112,6 +112,7 @@ Apply to `sophia-pilot-db` (`--remote --config wrangler.pilot.toml` — NEVER `s
 13. `migrations/0515_first_value_reviews.sql`
 14. `migrations/0517_customer_pilot_first_value.sql`
 15. `migrations/0519_pilot_support_requests.sql`
+16. `migrations/0520_pilot_affiliate_revenue_studio.sql`
 
 Apply to `sophia-pilot-tag-cache` (`--remote --config wrangler.pilot.toml`):
 1. `migrations/0108-opennext-tag-cache.sql`
