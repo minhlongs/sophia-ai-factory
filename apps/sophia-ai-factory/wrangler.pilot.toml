@@ -23,7 +23,7 @@
 # - Required Worker Secrets (set via `wrangler secret put <NAME> --config wrangler.pilot.toml`):
 #     BETTER_AUTH_SECRET
 #     BYOK_MASTER_KEY
-#     PILOT_ALLOWED_EMAILS      (exact Founder-supplied single customer email via `scripts/pilot-invite-customer.mjs`)
+#     PILOT_ALLOWED_EMAILS      (operator allowlist + exact invited customer email via `scripts/pilot-invite-customer.mjs`)
 # - Verify isolation before any deploy:
 #     npm run pilot:check-isolation -- --require-resolved-ids
 
