@@ -26,6 +26,7 @@ describe('Shortlink Hot-Swap (Affiliate Sovereignty Layer 1)', () => {
     const okRes = await hotSwapShortlinkDestination({
       db,
       orgId: 'org_1',
+      userId: 'user_1',
       linkId: 'lnk_1',
       newDestinationUrl: 'https://accounts.binance.com/register?ref=NEW123',
       nowIso: '2026-11-25T16:00:00Z',
@@ -39,6 +40,7 @@ describe('Shortlink Hot-Swap (Affiliate Sovereignty Layer 1)', () => {
     const crossTenantRes = await hotSwapShortlinkDestination({
       db,
       orgId: 'org_other',
+      userId: 'user_other',
       linkId: 'lnk_1',
       newDestinationUrl: 'https://partner.example.com/offer',
     });

@@ -14,6 +14,7 @@
  */
 
 import { success, failure, type Result } from '@/seed/types/result';
+import { validateHttpsDestinationUrl } from '@/tree/first-value/pilot-shortlink-repo';
 
 export interface HotSwapD1Prepared {
   bind(...values: unknown[]): {
@@ -28,6 +29,7 @@ export interface HotSwapD1Like {
 export interface HotSwapShortlinkInput {
   readonly db: HotSwapD1Like;
   readonly orgId: string;
+  readonly userId: string;
   readonly linkId: string;
   readonly newDestinationUrl: string;
   readonly nowIso?: string;
@@ -36,39 +38,23 @@ export interface HotSwapShortlinkInput {
 export interface HotSwapShortlinkOutput {
   readonly linkId: string;
   readonly orgId: string;
+  readonly userId: string;
   readonly destinationUrl: string;
   readonly updatedAtIso: string;
 }
 
-const PRIVATE_HOST_RE =
-  /^(localhost|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[0-1])\.|0\.0\.0\.0|\[::1\])/i;
-
 export function validateHotSwapDestinationUrl(
   rawUrl: string,
 ): Result<string, { code: string; message: string }> {
-  const trimmed = rawUrl.trim();
-  let parsed: URL;
   try {
-    parsed = new URL(trimmed);
-  } catch {
-    return failure({ code: 'INVALID_URL', message: 'Destination URL is malformed' });
-  }
-
-  if (parsed.protocol !== 'https:') {
+    const normalized = validateHttpsDestinationUrl(rawUrl);
+    return success(normalized.toString());
+  } catch (err) {
     return failure({
-      code: 'HTTPS_REQUIRED',
-      message: 'Destination URL must use https://',
+      code: 'INVALID_DESTINATION_URL',
+      message: err instanceof Error ? err.message : 'Invalid destination URL',
     });
   }
-
-  if (PRIVATE_HOST_RE.test(parsed.hostname) || parsed.hostname.endsWith('.local')) {
-    return failure({
-      code: 'PRIVATE_HOST_BLOCKED',
-      message: 'Private or local hostnames are not allowed',
-    });
-  }
-
-  return success(parsed.toString());
 }
 
 export async function hotSwapShortlinkDestination(
@@ -82,21 +68,22 @@ export async function hotSwapShortlinkDestination(
     .prepare(
       `UPDATE pilot_affiliate_links
        SET destination_url = ?, updated_at = ?
-       WHERE id = ? AND org_id = ?`,
+       WHERE id = ? AND org_id = ? AND user_id = ?`,
     )
-    .bind(validated.value, updatedAtIso, input.linkId, input.orgId)
+    .bind(validated.value, updatedAtIso, input.linkId, input.orgId, input.userId)
     .run();
 
   if ((res.meta?.changes ?? 0) === 0) {
     return failure({
       code: 'LINK_NOT_FOUND',
-      message: 'Shortlink not found for this organization',
+      message: 'Shortlink not found for this organization and user',
     });
   }
 
   return success({
     linkId: input.linkId,
     orgId: input.orgId,
+    userId: input.userId,
     destinationUrl: validated.value,
     updatedAtIso,
   });
