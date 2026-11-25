@@ -9,6 +9,7 @@ export interface ResilientOpenRouterOptions {
   maxRetries?: number
   timeoutMs?: number
   referer?: string
+  circuitKeyRef?: string
 }
 
 export interface MultiProviderResilientOptions {

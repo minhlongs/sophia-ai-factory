@@ -124,4 +124,35 @@ describe('RegisterPageView Auth 2027 flows', () => {
     fireEvent.click(enrollBtn);
     await waitFor(() => expect(mockAddPasskey).toHaveBeenCalledTimes(2));
   });
+
+  it('validates terms agreement, maps pilot invite errors, and wires redirectTo + emailOtpEnabled=false', async () => {
+    render(<RegisterPageView redirectTo="/vi/dashboard/first-value" emailOtpEnabled={false} />);
+    expect(screen.queryByRole('button', { name: 'Mã OTP 6 số' })).toBeNull();
+
+    fireEvent.change(screen.getByLabelText(/Địa chỉ Email/i), { target: { value: 'ceo@sophia.ai' } });
+    fireEvent.change(screen.getByLabelText(/Tạo mật khẩu/i), { target: { value: 'Password123!' } });
+    fireEvent.change(screen.getByLabelText(/Xác nhận mật khẩu/i), { target: { value: 'Password123!' } });
+
+    // Submit without checking terms -> blocked before API call
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo tài khoản' }));
+    expect(mockSignUpEmail).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    mockSignUpEmail.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'PILOT_INVITE_REQUIRED', message: 'This private pilot is invite-only', status: 403 },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo tài khoản' }));
+    await waitFor(() =>
+      expect(mockSignUpEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ callbackURL: '/dashboard/first-value' }),
+      ),
+    );
+
+    mockSignUpEmail.mockResolvedValueOnce({ data: { user: { id: 'u_pilot' } }, error: null });
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo tài khoản' }));
+    await waitFor(() => expect(screen.getByText('Tạo tài khoản thành công!')).toBeDefined());
+    const continueLink = screen.getByRole('link', { name: /continueWorkspace/i });
+    expect(continueLink.getAttribute('href')).toBe('/dashboard/first-value');
+  });
 });

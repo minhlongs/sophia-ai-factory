@@ -1,5 +1,6 @@
 export interface LoginFormProps {
   redirectTo?: string;
+  emailOtpEnabled?: boolean;
 }
 
 export interface LoginState {

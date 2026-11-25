@@ -7,6 +7,7 @@ import {
 import {
   selectModelForTier,
   resolveScriptApiKey,
+  parseScriptJsonFromLlm,
   validateParsedScriptStructure,
   rethrowMappedProviderError,
   type GenerateScriptInput,
@@ -17,6 +18,7 @@ import {
 export type { ScriptOutput } from './script-prompt-builders';
 export {
   selectModelForTier,
+  parseScriptJsonFromLlm,
   validateParsedScriptStructure,
   InvalidScriptStructureError,
   type GenerateScriptInput,
@@ -103,6 +105,7 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
         maxRetries: deps?.maxRetries,
         timeoutMs: deps?.timeoutMs,
         referer: deps?.referer,
+        circuitKeyRef: deps?.funding?.fund === 'byok' ? `byok:${finalUserId}` : undefined,
       },
     );
 
@@ -110,7 +113,7 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
 
     let parsed: unknown;
     try {
-      parsed = JSON.parse(content);
+      parsed = parseScriptJsonFromLlm(content);
     } catch {
       if (deps?.trackUsage) {
         await deps.trackUsage({

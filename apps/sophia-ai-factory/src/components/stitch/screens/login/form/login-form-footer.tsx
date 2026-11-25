@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/navigation';
 import { SocialAuthButtons } from './social-auth-buttons';
+import { resolveRedirectTarget } from './use-auth-2027-state';
 
 export function LoginErrorBanner({ error }: { error: string | null }) {
   if (!error) return null;
@@ -24,13 +25,18 @@ export function LoginFormFooter({
   passkeyLoading,
   onSendOtp,
   otpSending,
+  redirectTo,
 }: {
   onPasskey: () => void;
   passkeyLoading: boolean;
-  onSendOtp: () => void;
+  onSendOtp?: () => void;
   otpSending: boolean;
+  redirectTo?: string;
 }) {
   const t = useTranslations('stitch.auth.login');
+  const signUpHref = redirectTo
+    ? `/register?next=${encodeURIComponent(resolveRedirectTarget(redirectTo))}`
+    : '/register';
 
   return (
     <>
@@ -55,7 +61,7 @@ export function LoginFormFooter({
       <p className="text-center text-sm text-slate-600 dark:text-zinc-400">
         {t('noAccount')}{' '}
         <Link
-          href="/register"
+          href={signUpHref}
           className="text-[#4338CA] dark:text-[#6366F1] hover:opacity-80 font-semibold transition-opacity"
         >
           {t('signUp')}

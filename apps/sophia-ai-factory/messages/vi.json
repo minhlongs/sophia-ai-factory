@@ -6586,14 +6586,15 @@
         "switchToVietnamese": "Chuyển sang Tiếng Việt",
         "switchToEnglish": "Chuyển sang Tiếng Anh",
         "magicLink": "Liên kết đăng nhập",
-        "passkeySignIn": "Passkey Sign In",
-        "emailOtpSend": "Email Otp Send",
-        "emailOtpSentNotice": "Email Otp Sent Notice",
-        "emailOtpPlaceholder": "Email Otp Placeholder",
-        "emailOtpLabel": "Email Otp Label",
-        "emailOtpVerify": "Email Otp Verify",
-        "emailRequired": "Email Required",
-        "invalidOtp": "Invalid Otp"
+        "passkeySignIn": "Passkey (FaceID / TouchID)",
+        "emailOtpSend": "Mã OTP 6 số",
+        "emailOtpSentNotice": "Đã gửi mã 6 chữ số đến email của bạn.",
+        "emailOtpPlaceholder": "Nhập 6 chữ số từ email",
+        "emailOtpLabel": "Mã xác thực 6 chữ số",
+        "emailOtpVerify": "Xác thực OTP",
+        "emailRequired": "Vui lòng nhập địa chỉ email",
+        "invalidOtp": "Mã xác thực không hợp lệ",
+        "inviteRequired": "Chương trình thử nghiệm này chỉ dành cho khách mời. Email của bạn chưa được cấp quyền."
       },
       "register": {
         "title": "Tạo tài khoản của bạn",
@@ -6618,6 +6619,7 @@
         "successTitle": "Tạo tài khoản thành công!",
         "successMessage": "Chào mừng bạn đến với Sophia AI Factory. Hãy hoàn tất quy trình thiết lập để kết nối nhà cung cấp AI và tạo video đầu tiên.",
         "startSetup": "Bắt đầu thiết lập hệ thống",
+        "continueWorkspace": "Mở không gian làm việc Sophia",
         "goToLogin": "Đăng nhập tài khoản",
         "and": "Và",
         "or": "Hoặc",
@@ -6633,6 +6635,9 @@
         "errorPasswordLowercase": "Mật khẩu phải có ít nhất một chữ thường",
         "errorPasswordNumber": "Mật khẩu phải có ít nhất một chữ số",
         "errorPasswordComplexity": "Mật khẩu cần ít nhất 8 ký tự, gồm chữ hoa, chữ thường và chữ số",
+        "errorEmailRequired": "Vui lòng nhập địa chỉ email hợp lệ",
+        "errorTermsRequired": "Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách bảo mật",
+        "errorInviteRequired": "Chương trình thử nghiệm này chỉ dành cho khách mời. Email của bạn chưa được cấp quyền.",
         "ssoComingSoon": "Sắp có mặt — vui lòng dùng email để đăng ký"
       }
     },

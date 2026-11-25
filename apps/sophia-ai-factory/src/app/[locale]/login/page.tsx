@@ -20,8 +20,10 @@ export default async function LocaleLoginRoute({ params, searchParams }: LoginRo
     redirect(`/${locale}/register${qs ? `?${qs}` : ''}`);
   }
 
+  const isPilot = isPilotInviteOnlyEnabled();
   const effectiveRedirectTo =
-    next ?? (isPilotInviteOnlyEnabled() ? '/dashboard/first-value' : undefined);
+    next ?? (isPilot ? '/dashboard/first-value' : undefined);
+  const emailOtpEnabled = !isPilot || Boolean(process.env.RESEND_API_KEY?.trim());
 
-  return <LoginPage redirectTo={effectiveRedirectTo} />;
+  return <LoginPage redirectTo={effectiveRedirectTo} emailOtpEnabled={emailOtpEnabled} />;
 }

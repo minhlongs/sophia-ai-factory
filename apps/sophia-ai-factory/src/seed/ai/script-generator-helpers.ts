@@ -70,6 +70,45 @@ export class InvalidScriptStructureError extends Error {
   }
 }
 
+/**
+ * Parses LLM script output into a JSON value, tolerating markdown code fences
+ * (` ```json ... ``` `) and brief surrounding prose returned by live models.
+ */
+export function parseScriptJsonFromLlm(rawContent: string): unknown {
+  const trimmed = rawContent.trim();
+  if (!trimmed) {
+    throw new Error('Invalid JSON from LLM');
+  }
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    // Fall through to markdown code-fence / outer-object extraction
+  }
+
+  for (const match of trimmed.matchAll(/```(?:json)?\s*([\s\S]*?)```/gi)) {
+    const candidate = match[1]?.trim();
+    if (!candidate) continue;
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      // Try next fenced block
+    }
+  }
+
+  const firstBrace = trimmed.indexOf('{');
+  const lastBrace = trimmed.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    try {
+      return JSON.parse(trimmed.slice(firstBrace, lastBrace + 1));
+    } catch {
+      // Fall through to canonical error
+    }
+  }
+
+  throw new Error('Invalid JSON from LLM');
+}
+
 export function validateParsedScriptStructure(
   parsed: unknown,
   options?: ValidateScriptOptions,

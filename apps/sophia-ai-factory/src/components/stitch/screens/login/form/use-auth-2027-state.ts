@@ -15,6 +15,19 @@ export function resolveRedirectTarget(redirectTo?: string): string {
   return raw.replace(/^\/(?:en|vi)(?=\/|$)/, '') || '/dashboard';
 }
 
+export function isPilotInviteBlockedError(authError: unknown): boolean {
+  if (!authError || typeof authError !== 'object') return false;
+  const errObj = authError as { code?: string; message?: string };
+  const code = errObj.code?.toLowerCase() ?? '';
+  const msg = errObj.message?.toLowerCase() ?? '';
+  return (
+    code === 'pilot_invite_required' ||
+    code === 'pilot_access_revoked' ||
+    msg.includes('invite-only') ||
+    msg.includes('chỉ dành cho khách mời')
+  );
+}
+
 export function useAuth2027State({ redirectTo }: LoginFormProps) {
   const t = useTranslations('stitch.auth.login');
   const router = useRouter();
@@ -40,7 +53,9 @@ export function useAuth2027State({ redirectTo }: LoginFormProps) {
     try {
       const res = await authClient.signIn.email({ email: cleanEmail, password });
       if (res.error) {
-        setError(t('invalidCredentials'));
+        setError(
+          isPilotInviteBlockedError(res.error) ? t('inviteRequired') : t('invalidCredentials'),
+        );
         setLoading(false);
       } else {
         router.push(resolveRedirectTarget(redirectTo));
@@ -57,7 +72,11 @@ export function useAuth2027State({ redirectTo }: LoginFormProps) {
     try {
       const res = await authClient.signIn.passkey();
       if (res?.error) {
-        setError(res.error.message || t('invalidCredentials'));
+        setError(
+          isPilotInviteBlockedError(res.error)
+            ? t('inviteRequired')
+            : res.error.message || t('invalidCredentials'),
+        );
         setPasskeyLoading(false);
       } else {
         router.push(resolveRedirectTarget(redirectTo));
@@ -75,8 +94,15 @@ export function useAuth2027State({ redirectTo }: LoginFormProps) {
     setError(null);
     try {
       const res = await authClient.emailOtp.sendVerificationOtp({ email: cleanEmail, type: 'sign-in' });
-      if (res.error) setError(res.error.message || t('networkError'));
-      else setOtpSent(true);
+      if (res.error) {
+        setError(
+          isPilotInviteBlockedError(res.error)
+            ? t('inviteRequired')
+            : res.error.message || t('networkError'),
+        );
+      } else {
+        setOtpSent(true);
+      }
       setOtpSending(false);
     } catch {
       setError(t('networkError'));
@@ -93,7 +119,7 @@ export function useAuth2027State({ redirectTo }: LoginFormProps) {
     try {
       const res = await authClient.signIn.emailOtp({ email: cleanEmail, otp: otpCode });
       if (res.error) {
-        setError(t('invalidOtp'));
+        setError(isPilotInviteBlockedError(res.error) ? t('inviteRequired') : t('invalidOtp'));
         setOtpVerifying(false);
       } else {
         router.push(resolveRedirectTarget(redirectTo));

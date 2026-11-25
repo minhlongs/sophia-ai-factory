@@ -66,6 +66,38 @@ export async function probeProviderApiKey(
     });
 
     if (isProbeOk) {
+      if (provider === 'openrouter' && typeof res.json === 'function') {
+        const payload = (await res.json().catch(() => null)) as {
+          data?: { limit?: number | null; limit_remaining?: number | null };
+        } | null;
+        const limit = payload?.data?.limit;
+        const remaining = payload?.data?.limit_remaining;
+        if (
+          typeof limit === 'number' &&
+          Number.isFinite(limit) &&
+          typeof remaining === 'number' &&
+          Number.isFinite(remaining) &&
+          remaining <= 0
+        ) {
+          return {
+            ok: false,
+            valid: false,
+            provider,
+            status: resolveProviderHealthStatus({
+              hasKey: true,
+              probeSuccess: false,
+              httpStatus: 402,
+            }),
+            latencyMs,
+            httpStatus: 402,
+            message:
+              'Your OpenRouter API key has $0 remaining credit limit. Please top up or raise the key limit on openrouter.ai.',
+            message_vi:
+              'Khóa API OpenRouter này đã hết hạn mức tín dụng (còn $0). Vui lòng nạp thêm hoặc tăng giới hạn khóa tại openrouter.ai.',
+            maskedKey,
+          };
+        }
+      }
       return {
         ok: true,
         valid: true,
@@ -80,7 +112,8 @@ export async function probeProviderApiKey(
     }
 
     const isAuthFail = res.status === 401 || res.status === 403;
-    const isQuotaFail = res.status === 429 || res.status === 402;
+    const isCreditExhausted = res.status === 402;
+    const isQuotaFail = res.status === 429 || isCreditExhausted;
     return {
       ok: false,
       valid: false,
@@ -90,14 +123,18 @@ export async function probeProviderApiKey(
       httpStatus: res.status,
       message: isAuthFail
         ? 'Invalid API key credentials'
-        : isQuotaFail
-          ? `Provider quota or rate limit reached (${res.status})`
-          : `Provider returned status ${res.status}`,
+        : isCreditExhausted
+          ? 'Provider account or API key has insufficient credits (402)'
+          : isQuotaFail
+            ? `Provider quota or rate limit reached (${res.status})`
+            : `Provider returned status ${res.status}`,
       message_vi: isAuthFail
-        ? 'Khóa API không hợp lệ hoặc đã hết hạn'
-        : isQuotaFail
-          ? `Nhà cung cấp đã đạt giới hạn tần suất hoặc hết hạn mức (${res.status})`
-          : `Nhà cung cấp trả về mã lỗi ${res.status}`,
+        ? 'Khóa API không hợp lệ hoặc đã bị thu hồi'
+        : isCreditExhausted
+          ? 'Tài khoản hoặc khóa API đã hết tín dụng (credit) (402)'
+          : isQuotaFail
+            ? `Nhà cung cấp đã đạt giới hạn tần suất hoặc hết hạn mức (${res.status})`
+            : `Nhà cung cấp trả về mã lỗi ${res.status}`,
       maskedKey,
     };
   } catch (err) {

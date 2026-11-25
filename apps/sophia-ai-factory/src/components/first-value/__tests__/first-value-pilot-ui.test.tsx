@@ -576,4 +576,12 @@ describe('FirstValueJourneyClient Customer BYOK live pilot flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'pilotByokClearBtn' }));
     await waitFor(() => expect(screen.getByText('pilotByokMissingBadge')).toBeTruthy());
   });
+
+  it('suppresses simulated 0-MCU banner on first paint when initialPilotMode=true', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));
+    render(<FirstValueJourneyClient orgId="org_pilot_1" initialPilotMode />);
+    expect(screen.queryByText('simulatedBadge')).toBeNull();
+    expect(screen.getByText('pilotByokTitle')).toBeTruthy();
+    expect(screen.getByDisplayValue('openai/gpt-4o-mini')).toBeTruthy();
+  });
 });

@@ -40,16 +40,22 @@ export interface PilotByokSupportDeps {
 
 function rejectFailedOpenRouterProbe(probe: ProbeResult, userId: string): NextResponse {
   const isAuthRejection = probe.httpStatus === 401 || probe.httpStatus === 403;
-  if (!isAuthRejection) {
+  const isCreditRejection = probe.httpStatus === 402;
+  if (!isAuthRejection && !isCreditRejection) {
     const kind = probe.httpStatus ? classifyHttpStatus(probe.httpStatus) : FailureKind.TIMEOUT;
     recordFailure('openrouter-probe', kind, userId);
   }
+  const code = isAuthRejection
+    ? 'BYOK_KEY_REJECTED'
+    : isCreditRejection
+      ? 'BYOK_KEY_QUOTA_EXCEEDED'
+      : 'BYOK_PROVIDER_UNREACHABLE';
   return jsonPrivate(
     {
-      code: isAuthRejection ? 'BYOK_KEY_REJECTED' : 'BYOK_PROVIDER_UNREACHABLE',
+      code,
       error: `${probe.message} / ${probe.message_vi}`,
     },
-    isAuthRejection ? 422 : 502,
+    isAuthRejection || isCreditRejection ? 422 : 502,
   );
 }
 
@@ -114,6 +120,7 @@ export async function handleSaveByokKey(
   }
 
   recordSuccess('openrouter-probe', user.id);
+  recordSuccess('openrouter', `byok:${user.id}`);
   recordSuccess('openrouter', user.id);
   recordSuccess('openrouter');
 

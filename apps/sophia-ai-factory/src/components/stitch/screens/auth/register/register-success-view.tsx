@@ -6,11 +6,21 @@ import { useTranslations } from 'next-intl';
 import { CheckCircle, ArrowRight, Fingerprint, Loader2 } from 'lucide-react';
 import { authClient } from '@/seed/auth/better-auth-client';
 
-export function RegisterSuccessView() {
+import { resolveRedirectTarget } from '@/components/stitch/screens/login/form/use-auth-2027-state';
+
+export interface RegisterSuccessViewProps {
+  readonly redirectTo?: string;
+}
+
+export function RegisterSuccessView({ redirectTo }: RegisterSuccessViewProps = {}) {
   const t = useTranslations('stitch.auth.register');
   const tLogin = useTranslations('stitch.auth.login');
   const [passkeyAdding, setPasskeyAdding] = useState(false);
   const [passkeyDone, setPasskeyDone] = useState(false);
+  const primaryHref = redirectTo ? resolveRedirectTarget(redirectTo) : '/setup';
+  const loginHref = redirectTo
+    ? `/login?next=${encodeURIComponent(resolveRedirectTarget(redirectTo))}`
+    : '/login';
 
   const handleEnrollPasskey = async () => {
     setPasskeyAdding(true);
@@ -52,14 +62,14 @@ export function RegisterSuccessView() {
           </button>
         )}
         <Link
-          href="/setup"
+          href={primaryHref}
           className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#4338CA] hover:bg-indigo-600 dark:bg-[#6366F1] dark:hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-[#4338CA]/20 dark:shadow-indigo-500/25 transition-all"
         >
-          <span>{t('startSetup')}</span>
+          <span>{redirectTo ? t('continueWorkspace') : t('startSetup')}</span>
           <ArrowRight className="w-4 h-4" />
         </Link>
         <Link
-          href="/login"
+          href={loginHref}
           className="w-full inline-flex items-center justify-center py-3 rounded-xl bg-[#F8F9FC] hover:bg-slate-100 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] border border-[#E2E8F0] dark:border-white/10 text-[#0B0F19] dark:text-slate-200 font-semibold text-sm transition-all"
         >
           {t('goToLogin')}

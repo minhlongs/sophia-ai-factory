@@ -68,11 +68,14 @@ export function createEmailOtpPlugin() {
     otpLength: 6,
     expiresIn: 300,
     sendVerificationOTP: async ({ email, otp, type }) => {
-      await sendSeedEmail({
+      const result = await sendSeedEmail({
         to: email,
         subject: `${otp} is your Sophia AI verification code · Mã xác thực Sophia AI`,
         html: buildEmailOtpHtml(otp, type),
       });
+      if (result && result.success === false) {
+        throw new Error(result.error || 'Email verification delivery unavailable');
+      }
     },
   });
 }

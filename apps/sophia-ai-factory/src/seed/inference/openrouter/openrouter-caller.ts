@@ -12,6 +12,7 @@ export interface CallOpenRouterOptions {
   readonly maxTokens?: number
   readonly timeoutMs?: number
   readonly referer?: string
+  readonly circuitKeyRef?: string
 }
 
 export async function callOpenRouter(
@@ -21,7 +22,11 @@ export async function callOpenRouter(
   maxRetries: number = 3,
   options?: CallOpenRouterOptions,
 ): Promise<string> {
-  if (!shouldAllowRequest('openrouter')) {
+  const keyRef = options?.circuitKeyRef
+  const allowed = keyRef
+    ? shouldAllowRequest('openrouter', keyRef)
+    : shouldAllowRequest('openrouter')
+  if (!allowed) {
     throw new Error('[OpenRouter] Circuit breaker open for openrouter')
   }
 
@@ -58,7 +63,11 @@ export async function callOpenRouter(
 
       if (res.ok) {
         const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> }
-        recordSuccess('openrouter')
+        if (keyRef) {
+          recordSuccess('openrouter', keyRef)
+        } else {
+          recordSuccess('openrouter')
+        }
         return data.choices?.[0]?.message?.content ?? ''
       }
 
@@ -73,13 +82,21 @@ export async function callOpenRouter(
       lastError = new Error(`OpenRouter HTTP ${res.status}: ${errorBody.slice(0, 200)}`)
 
       if (res.status === 401 || res.status === 402 || res.status === 403) {
-        recordFailure('openrouter', classifyHttpStatus(res.status))
+        // Customer BYOK key/credit rejections must not open the service circuit breaker.
+        if (!keyRef) {
+          recordFailure('openrouter', classifyHttpStatus(res.status))
+        }
         ;(lastError as { retryable?: boolean }).retryable = false
         throw lastError
       }
 
       if (res.status === 429) {
-        recordFailure('openrouter', classifyHttpStatus(res.status))
+        const kind = classifyHttpStatus(res.status)
+        if (keyRef) {
+          recordFailure('openrouter', kind, keyRef)
+        } else {
+          recordFailure('openrouter', kind)
+        }
         if (attempt === maxRetries) throw lastError
         continue
       }
@@ -99,7 +116,12 @@ export async function callOpenRouter(
       }
       lastError = typedErr
       if (attempt === maxRetries) {
-        recordFailure('openrouter', classifyError(lastError))
+        const kind = classifyError(lastError)
+        if (keyRef) {
+          recordFailure('openrouter', kind, keyRef)
+        } else {
+          recordFailure('openrouter', kind)
+        }
         throw lastError
       }
     } finally {
@@ -121,6 +143,7 @@ export async function resilientChatCompletion(
     maxRetries,
     timeoutMs,
     referer,
+    circuitKeyRef,
   }: ResilientOpenRouterOptions,
 ): Promise<string> {
   if (!openRouterKey) {
@@ -136,6 +159,7 @@ export async function resilientChatCompletion(
       maxTokens,
       timeoutMs,
       referer,
+      circuitKeyRef,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)

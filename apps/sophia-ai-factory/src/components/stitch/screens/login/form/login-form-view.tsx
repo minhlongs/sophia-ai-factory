@@ -11,7 +11,7 @@ import { useAuth2027State } from './use-auth-2027-state';
 
 export { LoginErrorBanner, LoginFormFooter };
 
-export function LoginFormView({ redirectTo }: LoginFormProps) {
+export function LoginFormView({ redirectTo, emailOtpEnabled = true }: LoginFormProps) {
   const t = useTranslations('stitch.auth.login');
   const tCommon = useTranslations('stitch.common');
   const router = useRouter();
@@ -27,7 +27,7 @@ export function LoginFormView({ redirectTo }: LoginFormProps) {
         onSwitch={() => router.replace(pathname, { locale: locale === 'en' ? 'vi' : 'en' })}
       />
       <LoginErrorBanner error={state.error} />
-      {state.otpSent && (
+      {emailOtpEnabled && state.otpSent && (
         <EmailOtpPanel
           otpCode={state.otpCode}
           setOtpCode={state.setOtpCode}
@@ -63,8 +63,9 @@ export function LoginFormView({ redirectTo }: LoginFormProps) {
       <LoginFormFooter
         onPasskey={state.handlePasskey}
         passkeyLoading={state.passkeyLoading}
-        onSendOtp={state.handleSendOtp}
+        onSendOtp={emailOtpEnabled ? state.handleSendOtp : undefined}
         otpSending={state.otpSending}
+        redirectTo={redirectTo}
       />
     </>
   );

@@ -95,8 +95,34 @@ vi.mock('@/components/first-value/first-value-journey-client', () => ({
 }));
 
 vi.mock('@/components/stitch/screens/login', () => ({
-  LoginPage: ({ redirectTo }: { redirectTo?: string }) => (
-    <div data-testid="login-screen" data-redirect={redirectTo ?? ''} />
+  LoginPage: ({
+    redirectTo,
+    emailOtpEnabled,
+  }: {
+    redirectTo?: string;
+    emailOtpEnabled?: boolean;
+  }) => (
+    <div
+      data-testid="login-screen"
+      data-redirect={redirectTo ?? ''}
+      data-otp={String(emailOtpEnabled ?? true)}
+    />
+  ),
+}));
+
+vi.mock('@/components/stitch/screens/auth/register-page', () => ({
+  default: ({
+    redirectTo,
+    emailOtpEnabled,
+  }: {
+    redirectTo?: string;
+    emailOtpEnabled?: boolean;
+  }) => (
+    <div
+      data-testid="register-screen"
+      data-redirect={redirectTo ?? ''}
+      data-otp={String(emailOtpEnabled ?? true)}
+    />
   ),
 }));
 
@@ -308,8 +334,30 @@ describe('pilot App Router pages, layout, legal disclosures, and middleware', ()
       params: Promise.resolve({ locale: 'en' }),
       searchParams: Promise.resolve({}),
     });
-    render(stdLogin);
+    const { unmount: uStd } = render(stdLogin);
     expect(screen.getByTestId('login-screen').getAttribute('data-redirect')).toBe('');
+    expect(screen.getByTestId('login-screen').getAttribute('data-otp')).toBe('true');
+    uStd();
+
+    const { default: LocaleRegisterRoute } = await import('@/app/[locale]/register/page');
+    const { default: LocaleSignupRoute } = await import('@/app/[locale]/signup/page');
+    process.env.PILOT_INVITE_ONLY = 'true';
+    delete process.env.RESEND_API_KEY;
+    const pilotReg = await LocaleRegisterRoute({ searchParams: Promise.resolve({}) });
+    const { unmount: uReg } = render(pilotReg);
+    expect(screen.getByTestId('register-screen').getAttribute('data-redirect')).toBe(
+      '/dashboard/first-value',
+    );
+    expect(screen.getByTestId('register-screen').getAttribute('data-otp')).toBe('false');
+    uReg();
+
+    const pilotSignup = await LocaleSignupRoute({
+      searchParams: Promise.resolve({ next: '/vi/dashboard/first-value' }),
+    });
+    render(pilotSignup);
+    expect(screen.getByTestId('register-screen').getAttribute('data-redirect')).toBe(
+      '/vi/dashboard/first-value',
+    );
   });
 
   it('renders bilingual PrivacyPage and pilot/standard TermsPage with zero legacy support@agencyos.network references', async () => {
