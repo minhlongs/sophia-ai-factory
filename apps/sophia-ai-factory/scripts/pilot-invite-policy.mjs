@@ -1,19 +1,27 @@
 /**
  * Pure policy builders, CLI arg validators, email validators, and Zero Trust
- * readback assertions for the Private Beta invitation provisioner.
+ * readback assertions for the Private Beta invitation & subpath bypass provisioner.
  *
  * Enforces exact email format, preserves operator emails alongside the invited
- * customer email, and blocks wildcards, Everyone, Bypass, extra policies, and
- * non-email selectors on Cloudflare Access App `11a89148-d86e-4d3e-a1d4-e12edbeb6f75`.
+ * customer email, blocks wildcards/Everyone/Bypass/extra policies on the main
+ * Pilot App (`11a89148-d86e-4d3e-a1d4-e12edbeb6f75`), and scopes public redirect
+ * bypass strictly to `/api/r/*`.
  */
 
 export const PILOT_CF_ACCOUNT_ID = 'f691e83094f776311a1bfe3f8b126f1c';
 export const PILOT_ACCESS_APP_ID = '11a89148-d86e-4d3e-a1d4-e12edbeb6f75';
 export const PILOT_ACCESS_POLICY_ID = '5ad49a50-b19a-4cc9-a43d-d2455e92fa42';
 export const PILOT_BASE_URL = 'https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev';
+export const PILOT_SHORTLINK_BYPASS_DOMAIN =
+  'sophia-ai-factory-pilot.agencyos-openclaw.workers.dev/api/r/*';
 export const DEFAULT_PILOT_OPERATOR_EMAILS = Object.freeze([
   'billwill.mentor@gmail.com',
   'minhlong.rice@gmail.com',
+]);
+export const KNOWN_OPERATOR_EMAIL_ALIASES = Object.freeze([
+  'billwill.mentor@gmail.com',
+  'minhlong.rice@gmail.com',
+  'minlong.rice@gmail.com',
 ]);
 
 const STRICT_EMAIL_RE =
@@ -36,11 +44,20 @@ export function validateSinglePilotEmail(raw) {
 
 export function parseInviteCliArgs(argv) {
   const args = Array.isArray(argv) ? argv : [];
-  const unknownFlags = args.filter((a) => String(a).startsWith('-') && a !== '--dry-run');
+  const allowedFlags = new Set(['--dry-run', '--ensure-shortlink-bypass']);
+  const unknownFlags = args.filter((a) => String(a).startsWith('-') && !allowedFlags.has(a));
   if (unknownFlags.length > 0) {
     throw new Error(`Unknown CLI flag(s): ${unknownFlags.join(', ')}`);
   }
+  const onlyBypass = args.includes('--ensure-shortlink-bypass');
   const positional = args.filter((a) => !String(a).startsWith('-'));
+  if (onlyBypass) {
+    return {
+      dryRun: args.includes('--dry-run'),
+      onlyBypass: true,
+      email: null,
+    };
+  }
   if (positional.length !== 1) {
     throw new Error('Expected exactly 1 invited customer email argument.');
   }
@@ -48,6 +65,21 @@ export function parseInviteCliArgs(argv) {
     dryRun: args.includes('--dry-run'),
     email: validateSinglePilotEmail(positional[0]),
   };
+}
+
+export function extractExistingOperatorEmails(existingPolicies) {
+  const aliasSet = new Set(KNOWN_OPERATOR_EMAIL_ALIASES);
+  const found = [];
+  for (const pol of existingPolicies ?? []) {
+    if (pol?.id !== PILOT_ACCESS_POLICY_ID) continue;
+    for (const rule of pol.include ?? []) {
+      const em = String(rule?.email?.email ?? '').trim().toLowerCase();
+      if (em && aliasSet.has(em)) {
+        found.push(em);
+      }
+    }
+  }
+  return found.length > 0 ? found : [...DEFAULT_PILOT_OPERATOR_EMAILS];
 }
 
 export function resolveAuthorizedPilotEmails(customerEmail, operatorEmailsOverride) {
@@ -89,6 +121,43 @@ export function buildAccessSingleEmailPolicyPayload(email, options = {}) {
     require: [],
     precedence: 1,
   };
+}
+
+export function buildShortlinkSubpathBypassAppPayload() {
+  return {
+    name: 'Sophia Pilot Public Affiliate Shortlink Redirect (/api/r/*)',
+    domain: PILOT_SHORTLINK_BYPASS_DOMAIN,
+    self_hosted_domains: [PILOT_SHORTLINK_BYPASS_DOMAIN],
+    destinations: [{ type: 'public', uri: PILOT_SHORTLINK_BYPASS_DOMAIN }],
+    type: 'self_hosted',
+    session_duration: '24h',
+  };
+}
+
+export function buildShortlinkSubpathBypassPolicyPayload() {
+  return {
+    name: 'Public Shortlink Redirect Bypass (/api/r/* ONLY)',
+    decision: 'bypass',
+    include: [{ everyone: {} }],
+    exclude: [],
+    require: [],
+    precedence: 1,
+  };
+}
+
+export function assertShortlinkBypassPoliciesExact(policies) {
+  if (!Array.isArray(policies) || policies.length !== 1) {
+    throw new Error(`Expected exactly 1 policy on /api/r/* bypass app, got ${policies?.length ?? 0}.`);
+  }
+  const pol = policies[0];
+  if (
+    pol?.decision !== 'bypass' ||
+    !Array.isArray(pol.include) ||
+    pol.include.length !== 1 ||
+    !('everyone' in pol.include[0])
+  ) {
+    throw new Error('Subpath /api/r/* bypass app policy readback did not match expected bypass rule.');
+  }
 }
 
 export function assertAccessPoliciesSafeAndExact(policies, expectedEmailsOrCustomer) {
@@ -141,9 +210,7 @@ export function assertAccessPoliciesSafeAndExact(policies, expectedEmailsOrCusto
       `Target Access policy must be decision="allow" with exactly ${expectedEmails.length} exact email rule(s).`,
     );
   }
-  const actualEmails = target.include.map((rule) =>
-    validateSinglePilotEmail(rule.email.email),
-  );
+  const actualEmails = target.include.map((rule) => validateSinglePilotEmail(rule.email.email));
   const expectedSorted = [...expectedEmails].sort().join(',');
   const actualSorted = [...actualEmails].sort().join(',');
   if (actualSorted !== expectedSorted) {
@@ -161,14 +228,14 @@ export function buildCustomerUrlsAndVietnameseInvite(email) {
   const inviteVi = [
     'Chào bạn,',
     '',
-    `Mời bạn trải nghiệm riêng Sophia AI Factory (Private Beta 7 ngày — $0 phí nền tảng, tối đa 20 lượt tạo kịch bản AI thật) dành riêng cho email ${validEmail}.`,
+    `Mời bạn trải nghiệm riêng Sophia AI Factory (Private Beta 7 ngày — $0 phí nền tảng, tối đa 20 lượt tạo kịch bản/chiến dịch AI thật + xuất video MP4 + link Affiliate) dành riêng cho email ${validEmail}.`,
     '',
     `1. Mở liên kết đăng ký / bắt đầu: ${registerUrl}`,
     `   (Nếu đã tạo mật khẩu trước đó, đăng nhập tại: ${loginUrl})`,
     `2. Trên màn hình bảo mật Cloudflare Access, bấm nút "GitHub" để vào thẳng 1 chạm (nếu tài khoản GitHub của bạn dùng đúng email ${validEmail}), hoặc nhập ${validEmail} vào ô bên dưới để nhận mã PIN 6 số.`,
     '3. Tạo tài khoản Sophia bằng đúng email được mời, tick đồng ý điều khoản Private Beta.',
-    '4. Tại mục số 1, dán khóa OpenRouter của bạn (sk-or-v1-...) và bấm "Xác thực & Lưu khóa" (khóa được mã hóa AES-256-GCM, bạn có thể xóa bất cứ lúc nào).',
-    '5. Nhập chủ đề + đối tượng khách hàng -> bấm "Tạo kịch bản AI thật" -> chỉnh sửa phân cảnh, lưu nháp, xuất Markdown/JSON và gửi góp ý ngay trên trang.',
+    '4. Tại mục số 1, dán khóa OpenRouter của bạn (sk-or-v1-...) và bấm "Xác thực & Lưu khóa" (mã hóa AES-256-GCM, Founder không tài trợ AI, bạn xóa khóa bất cứ lúc nào).',
+    '5. Tạo chiến dịch/kịch bản AI thật -> Duyệt kịch bản -> Gắn CTA & Link Affiliate để nhận Shortlink đếm click thật -> Bấm "Tạo & Tải Video MP4 9:16" để đăng lên TikTok / Shorts / Reels và ghi nhận kết quả thực tế.',
     '',
     'Cần hỗ trợ hoặc xóa toàn bộ dữ liệu thử nghiệm: gửi trực tiếp tại khung "Yêu cầu Hỗ trợ & Xóa dữ liệu" ở cuối trang làm việc để nhận mã biên nhận xử lý trong 72 giờ.',
   ].join('\n');

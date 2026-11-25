@@ -119,6 +119,8 @@ export function isPublicApiRoute(pathname: string): boolean {
 
   // Stable token-based flow prefix family
   if (pathname.startsWith('/api/sign-')) return true;
+  // Public affiliate short-link redirect (/api/r/[code]) — validates base32 code & rate-limits per IP.
+  if (/^\/api\/r\/[a-z2-7]{8,13}$/i.test(pathname)) return true;
   // Better Auth owns its own auth for ALL /api/auth/* paths (catch-all route).
   if (pathname.startsWith('/api/auth/')) return true;
   if (pathname.startsWith('/api/webhooks/')) return false; // default deny

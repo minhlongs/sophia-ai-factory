@@ -58,6 +58,15 @@ import {
   handleSubmitSupportRequest,
 } from './first-value-pilot-byok-support';
 import {
+  handleClearHeyGenByokKey,
+  handleCreateAffiliateShortlink,
+  handlePollHeyGenMp4,
+  handleRecordBrowserMp4Export,
+  handleRecordManualPublish,
+  handleSaveHeyGenByokKey,
+  handleSubmitHeyGenMp4,
+} from './first-value-pilot-commercial';
+import {
   handleApproveAffiliateCampaign,
   handleArchiveAffiliateOffer,
   handleEditAffiliateCampaign,
@@ -93,6 +102,26 @@ export interface FirstValueHttpDeps {
   readonly probeOpenRouterByokKey?: (apiKey: string) => Promise<ProbeResult>;
   readonly saveOpenRouterByokKey?: (userId: string, apiKey: string) => Promise<void>;
   readonly clearOpenRouterByokKey?: (userId: string) => Promise<void>;
+  readonly lookupHeyGenByokKey?: (userId: string) => Promise<string | null>;
+  readonly probeHeyGenByokKey?: (apiKey: string) => Promise<ProbeResult>;
+  readonly saveHeyGenByokKey?: (userId: string, apiKey: string) => Promise<void>;
+  readonly clearHeyGenByokKey?: (userId: string) => Promise<void>;
+  readonly submitHeyGenVideo?: (input: {
+    readonly userId?: string;
+    readonly apiKey: string;
+    readonly script: string;
+    readonly title: string;
+  }) => Promise<{ readonly videoId: string }>;
+  readonly fetchHeyGenVideoStatus?: (input: {
+    readonly userId?: string;
+    readonly apiKey: string;
+    readonly videoId: string;
+  }) => Promise<{
+    readonly status: 'processing' | 'completed' | 'failed';
+    readonly mediaUrl?: string;
+    readonly durationSec?: number;
+    readonly errorMessage?: string;
+  }>;
   readonly generateLiveScript?: (input: LiveScriptGeneratorInput) => Promise<ScriptOutput>;
   readonly generateLiveAffiliateCampaign?: (
     input: GenerateAffiliateCampaignInput,
@@ -591,6 +620,14 @@ async function dispatchDurableAction(
     });
   }
   if (data.action === 'save_byok_key') {
+    if (data.provider === 'heygen') {
+      return handleSaveHeyGenByokKey(d1, user, data, {
+        env: deps.pilotEnv,
+        probeHeyGenByokKey: deps.probeHeyGenByokKey,
+        saveHeyGenByokKey: deps.saveHeyGenByokKey,
+        nowMs: deps.nowMs,
+      });
+    }
     return handleSaveByokKey(d1, user, data, {
       probeOpenRouterByokKey: deps.probeOpenRouterByokKey,
       saveOpenRouterByokKey: deps.saveOpenRouterByokKey,
@@ -598,8 +635,49 @@ async function dispatchDurableAction(
     });
   }
   if (data.action === 'clear_byok_key') {
+    if (data.provider === 'heygen') {
+      return handleClearHeyGenByokKey(d1, user, data, {
+        env: deps.pilotEnv,
+        clearHeyGenByokKey: deps.clearHeyGenByokKey,
+        nowMs: deps.nowMs,
+      });
+    }
     return handleClearByokKey(d1, user, data, {
       clearOpenRouterByokKey: deps.clearOpenRouterByokKey,
+      nowMs: deps.nowMs,
+    });
+  }
+  if (data.action === 'create_affiliate_shortlink') {
+    return handleCreateAffiliateShortlink(d1, user, data, {
+      env: deps.pilotEnv,
+      nowMs: deps.nowMs,
+    });
+  }
+  if (data.action === 'record_mp4_export') {
+    return handleRecordBrowserMp4Export(d1, user, data, {
+      env: deps.pilotEnv,
+      nowMs: deps.nowMs,
+    });
+  }
+  if (data.action === 'submit_heygen_mp4') {
+    return handleSubmitHeyGenMp4(d1, user, data, {
+      env: deps.pilotEnv,
+      nowMs: deps.nowMs,
+      lookupHeyGenByokKey: deps.lookupHeyGenByokKey,
+      submitHeyGenVideo: deps.submitHeyGenVideo,
+    });
+  }
+  if (data.action === 'poll_heygen_mp4') {
+    return handlePollHeyGenMp4(d1, user, data, {
+      env: deps.pilotEnv,
+      nowMs: deps.nowMs,
+      lookupHeyGenByokKey: deps.lookupHeyGenByokKey,
+      fetchHeyGenVideoStatus: deps.fetchHeyGenVideoStatus,
+    });
+  }
+  if (data.action === 'record_manual_publish') {
+    return handleRecordManualPublish(d1, user, data, {
+      env: deps.pilotEnv,
       nowMs: deps.nowMs,
     });
   }

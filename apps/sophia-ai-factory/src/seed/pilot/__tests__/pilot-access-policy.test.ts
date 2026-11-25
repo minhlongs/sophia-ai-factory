@@ -32,6 +32,8 @@ import {
   assertAccessPoliciesSafeAndExact,
   buildAccessSingleEmailPolicyPayload,
   buildCustomerUrlsAndVietnameseInvite,
+  buildShortlinkSubpathBypassAppPayload,
+  buildShortlinkSubpathBypassPolicyPayload,
   DEFAULT_PILOT_OPERATOR_EMAILS,
   parseInviteCliArgs,
   resolveAuthorizedPilotEmails,
@@ -496,6 +498,17 @@ describe('pilot operator CLIs (invite & support queue)', () => {
     expect(() => parseInviteCliArgs(['khach@congty.vn', '--dryrun'])).toThrow(/Unknown CLI flag/);
     expect(() => parseInviteCliArgs(['a@b.com', 'c@d.com'])).toThrow(/exactly 1/);
 
+    const bypassApp = buildShortlinkSubpathBypassAppPayload();
+    expect(bypassApp.domain).toBe(
+      'sophia-ai-factory-pilot.agencyos-openclaw.workers.dev/api/r/*',
+    );
+    expect(buildShortlinkSubpathBypassPolicyPayload().decision).toBe('bypass');
+    expect(parseInviteCliArgs(['--ensure-shortlink-bypass', '--dry-run'])).toEqual({
+      dryRun: true,
+      onlyBypass: true,
+      email: null,
+    });
+
     const prevOperatorEnv = process.env.PILOT_OPERATOR_EMAILS;
     try {
       delete process.env.PILOT_OPERATOR_EMAILS;
@@ -602,6 +615,7 @@ describe('pilot operator CLIs (invite & support queue)', () => {
         '0517_customer_pilot_first_value.sql',
         '0519_pilot_support_requests.sql',
         '0520_pilot_affiliate_revenue_studio.sql',
+        '0521_pilot_commercial_validation.sql',
       ]) {
         const sqlText = fs.readFileSync(
           path.resolve(__dirname, '../../../../migrations', mig),

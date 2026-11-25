@@ -3,7 +3,8 @@
  *
  * GET /api/r/[code] — validates short code, logs click, 302-redirects to merchant URL.
  * Public endpoint — no auth required.
- * Runs on Cloudflare Workers edge for <50ms p95.
+ * In isolated Pilot mode (`PILOT_INVITE_ONLY=true` / `SOPHIA_PILOT_MODE=true`),
+ * resolves strictly against `pilot_affiliate_links` without touching legacy production tables.
  *
  * @module app/api/r/[code]/route
  */
@@ -11,7 +12,12 @@
 import { NextRequest } from 'next/server';
 import { isValidShortCode } from '@/land/affiliate-shortlink/short-code-generator';
 import { logClick } from '@/land/affiliate-shortlink/click-logger';
-import { createServerClient } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
+import {
+  isPilotInviteOnlyEnabled,
+  resolvePilotRefererOrigin,
+} from '@/seed/pilot/pilot-access-policy';
+import { resolveAndRecordPilotShortlinkClick } from '@/tree/first-value/pilot-commercial-repo';
 import { checkRateLimit } from '@/tree/telegram/sql-rate-limiter';
 import {
   HOMEPAGE_URL,
@@ -22,28 +28,70 @@ import {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { code: string } },
+  { params }: { params: Promise<{ code: string }> | { code: string } },
 ) {
-  const code = params.code;
+  const resolvedParams = params instanceof Promise ? await params : params;
+  const code = String(resolvedParams.code ?? '').trim().toLowerCase();
+  const isPilot =
+    isPilotInviteOnlyEnabled(process.env) || process.env.SOPHIA_PILOT_MODE === 'true';
 
   if (!isValidShortCode(code)) {
+    if (isPilot) {
+      return new Response('Invalid shortlink code', {
+        status: 404,
+        headers: { 'Cache-Control': 'private, no-store' },
+      });
+    }
     return Response.redirect(HOMEPAGE_URL, 302);
   }
 
-  const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for');
+  const rawForwarded = request.headers.get('x-forwarded-for');
+  const ip =
+    request.headers.get('cf-connecting-ip')?.trim() ||
+    rawForwarded?.split(',')[0]?.trim() ||
+    null;
   const country = request.headers.get('cf-ipcountry');
   const userAgent = request.headers.get('user-agent');
   const referer = request.headers.get('referer');
+
+  const rawDb = (globalThis as unknown as { __env?: Record<string, unknown> }).__env;
+  const d1 = (rawDb?.DB as D1Database | undefined) ?? ((await getD1()) ?? undefined);
+
+  if (isPilot) {
+    if (!d1) {
+      return Response.redirect(resolvePilotRefererOrigin(process.env), 302);
+    }
+    const pilotRedirect = await resolveAndRecordPilotShortlinkClick(d1, {
+      code,
+      ip,
+      country,
+      referer,
+    });
+    if (pilotRedirect) {
+      return Response.redirect(pilotRedirect.redirectUrl, 302);
+    }
+    return new Response('Shortlink not found', {
+      status: 404,
+      headers: { 'Cache-Control': 'private, no-store' },
+    });
+  }
 
   const rateLimit = await checkRateLimit(`r:${ip ?? 'unknown'}`, 100, 60);
   if (!rateLimit.allowed) {
     return Response.redirect(HOMEPAGE_URL, 302);
   }
 
-  const rawDb = (globalThis as unknown as { __env?: Record<string, unknown> }).__env;
-  const d1 = rawDb?.DB as D1Database | undefined;
-
   if (d1) {
+    const pilotRedirect = await resolveAndRecordPilotShortlinkClick(d1, {
+      code,
+      ip,
+      country,
+      referer,
+    });
+    if (pilotRedirect) {
+      return Response.redirect(pilotRedirect.redirectUrl, 302);
+    }
+
     const engineRedirect = await tryResolveOfferEngineRedirect({
       d1,
       code,

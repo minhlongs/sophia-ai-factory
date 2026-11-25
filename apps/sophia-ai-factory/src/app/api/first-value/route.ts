@@ -26,6 +26,10 @@ import {
 } from '@/tree/byok/user-api-key-store';
 import { probeProviderApiKey } from '@/tree/byok/provider-probe';
 import {
+  fetchPilotHeyGenByokStatus,
+  submitPilotHeyGenByokVideo,
+} from '@/land/first-value/pilot-heygen-byok-client';
+import {
   handleFirstValueGet,
   handleFirstValuePost,
   type FirstValueHttpDeps,
@@ -65,6 +69,24 @@ function buildLiveDeps(): FirstValueHttpDeps {
     clearOpenRouterByokKey: async (userId: string) => {
       await clearUserApiKey(userId, 'openrouter');
     },
+    lookupHeyGenByokKey: async (userId: string) => {
+      const lookup = await lookupUserApiKey(userId, 'heygen');
+      if (lookup.status === 'FOUND' && lookup.key.trim().length > 0) {
+        return lookup.key.trim();
+      }
+      return null;
+    },
+    probeHeyGenByokKey: async (apiKey: string) => probeProviderApiKey('heygen', apiKey),
+    saveHeyGenByokKey: async (userId: string, apiKey: string) => {
+      await setUserApiKey(userId, 'heygen', apiKey);
+    },
+    clearHeyGenByokKey: async (userId: string) => {
+      await clearUserApiKey(userId, 'heygen');
+    },
+    submitHeyGenVideo: async ({ userId, apiKey, script, title }) =>
+      submitPilotHeyGenByokVideo({ userId, apiKey, script, title }),
+    fetchHeyGenVideoStatus: async ({ userId, apiKey, videoId }) =>
+      fetchPilotHeyGenByokStatus({ userId, apiKey, videoId }),
     generateLiveScript: async ({
       topic,
       audience,

@@ -21,14 +21,20 @@ import type {
   AffiliateStudioSnapshot,
 } from '@/land/first-value/pilot-affiliate-studio-revenue';
 import type { AffiliateCampaignPack } from '@/seed/ai/affiliate-campaign-prompt';
-import type { PilotStatusSnapshot } from '@/seed/pilot/pilot-access-policy';
+import type {
+  PilotAffiliateLinkSummary,
+  PilotStatusSnapshot,
+} from '@/seed/pilot/pilot-access-policy';
 import type { HonestValidationReceipt } from '@/tree/byok/honest-validation-receipt';
+import type { DurableFirstValueReview } from '@/tree/first-value/first-value-review-repo';
 import type { PilotAffiliateCampaignRecord } from '@/tree/first-value/pilot-affiliate-studio-repo';
 import { FirstValueByokCard } from '../first-value-byok-card';
 import {
   FirstValueFeedbackCard,
   type PilotFeedbackCategory,
 } from '../first-value-feedback-card';
+import { FirstValueManualPublishCard } from '../first-value-manual-publish-card';
+import { FirstValueMp4AffiliateCard } from '../first-value-mp4-affiliate-card';
 import { FirstValuePilotBanner } from '../first-value-pilot-banner';
 import {
   FirstValueSupportCard,
@@ -66,6 +72,7 @@ export interface AffiliateCampaignStudioProps {
   readonly orgId: string;
   readonly pilot: PilotStatusSnapshot | null;
   readonly studio: AffiliateStudioSnapshot | null;
+  readonly fallbackReview?: DurableFirstValueReview | null;
   readonly byokConfigured: boolean;
   readonly receipt: HonestValidationReceipt | null;
   readonly busy: boolean;
@@ -248,6 +255,171 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
     return false;
   }
 
+  const videoScriptReview: DurableFirstValueReview | null = activeCampaign
+    ? {
+        artifactId: activeCampaign.id,
+        orgId: activeCampaign.orgId,
+        userId: activeCampaign.userId,
+        missionId: activeCampaign.offerId,
+        idempotencyKey: activeCampaign.idempotencyKey,
+        payloadHash: activeCampaign.payloadHash,
+        reviewState:
+          activeCampaign.reviewState === 'approved'
+            ? 'accepted'
+            : activeCampaign.reviewState === 'rejected'
+              ? 'rejected'
+              : 'pending_review',
+        version: activeCampaign.version,
+        provenance: activeCampaign.provenance,
+        provenanceLabel: activeCampaign.provenanceLabel,
+        topic: activeCampaign.campaignName,
+        audience: activeCampaign.targetMarket,
+        durationSec: activeCampaign.pack.shortFormScript.total_duration,
+        publicPublished: false,
+        mcuCharged: 0,
+        mcuAccountingRef: 'pilot:customer_byok',
+        privateArtifactRef: `private://${activeCampaign.orgId}/campaign/${activeCampaign.id}`,
+        receiptId: 'pilot:customer_byok',
+        script: activeCampaign.pack.shortFormScript,
+        acceptedAtIso: activeCampaign.approvedAtIso,
+        acceptedByUserId: activeCampaign.approvedByUserId,
+        rejectedAtIso: activeCampaign.rejectedAtIso,
+        rejectionReason: activeCampaign.rejectionReason,
+        createdAtIso: activeCampaign.createdAtIso,
+        updatedAtIso: activeCampaign.updatedAtIso,
+      }
+    : (props.fallbackReview ?? null);
+
+  async function handleCreateAffiliateShortlink(input: {
+    readonly destinationUrl: string;
+    readonly ctaText: string;
+    readonly networkHint:
+      | 'generic'
+      | 'shopee'
+      | 'tiktok_shop'
+      | 'accesstrade'
+      | 'clickbank'
+      | 'amazon'
+      | 'awin';
+    readonly disclosureTag: '#QuảngCáo' | '#ad';
+  }): Promise<PilotAffiliateLinkSummary | null> {
+    const res = await props.postAction({
+      action: 'create_affiliate_shortlink',
+      orgId: props.orgId,
+      artifactId: videoScriptReview?.artifactId ?? null,
+      ...input,
+    });
+    const link = res?.affiliateLink as PilotAffiliateLinkSummary | undefined;
+    if (link?.id) {
+      await props.onReloadStatus();
+      return link;
+    }
+    return null;
+  }
+
+  async function handleRecordBrowserMp4(input: {
+    readonly artifactId: string;
+    readonly sha256Hex: string;
+    readonly byteSize: number;
+    readonly durationSec: number;
+    readonly width: number;
+    readonly height: number;
+    readonly ctaText: string;
+    readonly shortCode: string;
+    readonly referralUrl: string;
+  }): Promise<boolean> {
+    const res = await props.postAction({
+      action: 'record_mp4_export',
+      orgId: props.orgId,
+      ...input,
+    });
+    if (res?.mp4Export) {
+      await props.onReloadStatus();
+      return true;
+    }
+    return false;
+  }
+
+  async function handleSaveHeyGenKey(apiKey: string): Promise<boolean> {
+    const res = await props.postAction({
+      action: 'save_byok_key',
+      orgId: props.orgId,
+      provider: 'heygen',
+      apiKey,
+    });
+    if (res?.heygenByokConfigured) {
+      await props.onReloadStatus();
+      return true;
+    }
+    return false;
+  }
+
+  async function handleClearHeyGenKey(): Promise<boolean> {
+    const res = await props.postAction({
+      action: 'clear_byok_key',
+      orgId: props.orgId,
+      provider: 'heygen',
+    });
+    if (res && res.heygenByokConfigured === false) {
+      await props.onReloadStatus();
+      return true;
+    }
+    return false;
+  }
+
+  async function handleSubmitHeyGenMp4(input: {
+    readonly artifactId: string;
+    readonly ctaText: string;
+    readonly shortCode: string;
+    readonly referralUrl: string;
+  }): Promise<boolean> {
+    const res = await props.postAction({
+      action: 'submit_heygen_mp4',
+      orgId: props.orgId,
+      ...input,
+    });
+    if (res?.mp4Export) {
+      await props.onReloadStatus();
+      return true;
+    }
+    return false;
+  }
+
+  async function handlePollHeyGenMp4(exportId: string): Promise<void> {
+    const res = await props.postAction({
+      action: 'poll_heygen_mp4',
+      orgId: props.orgId,
+      exportId,
+    });
+    if (res?.mp4Export) {
+      await props.onReloadStatus();
+    }
+  }
+
+  async function handleRecordManualPublish(input: {
+    readonly artifactId: string | null;
+    readonly mp4ExportId: string | null;
+    readonly linkId: string | null;
+    readonly platform: 'tiktok' | 'youtube_shorts' | 'instagram_reels' | 'facebook_reels' | 'other';
+    readonly publishedPostUrl: string;
+    readonly reportedViews: number | null;
+    readonly reportedConversions: number | null;
+    readonly reportedCommissionAmount: number | null;
+    readonly reportedCommissionCurrency: 'VND' | 'USD' | 'USDT' | null;
+    readonly evidenceNote: string | null;
+  }): Promise<boolean> {
+    const res = await props.postAction({
+      action: 'record_manual_publish',
+      orgId: props.orgId,
+      ...input,
+    });
+    if (res?.manualPublish) {
+      await props.onReloadStatus();
+      return true;
+    }
+    return false;
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {props.pilot && (
@@ -314,6 +486,31 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
         onSaveEdit={handleSaveEdit}
         onApprove={handleApprove}
         onExport={handleExport}
+      />
+
+      <FirstValueMp4AffiliateCard
+        review={videoScriptReview}
+        busy={props.busy}
+        consentAccepted={Boolean(props.pilot?.consentAccepted)}
+        heygenConfigured={Boolean(props.pilot?.heygenByokConfigured)}
+        affiliateLinks={props.pilot?.affiliateLinks ?? []}
+        mp4Exports={props.pilot?.mp4Exports ?? []}
+        onCreateShortlink={handleCreateAffiliateShortlink}
+        onRecordBrowserMp4={handleRecordBrowserMp4}
+        onSaveHeyGenKey={handleSaveHeyGenKey}
+        onClearHeyGenKey={handleClearHeyGenKey}
+        onSubmitHeyGenMp4={handleSubmitHeyGenMp4}
+        onPollHeyGenMp4={handlePollHeyGenMp4}
+      />
+
+      <FirstValueManualPublishCard
+        review={videoScriptReview}
+        busy={props.busy}
+        consentAccepted={Boolean(props.pilot?.consentAccepted)}
+        affiliateLinks={props.pilot?.affiliateLinks ?? []}
+        mp4Exports={props.pilot?.mp4Exports ?? []}
+        manualPublishes={props.pilot?.manualPublishes ?? []}
+        onRecordManualPublish={handleRecordManualPublish}
       />
 
       <AffiliateRevenueDashboardCard

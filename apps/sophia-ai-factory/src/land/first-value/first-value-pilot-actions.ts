@@ -60,6 +60,11 @@ import {
 } from '@/tree/first-value/pilot-state-repo';
 import { listPilotSupportRequestsForUser } from '@/tree/first-value/pilot-support-repo';
 import {
+  listPilotAffiliateLinks,
+  listPilotManualPublishes,
+  listPilotMp4Exports,
+} from '@/tree/first-value/pilot-commercial-repo';
+import {
   jsonPrivate,
   resolveIdempotencyKey,
   type FirstValuePostPayload,
@@ -147,6 +152,7 @@ export async function buildPilotStatusSnapshot(
   const liveInferenceEnabled = isPilotLiveInferenceEnabled(env);
   const financingMode = resolvePilotFinancingMode(env);
   const hasByokOpenRouter = args.configuredProviders.includes('openrouter');
+  const hasByokHeyGen = args.configuredProviders.includes('heygen');
   const hasSponsoredKey = resolvePilotSponsoredOpenRouterKey(env) !== null;
 
   let fundingMode: PilotFundingMode = 'none';
@@ -195,6 +201,21 @@ export async function buildPilotStatusSnapshot(
     // Graceful fallback when support queue migration is absent on legacy envs
   }
 
+  const baseOrigin = resolvePilotRefererOrigin(env);
+  const affiliateLinks = await listPilotAffiliateLinks(d1, {
+    orgId: args.orgId,
+    userId: args.userId,
+    baseOrigin,
+  });
+  const mp4Exports = await listPilotMp4Exports(d1, {
+    orgId: args.orgId,
+    userId: args.userId,
+  });
+  const manualPublishes = await listPilotManualPublishes(d1, {
+    orgId: args.orgId,
+    userId: args.userId,
+  });
+
   return {
     inviteOnly: isPilotInviteOnlyEnabled(env),
     liveInferenceEnabled,
@@ -205,8 +226,12 @@ export async function buildPilotStatusSnapshot(
     fundingMode,
     modelId: costControls.ok ? costControls.config.modelId : 'openai/gpt-4o-mini',
     byokKeyConfigured: hasByokOpenRouter,
+    heygenByokConfigured: hasByokHeyGen,
     quota,
     supportRequests,
+    affiliateLinks,
+    mp4Exports,
+    manualPublishes,
   };
 }
 

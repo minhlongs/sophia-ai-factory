@@ -463,6 +463,7 @@ export function FirstValueJourneyClient({
         orgId={orgId}
         pilot={pilot}
         studio={status?.affiliateStudio ?? null}
+        fallbackReview={activeReview}
         byokConfigured={effectiveByokConfigured}
         receipt={status?.receipt ?? null}
         busy={busy}

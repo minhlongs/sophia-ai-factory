@@ -17,15 +17,16 @@
 2. **🔐 Xác thực 1 chạm & Tạo tài khoản:** Trên màn hình bảo mật Cloudflare Access, bấm **GitHub** để vào thẳng 1 chạm (nếu tài khoản GitHub dùng đúng email được mời) hoặc nhập đúng email được mời vào ô bên dưới để nhận mã PIN 6 số, sau đó đăng ký hoặc đăng nhập Sophia bằng đúng địa chỉ email đã được mời ($0 phí nền tảng, không cần thẻ thanh toán).
 3. **📋 Đọc thông báo thử nghiệm & quyền riêng tư (`2026-11-pilot-v2`):** Ở đầu trang **Sophia Private Beta** (`/vi/dashboard/first-value`), đọc thông báo bản thử nghiệm miễn phí 7 ngày và nhấn **Đồng ý điều khoản & Tiếp tục**.
    - **Đơn vị kiểm soát dữ liệu:** Sophia AI Factory (vận hành bởi MekongMind).
-   - **Mục đích:** Tạo, chỉnh sửa, lưu nháp và xuất kịch bản AI trong 7 ngày thử nghiệm; không tự động đăng công khai, không thu phí nền tảng.
-   - **Khóa OpenRouter của bạn (Customer BYOK) & Nhà cung cấp AI:** Bạn nhập khóa OpenRouter cá nhân (`sk-or-v1-...`) ngay tại mục số 1; khóa được mã hóa AES-256-GCM và chỉ giải mã tạm thời để gửi brief tới OpenRouter (`openai/gpt-4o-mini`). Không nhập mật khẩu cá nhân, thẻ thanh toán hay dữ liệu nhạy cảm vào ô brief.
+   - **Mục đích:** Tạo, chỉnh sửa, lưu nháp kịch bản AI, gắn CTA + Referral Shortlink, xuất tệp video `.mp4` thật và ghi nhận dữ liệu đăng bài Affiliate thực tế trong 7 ngày thử nghiệm; không tự động đăng công khai, không thu phí nền tảng.
+   - **Khóa OpenRouter của bạn (Customer BYOK) & Nhà cung cấp AI:** Bạn nhập khóa OpenRouter cá nhân (`sk-or-v1-...`) ngay tại mục số 1 (Founder không tài trợ chi phí AI); khóa được mã hóa AES-256-GCM và chỉ giải mã tạm thời để gửi brief tới OpenRouter (`openai/gpt-4o-mini`). Không nhập mật khẩu cá nhân, thẻ thanh toán hay dữ liệu nhạy cảm vào ô brief.
    - **Lưu trữ, Hỗ trợ & Xóa dữ liệu:** Lưu tối đa 7 ngày trong cơ sở dữ liệu thử nghiệm biệt lập (`sophia-pilot-db`). Bạn có thể xóa khóa BYOK bất cứ lúc nào hoặc gửi yêu cầu tại mục **Hỗ trợ & Xóa dữ liệu** ngay trong ứng dụng (`#support-deletion`) để nhận mã biên nhận `psr_...` (xử lý trong vòng 72 giờ).
 4. **🔑 Kết nối khóa OpenRouter (BYOK):** Dán khóa API OpenRouter của bạn vào ô **1. Khóa API OpenRouter Của Bạn** và nhấn **Xác thực & Lưu khóa**.
 5. **🏷️ Chọn lĩnh vực & Thêm Affiliate Offer:** Chọn **Crypto Affiliate** (chỉ hỗ trợ thị trường hợp lệ US, EU, JP — chặn VN/SG và không cam kết lợi nhuận) hoặc **SaaS Affiliate**, nhập tên sản phẩm, website chính thức, **referral link hợp lệ của bạn**, điều kiện nhận hoa hồng, đối tượng/thị trường và nguồn thông tin, rồi nhấn **Lưu Affiliate Offer**.
 6. **✨ Tạo chiến dịch Affiliate bằng AI:** Nhấn **Tạo bộ chiến dịch Affiliate (AI thật)** để nhận phân tích đối tượng, value proposition, góc nội dung, kịch bản short-form, hook/CTA, bài đăng social, affiliate disclosure và bảo toàn nguyên vẹn referral link của bạn.
-7. **✏️ Content Factory Workspace — Chỉnh sửa, Duyệt & Xuất thủ công:** Chỉnh sửa nội dung, nhấn **Lưu bản nháp**, sau đó nhấn **Duyệt chiến dịch để mở khóa xuất nội dung** và chọn **Xuất Markdown riêng tư** hoặc **Xuất JSON riêng tư** để đăng thủ công.
-8. **📊 Theo dõi Doanh thu & Hoa hồng:** Xem trạng thái đối tác (`NOT_CONNECTED` khi chưa nối webhook postback) hoặc ghi nhận báo cáo đối tác có mã đối soát chính thức để theo dõi Clicks, Signups, Chuyển đổi, Hoa hồng chờ duyệt, Hoa hồng đã xác nhận, Chi phí AI và Doanh thu ròng.
-9. **💬 Gửi góp ý, báo lỗi hoặc yêu cầu hỗ trợ/xóa dữ liệu:** Dùng khung **Góp ý & Báo lỗi thử nghiệm** hoặc khung **Yêu cầu Hỗ trợ & Xóa dữ liệu** ngay bên dưới trang.
+7. **✏️ Content Factory Workspace — Chỉnh sửa & Duyệt chiến dịch:** Chỉnh sửa nội dung, nhấn **Lưu bản nháp**, sau đó nhấn **Duyệt chiến dịch để mở khóa xuất nội dung**.
+8. **🎬 Gắn CTA, Tạo Referral Shortlink & Xuất Video `.MP4` Thật:** Tại mục tạo video MP4 & Affiliate Shortlink ngay bên dưới, dán link sản phẩm/Affiliate gốc (`https://...`) + lời kêu gọi hành động (CTA) -> nhấn **Tạo Referral Shortlink** (`/api/r/...` tự đếm lượt click thật khi người xem bấm vào), rồi nhấn **Tạo & Tải Video MP4 9:16 (1-Key, 0 phí phụ)** để tải tệp `.mp4` chuẩn H.264 về máy (hoặc nối thêm khóa HeyGen BYOK tùy chọn nếu muốn tạo video Avatar).
+9. **📲 Đăng Thủ Công & Ghi Nhận Kết Quả Affiliate Thực Tế:** Nhấn **Sao chép gói đăng bài** (gồm Caption + CTA + Shortlink + `#QuảngCáo`), tự đăng tệp `.mp4` lên TikTok / YouTube Shorts / Reels, rồi dán link bài đăng công khai thực tế + ghi nhận báo cáo đối tác thực tế (hệ thống tách rõ `SERVER_VERIFIED_CLICK` và `CUSTOMER_SELF_REPORTED`, tuyệt đối không tự đăng bài hay bịa hoa hồng).
+10. **💬 Gửi góp ý, báo lỗi hoặc yêu cầu hỗ trợ/xóa dữ liệu:** Dùng khung **Góp ý & Báo lỗi thử nghiệm** hoặc khung **Yêu cầu Hỗ trợ & Xóa dữ liệu** ngay bên dưới trang.
 
 ### 🇬🇧 Step-by-step Guide (Customer)
 
@@ -33,15 +34,16 @@
 2. **🔐 1-Click Authenticate & Register:** On the Cloudflare Access screen, click **GitHub** for 1-click sign-in (when your GitHub account uses your invited email) or enter your invited email below to receive a 6-digit One-time PIN code, then register or sign in to Sophia with your exact invited email ($0 platform fee, no payment card needed).
 3. **📋 Review Beta & Privacy Notice (`2026-11-pilot-v2`):** At the top of `/en/dashboard/first-value`, read the 7-day private beta privacy notice and click **Accept Pilot Terms & Continue**.
    - **Data Controller:** Sophia AI Factory (operated by MekongMind).
-   - **Purpose:** Generate, edit, save, and export AI video scripts during your 7-day private evaluation. No auto-publishing, no Sophia billing.
-   - **Customer BYOK & AI Provider Transfer:** Enter your own OpenRouter API key (`sk-or-v1-...`) in Card 1 (stored encrypted with AES-256-GCM). Your brief is transmitted to OpenRouter (`openai/gpt-4o-mini`) solely to generate your script. Never enter passwords, payment data, or sensitive personal data.
+   - **Purpose:** Generate, edit, save AI video scripts, attach CTA + Referral Shortlink, export real `.mp4` videos, and log manual Affiliate outcomes during your 7-day private evaluation. No auto-publishing, no Sophia billing.
+   - **Customer BYOK & AI Provider Transfer:** Enter your own OpenRouter API key (`sk-or-v1-...`) in Card 1 (zero Founder AI subsidy; encrypted with AES-256-GCM). Your brief is transmitted to OpenRouter (`openai/gpt-4o-mini`) solely to generate your script. Never enter passwords, payment data, or sensitive personal data.
    - **Retention, Support & Deletion:** Stored in an isolated pilot database (`sophia-pilot-db`) for 7 days. Remove your BYOK key anytime or submit a Support / Data Deletion request directly in the in-app **Support & Data Deletion** panel (`#support-deletion`) to receive a verifiable `psr_...` receipt ID (completed within 72 hours).
 4. **🔑 Connect Your OpenRouter Key (BYOK):** Paste your OpenRouter key in **1. Your OpenRouter API Key (Customer BYOK)** and click **Verify & Save Key**.
 5. **🏷️ Select Vertical & Add Your Affiliate Offer:** Choose **Crypto Affiliate** (assessed markets US, EU, JP only — VN/SG blocked, zero guaranteed-return claims) or **SaaS Affiliate**, enter product name, official website, **your approved referral link**, commission terms, target audience/market, and product info source, then click **Save Affiliate Offer**.
 6. **✨ Generate Your Affiliate Campaign:** Click **Generate Live AI Affiliate Campaign** to create audience analysis, value proposition, content angles, short-form script, hook/CTA, ready-to-post social copy, mandatory disclosure, and exact referral link preservation.
-7. **✏️ Content Factory Workspace — Edit, Approve & Export:** Edit and click **Save Draft**, then click **Approve Campaign to Unlock Export** and export Markdown or JSON for manual publishing.
-8. **📊 Track Revenue & Commissions:** View partner feed status (`NOT_CONNECTED` when no live postback webhook is connected) or record verified partner statements with reference IDs to track Clicks, Signups, Qualified Conversions, Pending Commissions, Confirmed Commissions, Estimated AI Cost, and Net Revenue.
-9. **💬 Share Feedback or Request Support / Deletion:** Use the **Pilot Feedback & Issue Report** card or the **Support & Data Deletion Request** card on the same page.
+7. **✏️ Content Factory Workspace — Edit & Approve:** Edit and click **Save Draft**, then click **Approve Campaign to Unlock Export**.
+8. **🎬 Attach CTA, Create Referral Shortlink & Export Real `.MP4` Video:** Paste your destination Affiliate URL (`https://...`) + Call-to-Action -> click **Create Referral Shortlink** (live `/api/r/...` link that counts real viewer clicks), then click **Render & Download 9:16 MP4 (1-Key, $0 extra)** to download a real H.264 `.mp4` file (or optionally connect your own HeyGen BYOK key for AI Avatar video).
+9. **📲 Publish Manually & Record Real Affiliate Outcomes:** Click **Copy Post Pack** (Caption + CTA + Shortlink + `#ad`), upload your `.mp4` manually to TikTok / YouTube Shorts / Reels, and record your live post URL + actual network reconciliation numbers (`SERVER_VERIFIED_CLICK` vs `CUSTOMER_SELF_REPORTED`, zero fabricated conversions or commissions).
+10. **💬 Share Feedback or Request Support / Deletion:** Use the **Pilot Feedback & Issue Report** card or the **Support & Data Deletion Request** card on the same page.
 
 ---
 
@@ -59,9 +61,9 @@
 
 - **Data Controller / Owner:** Sophia AI Factory (operated by MekongMind — in-app Support & Data Deletion queue at `/[locale]/dashboard/first-value#support-deletion`, operator CLI `node scripts/pilot-support-queue.mjs`).
 - **Consent Version:** `2026-11-pilot-v2` (explicit opt-in required prior to first generation; no pre-checked boxes).
-- **Data Collected (Minimized):** Invited email, workspace/org membership, submitted brief, generated/edited script, consent timestamp & policy version, minimal scoped telemetry events (`INVITE_ACCEPTED`, `FIRST_LOGIN`, `BYOK_KEY_SAVED`, `BYOK_KEY_CLEARED`, `BRIEF_SUBMITTED`, `GENERATION_REQUESTED`, `GENERATION_SUCCEEDED`, `GENERATION_FAILED`, `SCRIPT_REVIEWED`, `SCRIPT_EDITED`, `SCRIPT_EXPORTED`, `CUSTOMER_FEEDBACK_SUBMITTED`, `SUPPORT_REQUEST_SUBMITTED`, `DATA_DELETION_REQUESTED`), feedback text, and in-app support/deletion requests (`pilot_support_requests`).
+- **Data Collected (Minimized):** Invited email, workspace/org membership, submitted brief, generated/edited script, consent timestamp & policy version, minimal scoped telemetry events (`INVITE_ACCEPTED`, `FIRST_LOGIN`, `BYOK_KEY_SAVED`, `BYOK_KEY_CLEARED`, `HEYGEN_BYOK_SAVED`, `HEYGEN_BYOK_CLEARED`, `BRIEF_SUBMITTED`, `GENERATION_REQUESTED`, `GENERATION_SUCCEEDED`, `GENERATION_FAILED`, `SCRIPT_REVIEWED`, `SCRIPT_EDITED`, `SCRIPT_EXPORTED`, `AFFILIATE_SHORTLINK_CREATED`, `MP4_EXPORT_REQUESTED`, `MP4_EXPORTED`, `MP4_EXPORT_FAILED`, `MANUAL_PUBLISH_RECORDED`, `CUSTOMER_FEEDBACK_SUBMITTED`, `SUPPORT_REQUEST_SUBMITTED`, `DATA_DELETION_REQUESTED`), MP4 export hashes/metadata (`pilot_mp4_exports`), affiliate shortlinks & IP-hashed clicks (`pilot_affiliate_links`, `pilot_affiliate_clicks`), customer-reported manual publish entries (`pilot_manual_publishes`), feedback text, and in-app support/deletion requests (`pilot_support_requests`).
 - **Data NOT Logged / NOT Stored in Plaintext:** No prompts, full script contents, or API keys are logged by default. Customer OpenRouter BYOK keys are encrypted at rest with AES-256-GCM (`BYOK_MASTER_KEY` + `key_versions`) and never echoed in responses or telemetry. Zero payment or social OAuth credentials (PayOS, NOWPayments, B2 publishing, and all non-pilot `/api/*` routes are hard-blocked at middleware with `403`).
-- **Cross-Border Transfer Disclosure:** Submitted briefs are transmitted to OpenRouter (`https://openrouter.ai/api/v1/chat/completions`) and upstream model provider (`openai/gpt-4o-mini`) solely for script generation.
+- **Cross-Border Transfer Disclosure:** Submitted briefs are transmitted to OpenRouter (`https://openrouter.ai/api/v1/chat/completions`, upstream model `openai/gpt-4o-mini`) solely for script generation. If the customer optionally connects their own HeyGen BYOK key, approved narration and CTA text are transmitted to HeyGen (`https://api.heygen.com/v2/video/generate`) solely to render their avatar MP4.
 - **Applicable Vietnamese Privacy Framework (Founder Legal Check Required — No Fabricated Compliance):**
   - **Law on Personal Data Protection No. 91/2025/QH15** and implementing **Decree No. 356/2025/ND-CP** took effect **January 1, 2026** (superseding Decree 13/2023/ND-CP).
   - **Article 6 (Consent):** Verifiable, explicit, non-default consent is enforced via `accept_pilot_terms` (`2026-11-pilot-v2`) before any generation.
@@ -113,6 +115,7 @@ Apply to `sophia-pilot-db` (`--remote --config wrangler.pilot.toml` — NEVER `s
 14. `migrations/0517_customer_pilot_first_value.sql`
 15. `migrations/0519_pilot_support_requests.sql`
 16. `migrations/0520_pilot_affiliate_revenue_studio.sql`
+17. `migrations/0521_pilot_commercial_validation.sql`
 
 Apply to `sophia-pilot-tag-cache` (`--remote --config wrangler.pilot.toml`):
 1. `migrations/0108-opennext-tag-cache.sql`
@@ -130,12 +133,12 @@ Set via `wrangler secret put <NAME> --config wrangler.pilot.toml`:
 
 ### 8. Exact Email Allowlist & Page Scope Confinement
 - Exact allowlisted emails only in `PILOT_ALLOWED_EMAILS` (operator allowlist + single invited customer email; zero domain wildcards, fails closed when empty).
-- Middleware confines pilot APIs to `['/api/auth', '/api/first-value', '/api/health', '/api/version', '/api/check-access', '/api/csp-report']` and confines pilot UI pages to `/login`, `/register`, `/signup`, `/reset-password`, `/privacy`, `/terms`, and `/dashboard/first-value`.
+- Middleware confines pilot APIs to `['/api/auth', '/api/first-value', '/api/r', '/api/health', '/api/version', '/api/check-access', '/api/csp-report']` and confines pilot UI pages to `/login`, `/register`, `/signup`, `/reset-password`, `/privacy`, `/terms`, and `/dashboard/first-value`.
 
-### 9. Cloudflare Access Policy & 1-Click GitHub SSO (Worker-Level Zero Trust)
+### 9. Cloudflare Access Policy, 1-Click GitHub SSO & Scoped Shortlink Bypass
 - Cloudflare Access App `11a89148-d86e-4d3e-a1d4-e12edbeb6f75` (`mekongmind.cloudflareaccess.com`) binds `allowed_idps` to 1-click **GitHub OAuth** (`6d34ddc8-ac66-4489-ac4e-4e8dc784aacd`) alongside **One-time PIN** (`374e269a-15c4-4228-bce1-abccacce9110`) fallback.
-- Policy `5ad49a50-b19a-4cc9-a43d-d2455e92fa42` enforces `decision = "allow"` with exact `email` include rules for the operator emails and the single invited customer email.
-- Zero wildcard domains, `everyone`, or `bypass` rules permitted (verified automatically by `scripts/pilot-invite-customer.mjs`).
+- Policy `5ad49a50-b19a-4cc9-a43d-d2455e92fa42` enforces `decision = "allow"` with exact `email` include rules for operator emails and the single invited customer email (zero `everyone`/`bypass`/wildcards on the root app).
+- A dedicated subpath Cloudflare Access App on `sophia-ai-factory-pilot.agencyos-openclaw.workers.dev/api/r/*` permits public shortlink redirects (`302` + `sub_id` + IP-hashed `SERVER_VERIFIED_CLICK` logging) so social media viewers can click referral links while all pages and `/api/first-value` remain locked behind Zero Trust.
 
 ### 10. Financing Mode & Platform Spend Guarantee (`$0` Platform Spend)
 - `PILOT_FINANCING_MODE = "CUSTOMER_BYOK"` and `BYOK_ENABLED = "1"`.
@@ -177,9 +180,17 @@ node scripts/pilot-invite-customer.mjs "<invited-customer-email>"
    - **Application allowlist:** `wrangler secret put PILOT_ALLOWED_EMAILS --config wrangler.pilot.toml` (reset to operator-only emails `billwill.mentor@gmail.com,minhlong.rice@gmail.com` or empty to pause all access — triggers new Worker version deployment, propagates in ~10–30s).
    - **Session cookie cache:** Better Auth caches validated sessions in a signed cookie for up to 5 minutes (`cookieCache.maxAge = 300`); however, `/api/first-value` checks `PILOT_ALLOWED_EMAILS` on **every request** regardless of cookie cache, and Cloudflare Access blocks at the edge before the Worker runs. For complete session invalidation in D1, delete rows from `session` in `sophia-pilot-db`.
 
-### 19. Customer Feedback & Incident Monitoring
-- Review `pilot_events` and `pilot_feedback` tables in `sophia-pilot-db` daily via read-only `wrangler d1 execute sophia-pilot-db --remote --command "..."`.
-- Monitor OpenRouter key `usage` / `limit_remaining` via `GET /api/v1/key`.
+### 19. On-Demand Operations Triage & REPORT 10 / REPORT 12 Decision CLI
+- **Honest Monitoring Mode (`ON_DEMAND_CLI`):** No background cron daemon is attached to `wrangler.pilot.toml` (never claim background monitoring). Run the PII-redacted on-demand triage command anytime:
+  ```bash
+  cd apps/sophia-ai-factory
+  npm run pilot:ops-report -- --markdown
+  ```
+- **End-of-Pilot Strategic Verdict (`BUILD / FIX / HOLD / SCALE`):** Cross-examine real `sophia-pilot-db` evidence against **REPORT 10** and **REPORT 12** in `Sophia AI Factory Research.pdf`:
+  ```bash
+  cd apps/sophia-ai-factory
+  npm run pilot:decision-report -- --markdown
+  ```
 - P0 incident (cross-tenant access, leaked secret, runaway spend): disable OpenRouter key + revoke Cloudflare Access within 5 minutes.
 
 ### 20. End-of-Pilot Data Retention & Deletion Actions
@@ -210,6 +221,8 @@ events_observed:
   FIRST_LOGIN: 0
   BYOK_KEY_SAVED: 0
   BYOK_KEY_CLEARED: 0
+  HEYGEN_BYOK_SAVED: 0
+  HEYGEN_BYOK_CLEARED: 0
   BRIEF_SUBMITTED: 0
   GENERATION_REQUESTED: 0
   GENERATION_SUCCEEDED: 0
@@ -217,6 +230,11 @@ events_observed:
   SCRIPT_REVIEWED: 0
   SCRIPT_EDITED: 0
   SCRIPT_EXPORTED: 0
+  AFFILIATE_SHORTLINK_CREATED: 0
+  MP4_EXPORT_REQUESTED: 0
+  MP4_EXPORTED: 0
+  MP4_EXPORT_FAILED: 0
+  MANUAL_PUBLISH_RECORDED: 0
   CUSTOMER_FEEDBACK_SUBMITTED: 0
   SUPPORT_REQUEST_SUBMITTED: 0
   DATA_DELETION_REQUESTED: 0
