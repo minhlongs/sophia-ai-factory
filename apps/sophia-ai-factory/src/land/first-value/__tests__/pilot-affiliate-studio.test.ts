@@ -367,6 +367,7 @@ describe('Commercial Vertical Slice over /api/first-value + SQLite D1', () => {
       '0517_customer_pilot_first_value.sql',
       '0519_pilot_support_requests.sql',
       '0520_pilot_affiliate_revenue_studio.sql',
+      '0522_pilot_affiliate_performance_tenant_isolation.sql',
     ]) {
       await sqlite.exec(
         fs.readFileSync(path.resolve(__dirname, '../../../../migrations', mig), 'utf8'),

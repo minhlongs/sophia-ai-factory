@@ -8,6 +8,7 @@
  */
 
 import type { D1Database } from '@cloudflare/workers-types';
+import { verifyWorkspaceRole } from '@/seed/auth/workspace-access';
 import type {
   AffiliateCampaignPack,
   AffiliateStudioVertical,
@@ -539,6 +540,83 @@ export async function approvePilotAffiliateCampaign(
   return { outcome: 'approved', record: updated };
 }
 
+export class AmbiguousLegacyCommissionOwnershipError extends Error {
+  readonly code = 'AMBIGUOUS_LEGACY_COMMISSION_OWNERSHIP' as const;
+  readonly orgId: string;
+  readonly externalRefId: string;
+
+  constructor(orgId: string, externalRefId: string) {
+    super(
+      `Ambiguous legacy commission ownership for org=${orgId} external_ref_id=${externalRefId}; refusing to infer owner or create duplicate credit.`,
+    );
+    this.name = 'AmbiguousLegacyCommissionOwnershipError';
+    this.orgId = orgId;
+    this.externalRefId = externalRefId;
+  }
+}
+
+interface LegacyCommissionRow {
+  id: string;
+  campaign_id: string | null;
+  external_tx_id: string;
+  commission_cents: number;
+  status: string;
+  raw_payload: string | null;
+}
+
+async function resolveLegacyCommissionOwnership(
+  d1: D1Database,
+  args: {
+    readonly orgId: string;
+    readonly userId: string;
+    readonly campaignId: string;
+    readonly externalRefId: string;
+    readonly legacyTxId: string;
+    readonly status: 'pending' | 'approved' | 'reversed';
+  },
+): Promise<'none' | 'owned_by_caller' | 'owned_by_other_user'> {
+  const legacyRow = await d1
+    .prepare(
+      `SELECT id, campaign_id, external_tx_id, commission_cents, status, raw_payload
+       FROM workspace_external_commissions
+       WHERE tenant_id = ? AND network = 'customer_partner_report'
+         AND external_tx_id = ? AND status = ?
+       LIMIT 1`,
+    )
+    .bind(args.orgId, args.legacyTxId, args.status)
+    .first<LegacyCommissionRow>();
+
+  if (!legacyRow) return 'none';
+
+  // 1. Check campaign ownership in pilot_affiliate_campaigns (authoritative)
+  if (legacyRow.campaign_id) {
+    const camp = await d1
+      .prepare(`SELECT user_id FROM pilot_affiliate_campaigns WHERE id = ? AND org_id = ? LIMIT 1`)
+      .bind(legacyRow.campaign_id, args.orgId)
+      .first<{ user_id: string }>();
+
+    if (camp) {
+      return camp.user_id === args.userId ? 'owned_by_caller' : 'owned_by_other_user';
+    }
+  }
+
+  // 2. Fallback: check unambiguous owner in pilot_affiliate_performance_entries
+  const perfOwners = await d1
+    .prepare(
+      `SELECT DISTINCT user_id FROM pilot_affiliate_performance_entries
+       WHERE org_id = ? AND external_ref_id = ?`,
+    )
+    .bind(args.orgId, args.externalRefId)
+    .all<{ user_id: string }>();
+  const distinctOwners = (perfOwners.results ?? []).map((r) => r.user_id);
+  if (distinctOwners.length === 1) {
+    return distinctOwners[0] === args.userId ? 'owned_by_caller' : 'owned_by_other_user';
+  }
+
+  // 3. Ambiguous legacy row (no verifiable single owner) -> fail closed!
+  throw new AmbiguousLegacyCommissionOwnershipError(args.orgId, args.externalRefId);
+}
+
 export async function recordPartnerPerformanceReport(
   d1: D1Database,
   input: {
@@ -560,9 +638,45 @@ export async function recordPartnerPerformanceReport(
     readonly notes: string | null;
     readonly nowIso: string;
     readonly nowMs: number;
+    readonly eventKind?: 'report' | 'reversal' | 'correction';
   },
 ): Promise<{ readonly entry: PilotAffiliatePerformanceEntry; readonly duplicate: boolean }> {
   const currency = (input.currency || 'USD').trim().toUpperCase();
+  const eventKind = input.eventKind ?? 'report';
+  const niche = input.vertical === 'crypto' ? 'crypto_global' : 'saas_global';
+  const rawMeta = JSON.stringify({
+    provenance: 'customer_reported_partner_statement',
+    reportSource: input.reportSource,
+    reportPeriod: input.reportPeriod,
+    userId: input.userId,
+    eventKind,
+  });
+
+  // Fail-closed pre-check for legacy unprefixed rows before any ledger mutation
+  const pendingLegacyOwnership =
+    input.pendingCommissionCents > 0
+      ? await resolveLegacyCommissionOwnership(d1, {
+          orgId: input.orgId,
+          userId: input.userId,
+          campaignId: input.campaignId,
+          externalRefId: input.externalRefId,
+          legacyTxId: `${input.externalRefId}:pending`,
+          status: 'pending',
+        })
+      : 'none';
+
+  const confirmedLegacyOwnership =
+    input.confirmedCommissionCents > 0 || eventKind === 'reversal' || eventKind === 'correction'
+      ? await resolveLegacyCommissionOwnership(d1, {
+          orgId: input.orgId,
+          userId: input.userId,
+          campaignId: input.campaignId,
+          externalRefId: input.externalRefId,
+          legacyTxId: `${input.externalRefId}:confirmed`,
+          status: 'approved',
+        })
+      : 'none';
+
   const res = await d1
     .prepare(
       `INSERT INTO pilot_affiliate_performance_entries
@@ -570,7 +684,7 @@ export async function recordPartnerPerformanceReport(
         clicks_count, signups_count, qualified_conversions, pending_commission_cents,
         confirmed_commission_cents, currency, notes, created_at_iso, updated_at_iso)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT (org_id, external_ref_id) DO NOTHING`,
+       ON CONFLICT (org_id, user_id, external_ref_id) DO NOTHING`,
     )
     .bind(
       input.id,
@@ -593,77 +707,269 @@ export async function recordPartnerPerformanceReport(
     )
     .run();
 
-  const duplicate = Number(res.meta?.changes ?? 0) === 0;
-  const niche = input.vertical === 'crypto' ? 'crypto_global' : 'saas_global';
-  const rawMeta = JSON.stringify({
-    provenance: 'customer_reported_partner_statement',
-    reportSource: input.reportSource,
-    reportPeriod: input.reportPeriod,
-  });
+  const insertedNewPerf = Number(res.meta?.changes ?? 0) > 0;
+  let duplicate = !insertedNewPerf;
 
-  if (!duplicate) {
-    if (input.pendingCommissionCents > 0) {
-      await d1
-        .prepare(
-          `INSERT INTO workspace_external_commissions
-           (id, tenant_id, campaign_id, network, niche, external_tx_id, event_type, status,
-            gross_amount_cents, commission_cents, platform_fee_cents, currency, raw_payload,
-            occurred_at, created_at)
-           VALUES (?, ?, ?, 'customer_partner_report', ?, ?, 'partner_statement_pending', 'pending',
-                   0, ?, 0, ?, ?, ?, ?)
-           ON CONFLICT (tenant_id, network, external_tx_id, status) DO NOTHING`,
-        )
-        .bind(
-          `wec_pend_${input.id}`,
-          input.orgId,
-          input.campaignId,
-          niche,
-          `${input.externalRefId}:pending`,
-          input.pendingCommissionCents,
-          currency,
-          rawMeta,
-          input.nowMs,
-          input.nowMs,
-        )
-        .run();
+  const insertCommissionAtomically = async (params: {
+    readonly id: string;
+    readonly scopedTxId: string;
+    readonly legacyTxId: string;
+    readonly eventType: string;
+    readonly status: 'pending' | 'approved' | 'reversed';
+    readonly commissionCents: number;
+    readonly legacyOwnership: 'none' | 'owned_by_caller' | 'owned_by_other_user';
+  }): Promise<void> => {
+    if (params.legacyOwnership === 'owned_by_caller') {
+      // Historical legacy row already credited this caller's economic event — never double-credit
+      return;
     }
 
-    if (input.confirmedCommissionCents > 0) {
-      await d1
-        .prepare(
-          `INSERT INTO workspace_external_commissions
-           (id, tenant_id, campaign_id, network, niche, external_tx_id, event_type, status,
-            gross_amount_cents, commission_cents, platform_fee_cents, currency, raw_payload,
-            occurred_at, created_at)
-           VALUES (?, ?, ?, 'customer_partner_report', ?, ?, 'partner_statement_confirmed', 'approved',
-                   0, ?, 0, ?, ?, ?, ?)
-           ON CONFLICT (tenant_id, network, external_tx_id, status) DO NOTHING`,
-        )
-        .bind(
-          `wec_conf_${input.id}`,
-          input.orgId,
-          input.campaignId,
-          niche,
-          `${input.externalRefId}:confirmed`,
-          input.confirmedCommissionCents,
-          currency,
-          rawMeta,
-          input.nowMs,
-          input.nowMs,
-        )
-        .run();
+    await d1
+      .prepare(
+        `INSERT INTO workspace_external_commissions
+         (id, tenant_id, campaign_id, network, niche, external_tx_id, event_type, status,
+          gross_amount_cents, commission_cents, platform_fee_cents, currency, raw_payload,
+          occurred_at, created_at)
+         SELECT ?, ?, ?, 'customer_partner_report', ?, ?, ?, ?,
+                0, ?, 0, ?, ?, ?, ?
+         WHERE NOT EXISTS (
+           SELECT 1 FROM workspace_external_commissions
+           WHERE tenant_id = ? AND network = 'customer_partner_report' AND status = ?
+             AND (external_tx_id = ? OR (external_tx_id = ? AND campaign_id = ?))
+         )
+         ON CONFLICT (tenant_id, network, external_tx_id, status) DO NOTHING`,
+      )
+      .bind(
+        params.id,
+        input.orgId,
+        input.campaignId,
+        niche,
+        params.scopedTxId,
+        params.eventType,
+        params.status,
+        params.commissionCents,
+        currency,
+        rawMeta,
+        input.nowMs,
+        input.nowMs,
+        input.orgId,
+        params.status,
+        params.scopedTxId,
+        params.legacyTxId,
+        input.campaignId,
+      )
+      .run();
+  };
+
+  if (insertedNewPerf) {
+    if (eventKind === 'reversal') {
+      await insertCommissionAtomically({
+        id: `wec_rev_${input.id}`,
+        scopedTxId: `${input.userId}:${input.externalRefId}:reversed`,
+        legacyTxId: `${input.externalRefId}:reversed`,
+        eventType: 'partner_statement_reversed',
+        status: 'reversed',
+        commissionCents: -Math.abs(input.confirmedCommissionCents || input.pendingCommissionCents),
+        legacyOwnership: 'none',
+      });
+    } else {
+      if (input.pendingCommissionCents > 0) {
+        await insertCommissionAtomically({
+          id: `wec_pend_${input.id}`,
+          scopedTxId: `${input.userId}:${input.externalRefId}:pending`,
+          legacyTxId: `${input.externalRefId}:pending`,
+          eventType: 'partner_statement_pending',
+          status: 'pending',
+          commissionCents: input.pendingCommissionCents,
+          legacyOwnership: pendingLegacyOwnership,
+        });
+      }
+
+      if (input.confirmedCommissionCents > 0) {
+        await insertCommissionAtomically({
+          id: `wec_conf_${input.id}`,
+          scopedTxId: `${input.userId}:${input.externalRefId}:confirmed`,
+          legacyTxId: `${input.externalRefId}:confirmed`,
+          eventType: 'partner_statement_confirmed',
+          status: 'approved',
+          commissionCents: input.confirmedCommissionCents,
+          legacyOwnership: confirmedLegacyOwnership,
+        });
+      }
+    }
+  } else {
+    // Existing performance entry for (org_id, user_id, external_ref_id):
+    // Handle legitimate state transitions (pending -> confirmed, reversal, correction)
+    const existingRow = await d1
+      .prepare(
+        `SELECT * FROM pilot_affiliate_performance_entries
+         WHERE org_id = ? AND user_id = ? AND external_ref_id = ? LIMIT 1`,
+      )
+      .bind(input.orgId, input.userId, input.externalRefId)
+      .first<PerfDbRow>();
+
+    if (existingRow) {
+      const isPendingToConfirmed =
+        eventKind === 'report' &&
+        Number(existingRow.pending_commission_cents) > 0 &&
+        input.pendingCommissionCents === 0 &&
+        input.confirmedCommissionCents > 0 &&
+        Number(existingRow.confirmed_commission_cents) === 0;
+
+      if (isPendingToConfirmed) {
+        await d1
+          .prepare(
+            `UPDATE pilot_affiliate_performance_entries
+             SET pending_commission_cents = 0, confirmed_commission_cents = ?, updated_at_iso = ?
+             WHERE id = ? AND org_id = ? AND user_id = ?`,
+          )
+          .bind(input.confirmedCommissionCents, input.nowIso, existingRow.id, input.orgId, input.userId)
+          .run();
+
+        // Zero out pending ledger row (scoped or owned-legacy) so pending + approved are never double-counted
+        await d1
+          .prepare(
+            `UPDATE workspace_external_commissions
+             SET commission_cents = 0
+             WHERE tenant_id = ? AND network = 'customer_partner_report' AND status = 'pending'
+               AND (external_tx_id = ? OR (external_tx_id = ? AND campaign_id = ?))`,
+          )
+          .bind(
+            input.orgId,
+            `${input.userId}:${input.externalRefId}:pending`,
+            `${input.externalRefId}:pending`,
+            input.campaignId,
+          )
+          .run();
+
+        await insertCommissionAtomically({
+          id: `wec_conf_${input.id}`,
+          scopedTxId: `${input.userId}:${input.externalRefId}:confirmed`,
+          legacyTxId: `${input.externalRefId}:confirmed`,
+          eventType: 'partner_statement_confirmed',
+          status: 'approved',
+          commissionCents: input.confirmedCommissionCents,
+          legacyOwnership: confirmedLegacyOwnership,
+        });
+        duplicate = false;
+      } else if (eventKind === 'reversal') {
+        const reversalAmount = Math.abs(
+          input.confirmedCommissionCents || Number(existingRow.confirmed_commission_cents),
+        );
+        const revRes = await d1
+          .prepare(
+            `INSERT INTO workspace_external_commissions
+             (id, tenant_id, campaign_id, network, niche, external_tx_id, event_type, status,
+              gross_amount_cents, commission_cents, platform_fee_cents, currency, raw_payload,
+              occurred_at, created_at)
+             VALUES (?, ?, ?, 'customer_partner_report', ?, ?, 'partner_statement_reversed', 'reversed',
+                     0, ?, 0, ?, ?, ?, ?)
+             ON CONFLICT (tenant_id, network, external_tx_id, status) DO NOTHING`,
+          )
+          .bind(
+            `wec_rev_${input.id}`,
+            input.orgId,
+            input.campaignId,
+            niche,
+            `${input.userId}:${input.externalRefId}:reversed`,
+            -reversalAmount,
+            currency,
+            rawMeta,
+            input.nowMs,
+            input.nowMs,
+          )
+          .run();
+
+        await d1
+          .prepare(
+            `UPDATE pilot_affiliate_performance_entries
+             SET pending_commission_cents = 0, confirmed_commission_cents = 0, updated_at_iso = ?
+             WHERE id = ? AND org_id = ? AND user_id = ?`,
+          )
+          .bind(input.nowIso, existingRow.id, input.orgId, input.userId)
+          .run();
+
+        duplicate = Number(revRes.meta?.changes ?? 0) === 0;
+      } else if (eventKind === 'correction') {
+        const alreadySame =
+          Number(existingRow.pending_commission_cents) === input.pendingCommissionCents &&
+          Number(existingRow.confirmed_commission_cents) === input.confirmedCommissionCents;
+
+        if (!alreadySame) {
+          const auditPayload = JSON.stringify({
+            provenance: 'customer_reported_partner_statement',
+            reportSource: input.reportSource,
+            reportPeriod: input.reportPeriod,
+            userId: input.userId,
+            eventKind: 'correction',
+            previousConfirmedCommissionCents: Number(existingRow.confirmed_commission_cents),
+            correctedConfirmedCommissionCents: input.confirmedCommissionCents,
+            correctedAtIso: input.nowIso,
+          });
+
+          await d1
+            .prepare(
+              `UPDATE pilot_affiliate_performance_entries
+               SET pending_commission_cents = ?, confirmed_commission_cents = ?, notes = ?, updated_at_iso = ?
+               WHERE id = ? AND org_id = ? AND user_id = ?`,
+            )
+            .bind(
+              input.pendingCommissionCents,
+              input.confirmedCommissionCents,
+              input.notes,
+              input.nowIso,
+              existingRow.id,
+              input.orgId,
+              input.userId,
+            )
+            .run();
+
+          await d1
+            .prepare(
+              `UPDATE workspace_external_commissions
+               SET commission_cents = ?, raw_payload = ?
+               WHERE tenant_id = ? AND network = 'customer_partner_report' AND status = 'approved'
+                 AND (external_tx_id = ? OR (external_tx_id = ? AND campaign_id = ?))`,
+            )
+            .bind(
+              input.confirmedCommissionCents,
+              auditPayload,
+              input.orgId,
+              `${input.userId}:${input.externalRefId}:confirmed`,
+              `${input.externalRefId}:confirmed`,
+              input.campaignId,
+            )
+            .run();
+
+          duplicate = false;
+        }
+      }
     }
   }
 
   const row = await d1
     .prepare(
       `SELECT * FROM pilot_affiliate_performance_entries
-       WHERE org_id = ? AND external_ref_id = ? LIMIT 1`,
+       WHERE org_id = ? AND user_id = ? AND external_ref_id = ? LIMIT 1`,
     )
-    .bind(input.orgId, input.externalRefId)
+    .bind(input.orgId, input.userId, input.externalRefId)
     .first<PerfDbRow>();
   if (!row) throw new Error('Failed to load recorded partner performance entry');
   return { entry: mapPerfRow(row), duplicate };
+}
+
+export async function getPartnerPerformanceEntryByRef(
+  d1: D1Database,
+  args: { readonly orgId: string; readonly userId: string; readonly externalRefId: string },
+): Promise<PilotAffiliatePerformanceEntry | null> {
+  const row = await d1
+    .prepare(
+      `SELECT * FROM pilot_affiliate_performance_entries
+       WHERE org_id = ? AND user_id = ? AND external_ref_id = ? LIMIT 1`,
+    )
+    .bind(args.orgId, args.userId, args.externalRefId)
+    .first<PerfDbRow>();
+  return row ? mapPerfRow(row) : null;
 }
 
 export async function listPartnerPerformanceEntries(
@@ -679,4 +985,31 @@ export async function listPartnerPerformanceEntries(
     .bind(args.orgId, args.userId, args.limit ?? 30)
     .all<PerfDbRow>();
   return (res.results ?? []).map(mapPerfRow);
+}
+
+/**
+ * Organization-wide performance entry visibility for legitimate ADMIN/OWNER roles.
+ * Fail-closed: verifies workspace RBAC (`ADMIN` minimum) against D1 before reading.
+ */
+export async function listPartnerPerformanceEntriesForOrgAdmin(
+  d1: D1Database,
+  args: { readonly orgId: string; readonly actorUserId: string; readonly limit?: number },
+): Promise<
+  | { readonly authorized: true; readonly entries: readonly PilotAffiliatePerformanceEntry[] }
+  | { readonly authorized: false; readonly entries: readonly [] }
+> {
+  const isAdmin = await verifyWorkspaceRole(args.orgId, args.actorUserId, 'ADMIN', d1);
+  if (!isAdmin) {
+    return { authorized: false, entries: [] };
+  }
+
+  const res = await d1
+    .prepare(
+      `SELECT * FROM pilot_affiliate_performance_entries
+       WHERE org_id = ?
+       ORDER BY created_at_iso DESC LIMIT ?`,
+    )
+    .bind(args.orgId, args.limit ?? 100)
+    .all<PerfDbRow>();
+  return { authorized: true, entries: (res.results ?? []).map(mapPerfRow) };
 }
