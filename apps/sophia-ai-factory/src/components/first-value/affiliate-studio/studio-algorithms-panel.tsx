@@ -19,6 +19,7 @@ import {
   type ComplianceProvider,
   type ComplianceVertical,
 } from '@/seed/compliance/policy-preflight-engine';
+import { evaluateHookAndBeatPacing } from '@/seed/ai/hook-beat-evaluator';
 
 export interface StudioAlgorithmsPanelProps {
   readonly scriptText: string;
@@ -62,6 +63,8 @@ export function StudioAlgorithmsPanel({
     [scriptText, jurisdiction, platform, provider, vertical],
   );
 
+  const hookEval = useMemo(() => evaluateHookAndBeatPacing(scriptText), [scriptText]);
+
   async function handleCopyDisclosure() {
     try {
       await navigator.clipboard.writeText(preflight.requiredDisclosure);
@@ -96,6 +99,9 @@ export function StudioAlgorithmsPanel({
           </span>
           <span className="rounded border border-border bg-muted/50 px-1.5 py-0.5 text-muted-foreground">
             Smartlink /api/r/ ✓
+          </span>
+          <span className="rounded border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-primary">
+            Hook {hookEval.estimatedHookSec}s • {hookEval.weightedScore100}/100
           </span>
         </div>
       </div>
