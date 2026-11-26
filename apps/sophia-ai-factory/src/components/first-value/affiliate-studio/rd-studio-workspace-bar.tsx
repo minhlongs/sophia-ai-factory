@@ -1,20 +1,16 @@
 'use client';
 
 /**
- * Sticky R&D Studio Context Bar & 4-Tab Modular Workspace Switcher (Zen Design OS 2026).
+ * Calm Inline Pipeline Header (Linear / Vercel Geist 2026 Craft Standard).
  *
- * Replaces vertical 11-card scroll fatigue with 4 focused workspaces:
- * 1. Setup & Offers (BYOK + Crypto/SaaS Offers)
- * 2. Script & Eval (AI Generator 9:16/16:9 + Content Workspace)
- * 3. Video & Distribution (MP4/TTS/SRT/1-Long-3-Shorts + 5-Platform Hub)
- * 4. Revenue & R&D Ops (Revenue Ledger + Feedback + Support)
- * Plus an optional "All View" toggle for full-page overview.
+ * Replaces stacked nav bars, heavy boxed pipeline canvases, and duplicate steppers
+ * with one quiet, hairline-bordered inline breadcrumb bar (`48px` height).
  *
  * @module components/first-value/affiliate-studio/rd-studio-workspace-bar
  */
 
 import { useTranslations } from 'next-intl';
-import { Layers, Sparkles, Film, BarChart3, LayoutGrid } from 'lucide-react';
+import { Check, ChevronRight, LayoutGrid } from 'lucide-react';
 
 export type RdStudioTabId = 'setup' | 'script' | 'studio' | 'ops' | 'all';
 
@@ -26,128 +22,113 @@ export interface RdStudioWorkspaceBarProps {
   readonly activeCampaignTitle: string | null;
   readonly offersCount: number;
   readonly campaignsCount: number;
+  readonly hasApprovedCampaign?: boolean;
+  readonly hasMp4OrLink?: boolean;
+  readonly hasManualPublish?: boolean;
 }
 
 export function RdStudioWorkspaceBar(props: RdStudioWorkspaceBarProps) {
   const t = useTranslations('firstValue');
 
-  const tabs: ReadonlyArray<{
+  const steps: ReadonlyArray<{
     readonly id: Exclude<RdStudioTabId, 'all'>;
     readonly label: string;
-    readonly badge?: string;
-    readonly Icon: typeof Layers;
+    readonly done: boolean;
   }> = [
     {
       id: 'setup',
       label: t('rdTabSetupOffers'),
-      badge: props.offersCount > 0 ? String(props.offersCount) : undefined,
-      Icon: Layers,
+      done: props.byokConfigured && props.offersCount > 0,
     },
     {
       id: 'script',
       label: t('rdTabScriptEval'),
-      badge: props.campaignsCount > 0 ? String(props.campaignsCount) : undefined,
-      Icon: Sparkles,
+      done: Boolean(props.hasApprovedCampaign),
     },
     {
       id: 'studio',
       label: t('rdTabVideoDist'),
-      Icon: Film,
+      done: Boolean(props.hasMp4OrLink),
     },
     {
       id: 'ops',
       label: t('rdTabRevenueOps'),
-      Icon: BarChart3,
+      done: Boolean(props.hasManualPublish),
     },
   ];
 
   return (
     <div
       data-testid="rd-studio-workspace-bar"
-      className="sticky top-[57px] z-20 space-y-3 rounded-xl border border-border bg-card/95 p-3 shadow-sm backdrop-blur"
+      className="sticky top-12 z-20 -mx-4 flex flex-wrap items-center justify-between gap-2 border-b border-border bg-background/95 px-4 py-2.5 backdrop-blur sm:-mx-6 sm:px-6"
     >
-      {/* Top Context Telemetry Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 font-mono text-[11px] font-semibold text-primary">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-            {t('rdStudioModeBadge')}
-          </span>
-          <span
-            className={`rounded-full px-2.5 py-0.5 font-mono text-[11px] font-medium ${
-              props.byokConfigured
-                ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
-                : 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
-            }`}
-          >
-            BYOK: {props.byokConfigured ? 'READY' : 'REQUIRED'}
-          </span>
-          {props.activeOfferName && (
-            <span className="hidden max-w-[200px] truncate rounded-full border border-border bg-muted/50 px-2.5 py-0.5 text-[11px] text-muted-foreground md:inline">
-              Offer: <strong className="text-foreground">{props.activeOfferName}</strong>
-            </span>
-          )}
-          {props.activeCampaignTitle && (
-            <span className="hidden max-w-[220px] truncate rounded-full border border-border bg-muted/50 px-2.5 py-0.5 text-[11px] text-muted-foreground lg:inline">
-              Campaign: <strong className="text-foreground">{props.activeCampaignTitle}</strong>
-            </span>
-          )}
-        </div>
+      <div
+        role="tablist"
+        aria-label={t('rdStudioModeBadge')}
+        className="flex flex-wrap items-center gap-1"
+      >
+        {steps.map((step, idx) => {
+          const isActive = props.activeTab === step.id;
+          return (
+            <div key={step.id} className="flex items-center gap-1">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                data-testid={`rd-studio-tab-${step.id}`}
+                onClick={() => props.onTabChange(step.id)}
+                className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-colors ${
+                  isActive
+                    ? 'bg-muted font-semibold text-foreground'
+                    : 'font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+                }`}
+              >
+                {step.done ? (
+                  <Check className="h-3.5 w-3.5 text-emerald-500" />
+                ) : (
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      isActive ? 'bg-primary' : 'bg-muted-foreground/40'
+                    }`}
+                  />
+                )}
+                <span>{step.label}</span>
+              </button>
+              {idx < steps.length - 1 && (
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" aria-hidden="true" />
+              )}
+            </div>
+          );
+        })}
+      </div>
 
+      <div className="flex items-center gap-2 text-xs">
+        <span
+          className={`font-mono text-[11px] ${
+            props.byokConfigured ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+          }`}
+        >
+          BYOK: {props.byokConfigured ? 'READY' : 'REQUIRED'}
+        </span>
+        {props.activeOfferName && (
+          <span className="hidden max-w-[140px] truncate text-[11px] text-muted-foreground md:inline">
+            · {props.activeOfferName}
+          </span>
+        )}
         <button
           type="button"
           data-testid="rd-studio-tab-all"
           aria-pressed={props.activeTab === 'all'}
           onClick={() => props.onTabChange(props.activeTab === 'all' ? 'setup' : 'all')}
-          className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors ${
             props.activeTab === 'all'
-              ? 'border-primary bg-primary/10 text-primary'
-              : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground'
+              ? 'border-primary/50 bg-primary/10 text-primary'
+              : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
           }`}
         >
-          <LayoutGrid className="h-3.5 w-3.5" />
+          <LayoutGrid className="h-3 w-3" />
           <span>{t('rdTabAllView')}</span>
         </button>
-      </div>
-
-      {/* 4-Tab Modular Navigation */}
-      <div
-        role="tablist"
-        aria-label={t('rdStudioModeBadge')}
-        className="grid grid-cols-2 gap-1.5 sm:grid-cols-4"
-      >
-        {tabs.map(({ id, label, badge, Icon }) => {
-          const isActive = props.activeTab === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              data-testid={`rd-studio-tab-${id}`}
-              onClick={() => props.onTabChange(id)}
-              className={`flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-all ${
-                isActive
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'border border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
-            >
-              <Icon className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{label}</span>
-              {badge && (
-                <span
-                  className={`rounded-full px-1.5 py-0.5 font-mono text-[10px] ${
-                    isActive
-                      ? 'bg-primary-foreground/20 text-primary-foreground'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  {badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
       </div>
     </div>
   );
