@@ -269,12 +269,20 @@ export function resolvePilotFinancingMode(env: PilotEnvSource = process.env): Pi
   return 'DISABLED';
 }
 
+const INTERNAL_RD_MAX_GENERATIONS = 1_000_000;
+const INTERNAL_RD_MAX_SPEND_USD = 10_000;
+
+function isInternalRdWindow(env: PilotEnvSource): boolean {
+  return (env.PILOT_WINDOW_MODE ?? '').trim().toUpperCase() === 'OPEN_INTERNAL_RD';
+}
+
 export function resolvePilotMaxGenerations(env: PilotEnvSource = process.env): number {
   const parsed = Number.parseInt((env.PILOT_MAX_GENERATIONS ?? '').trim(), 10);
   if (!Number.isFinite(parsed)) {
     return DEFAULT_MAX_GENERATIONS;
   }
-  return Math.min(MAX_MAX_GENERATIONS, Math.max(MIN_MAX_GENERATIONS, parsed));
+  const ceiling = isInternalRdWindow(env) ? INTERNAL_RD_MAX_GENERATIONS : MAX_MAX_GENERATIONS;
+  return Math.min(ceiling, Math.max(MIN_MAX_GENERATIONS, parsed));
 }
 
 export function resolvePilotRateLimitCooldownMs(env: PilotEnvSource = process.env): number {
@@ -294,6 +302,8 @@ export function resolvePilotCostControls(
   env: PilotEnvSource = process.env,
 ): PilotCostControlValidation {
   const missingOrInvalid: string[] = [];
+  const genCeiling = isInternalRdWindow(env) ? INTERNAL_RD_MAX_GENERATIONS : MAX_MAX_GENERATIONS;
+  const spendCeiling = isInternalRdWindow(env) ? INTERNAL_RD_MAX_SPEND_USD : MAX_SPEND_USD_CEILING;
 
   const rawMaxGen = (env.PILOT_MAX_GENERATIONS ?? '').trim();
   const maxGenerations = Number(rawMaxGen);
@@ -301,7 +311,7 @@ export function resolvePilotCostControls(
     !rawMaxGen ||
     !Number.isInteger(maxGenerations) ||
     maxGenerations < MIN_MAX_GENERATIONS ||
-    maxGenerations > MAX_MAX_GENERATIONS
+    maxGenerations > genCeiling
   ) {
     missingOrInvalid.push('PILOT_MAX_GENERATIONS');
   }
@@ -312,7 +322,7 @@ export function resolvePilotCostControls(
     !rawMaxSpend ||
     !Number.isFinite(maxEstimatedSpendUsd) ||
     maxEstimatedSpendUsd <= 0 ||
-    maxEstimatedSpendUsd > MAX_SPEND_USD_CEILING
+    maxEstimatedSpendUsd > spendCeiling
   ) {
     missingOrInvalid.push('PILOT_MAX_ESTIMATED_SPEND_USD');
   }
