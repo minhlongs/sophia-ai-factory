@@ -402,6 +402,33 @@ export async function handlePollHeyGenMp4(
         200,
       );
     }
+    const createdMs = Date.parse(target.createdAtIso);
+    const currentMs = deps.nowMs ? deps.nowMs() : Date.now();
+    const HEYGEN_STALE_TIMEOUT_MS = 15 * 60 * 1000;
+    if (Number.isFinite(createdMs) && currentMs - createdMs >= HEYGEN_STALE_TIMEOUT_MS) {
+      const errorCode = 'HEYGEN_POLL_TIMEOUT_15M_USE_BROWSER_MP4';
+      const updated = await updatePilotMp4ExportStatus(d1, {
+        id: target.id,
+        orgId: payload.orgId,
+        userId: user.id,
+        status: 'failed',
+        errorCode,
+        nowIso,
+      });
+      await safeRecordPilotEvent(d1, {
+        orgId: payload.orgId,
+        userId: user.id,
+        eventName: 'MP4_EXPORT_FAILED',
+        artifactId: target.artifactId,
+        metadata: { exportId: target.id, renderMode: 'heygen_byok_mp4', errorCode },
+        nowIso,
+      });
+      return jsonPrivate(
+        { mp4Export: updated ?? target, checkedAtIso: nowIso, publicPublished: false, paidInferenceExecuted: false },
+        200,
+      );
+    }
+
     return jsonPrivate(
       { mp4Export: target, checkedAtIso: nowIso, publicPublished: false, paidInferenceExecuted: false },
       200,
