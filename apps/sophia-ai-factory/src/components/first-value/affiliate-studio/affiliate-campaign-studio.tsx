@@ -54,6 +54,7 @@ import {
   RdStudioWorkspaceBar,
   type RdStudioTabId,
 } from './rd-studio-workspace-bar';
+import { StudioAlgorithmsPanel } from './studio-algorithms-panel';
 import {
   AffiliateRevenueDashboardCard,
   type RecordPerformanceFormInput,
@@ -519,6 +520,18 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
             setExportPayload(null);
           }}
           onGenerate={handleGenerateCampaign}
+        />
+
+        <StudioAlgorithmsPanel
+          scriptText={
+            activeCampaign
+              ? [
+                  activeCampaign.pack.hook,
+                  ...activeCampaign.pack.shortFormScript.scenes.map((s) => s.narration),
+                ].join(' ')
+              : ''
+          }
+          vertical={activeOffer?.vertical ?? 'crypto'}
         />
 
         <AffiliateContentWorkspaceCard
