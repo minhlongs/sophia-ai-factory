@@ -92,7 +92,7 @@ export function DunningStatusBanner({
           {showAction && (
             <div className="mt-4">
               <Button asChild>
-                <Link href="/dashboard/billing/payment">{t(`${state}.action`)}</Link>
+                <Link href="/dashboard/monetization">{t(`${state}.action`)}</Link>
               </Button>
             </div>
           )}

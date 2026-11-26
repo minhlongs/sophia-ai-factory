@@ -3,12 +3,12 @@
  * Sidebar Quota Widget — compact at-a-glance monthly credits indicator.
  *
  * Wave 20 Phase 03 (7C): renders inside dashboard left sidebar so users see
- * "credits used / limit" without navigating to /dashboard/billing.
+ * "credits used / limit" without navigating to /dashboard/monetization.
  *
  * - Fetches `/api/quota/status` via TanStack Query (shared cache).
  * - Hides silently when loading/error/no-license (BASIC pre-checkout user).
  * - MASTER tier renders `<used> / ∞` with no progress bar (lifetime/unlimited).
- * - Click anywhere on widget -> navigates to `/dashboard/billing`.
+ * - Click anywhere on widget -> navigates to `/dashboard/monetization`.
  *
  * @module forest/components/dashboard/sidebar-quota-widget
  */
@@ -53,7 +53,7 @@ export function SidebarQuotaWidget() {
 
   return (
     <Link
-      href="/dashboard/billing"
+      href="/dashboard/monetization"
       className="block rounded-lg border border-border bg-muted/30 px-3 py-2.5 hover:bg-muted/50 transition-colors min-h-[44px]"
       aria-label={t('viewBilling')}
       data-testid="sidebar-quota-widget"

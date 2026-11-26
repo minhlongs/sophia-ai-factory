@@ -47,7 +47,7 @@ export default function CampaignsPage({
     if (onCreateCampaign) {
       onCreateCampaign();
     } else if (typeof window !== 'undefined') {
-      window.location.href = '/dashboard/campaigns/new';
+      window.location.href = '/dashboard/first-value';
     }
   };
 

@@ -5273,8 +5273,8 @@
       "loading": "Loading publish queue...",
       "empty": {
         "title": "No Publish Jobs Yet",
-        "message": "Schedule your first WhatsApp publish from the video editor or setup wizard.",
-        "cta": "Create WhatsApp Template"
+        "message": "Schedule your first video publish from Affiliate Studio or AI Missions.",
+        "cta": "Open Affiliate Studio"
       },
       "table": {
         "video": "Video",
@@ -5298,8 +5298,8 @@
       },
       "approvalBanner": {
         "title": "First Publish Requires Approval",
-        "message": "Your first WhatsApp publish requires explicit approval. Click \"Approve\" on the pending job to continue.",
-        "note": "This is a one-time security measure to prevent accidental sends."
+        "message": "Your first scheduled publish requires explicit approval. Click \"Approve\" on a pending job to continue.",
+        "note": "This is a one-time safety check to prevent accidental posts."
       },
       "legend": {
         "title": "Status Legend"

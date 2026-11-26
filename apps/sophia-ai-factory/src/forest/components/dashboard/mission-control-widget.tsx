@@ -48,13 +48,13 @@ export function MissionControlWidget({ isVi = false }: { isVi?: boolean }) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-3 min-w-0">
           <div className="flex items-center gap-2">
-            <TierBadge tier={data.tier} href="/dashboard/billing" />
+            <TierBadge tier={data.tier} href="/dashboard/monetization" />
             <span className="text-muted-foreground text-xs">{isVi ? 'Gói hiện tại' : 'Current plan'}</span>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-muted-foreground">{isVi ? 'Hạn mức MCU' : 'MCU quota'}</span>
-              <Link href="/dashboard/billing" className="text-xs text-primary hover:underline">
+              <Link href="/dashboard/monetization" className="text-xs text-primary hover:underline">
                 <span className="tabular-nums">{data.quota.used.toLocaleString()} / {data.quota.total.toLocaleString()}</span>
               </Link>
             </div>

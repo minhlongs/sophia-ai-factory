@@ -33,11 +33,11 @@ export function DashboardAdminNavLinks({
         <span className="truncate">Handover Console</span>
       </Link>
       <Link
-        href="/dashboard/admin/ops"
+        href="/dashboard/system-health"
         onClick={onCloseMobile}
         className={cn(
           "relative flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/60 transition-all",
-          isActive("/dashboard/admin/ops") && "text-foreground dark:text-white bg-primary/10 border border-primary/30 font-medium"
+          isActive("/dashboard/system-health") && "text-foreground dark:text-white bg-primary/10 border border-primary/30 font-medium"
         )}
       >
         <Activity className="w-4 h-4 text-primary shrink-0" />

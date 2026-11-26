@@ -41,7 +41,7 @@ export function QuotaWarningBanner({ maxUsage }: QuotaWarningBannerProps) {
           </p>
         </div>
         <Link
-          href="/dashboard/billing"
+          href="/dashboard/monetization"
           className={`px-4 py-2 rounded-md font-medium text-white ${
             isCritical ? 'bg-red-500 hover:bg-red-600' : 'bg-amber-500 hover:bg-amber-600'
           }`}

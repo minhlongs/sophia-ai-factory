@@ -92,7 +92,7 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
                   {videoTitle && <p className="text-xs text-muted-foreground mb-2 truncate">{videoTitle}</p>}
                   {content.videoPublished === true ? (
                     <a
-                      href={`/dashboard/help#video-${content.videoSlug}`}
+                      href={`/guide#video-${content.videoSlug}`}
                       className="inline-flex items-center gap-1 text-xs text-primary-400 hover:text-primary-300 hover:underline"
                       onClick={() => setOpen(false)}
                     >
@@ -105,7 +105,7 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
                 </div>
               </div>
             )}
-            <Link href="/dashboard/help" className="block text-xs text-center text-muted-foreground hover:text-primary-400 transition-colors" onClick={() => setOpen(false)}>
+            <Link href="/guide" className="block text-xs text-center text-muted-foreground hover:text-primary-400 transition-colors" onClick={() => setOpen(false)}>
               {t("help_center")} {" →"}
             </Link>
           </div>

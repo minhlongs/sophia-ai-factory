@@ -43,7 +43,7 @@ export function MissionControlEmptyCard({ isVi }: { isVi: boolean }) {
           {isVi ? 'Chưa có hoạt động — bắt đầu chiến dịch đầu tiên' : 'No activity yet — start your first campaign'}
         </p>
         <Link
-          href="/dashboard/campaigns/new"
+          href="/dashboard/first-value"
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-medium shadow shadow-primary/20 hover:opacity-90 transition-opacity"
         >
           {isVi ? 'Tạo chiến dịch' : 'Create campaign'}
