@@ -20,6 +20,21 @@ on:
         required: false
         type: boolean
         default: false
+      deploy_pilot_explicit:
+        description: 'Explicitly deploy sophia-ai-factory-pilot under independent pilot environment approval (never inherits production approval)'
+        required: false
+        type: boolean
+        default: false
+      allow_pilot_migrations:
+        description: 'Explicitly authorize Pilot D1 migration delta when deploying sophia-ai-factory-pilot'
+        required: false
+        type: boolean
+        default: false
+      pilot_expected_base_sha:
+        description: 'Pinned live Pilot base commit SHA for migration range guard (required when deploy_pilot_explicit=true and allow_pilot_migrations=false)'
+        required: false
+        type: string
+        default: ''
 permissions:
   contents: read
 
@@ -81,6 +96,7 @@ jobs:
   stage-2-3-build-and-deploy:
     name: 'Stage 2 & 3: Cloudflare Build, D1 Migration & Edge Deploy'
     needs: stage-1-quality-gate
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy_pilot_explicit != true }}
     environment: production
     runs-on: ubuntu-latest
     defaults:
@@ -193,12 +209,6 @@ jobs:
       - name: 'Stage 3a: Deploy Worker to Cloudflare Edge'
         if: ${{ inputs.dry_run != true }}
         run: OPEN_NEXT_DEPLOY=true npx wrangler deploy --config wrangler.toml --env "" --upload-source-maps=false
-
-      - name: 'Stage 3a-pilot: Auto-Sync Permanent Internal R&D Pilot Worker (100% Parity, $0 RaaS)'
-        if: ${{ inputs.dry_run != true }}
-        run: |
-          node scripts/verify-pilot-wrangler-isolation.mjs --require-resolved-ids
-          OPEN_NEXT_DEPLOY=true npx wrangler deploy --config wrangler.pilot.toml --upload-source-maps=false --var "COMMIT_SHA:${{ github.sha }}" --var "DEPLOYED_AT:$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
       - name: 'Stage 3b: Inject Secret Metadata (COMMIT_SHA / DEPLOYED_AT / DEPLOY_BRANCH)'
         if: ${{ inputs.dry_run != true }}
@@ -314,3 +324,101 @@ jobs:
           EXPECTED_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
           BASE_URL="${DEPLOY_VERIFY_URL%/}"
           node scripts/post-deploy-smoke.mjs "$BASE_URL" "$EXPECTED_SHA"
+
+  # =========================================================================
+  # STAGE 3-PILOT: Explicit Opt-In R&D Pilot Deploy (Independent Approval)
+  # =========================================================================
+  stage-3-pilot-explicit-deploy:
+    name: 'Stage 3-Pilot: Explicit Opt-In Pilot Worker Deploy'
+    needs: stage-1-quality-gate
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_pilot_explicit == true && inputs.dry_run != true }}
+    environment: pilot
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/sophia-ai-factory
+    env:
+      NODE_OPTIONS: '--max-old-space-size=4096'
+      SKIP_SENTRY_BUILD: '1'
+      SKIP_SYMBOL_UPLOAD: '1'
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: apps/sophia-ai-factory/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Preflight — Collect Live Release-Gate Evidence (pilot environment)
+        id: pilot-release-gate
+        env:
+          RELEASE_ENVIRONMENT: pilot
+          GATE_READ_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node scripts/collect-release-gate-evidence.mjs > /tmp/pilot-release-gate.json
+          cat /tmp/pilot-release-gate.json
+          {
+            echo "evidence<<GATE_EOF"
+            cat /tmp/pilot-release-gate.json
+            echo
+            echo "GATE_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Preflight — Verify Independent Environment Approval Authorizes This Pilot Revision
+        env:
+          RELEASE_ENVIRONMENT: pilot
+          DRY_RUN: ${{ inputs.dry_run }}
+          RELEASE_GATE_EVIDENCE: ${{ steps.pilot-release-gate.outputs.evidence }}
+        run: node scripts/verify-release-authorization.mjs
+
+      - name: Preflight — Assert Cloudflare Credentials
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "❌ CRITICAL: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are required for Pilot edge deployment."
+            exit 1
+          fi
+
+      - name: Preflight — Verify Pilot Wrangler Isolation
+        run: node scripts/verify-pilot-wrangler-isolation.mjs --require-resolved-ids
+
+      - name: Preflight — D1 Migration Duplicate Prefix Guard
+        run: bash scripts/check-duplicate-migration-prefixes.sh
+
+      - name: Preflight — Verify Live Pilot Baseline, Fail-Closed Migration Diff & Remote D1 Schema
+        id: pilot-release-guards
+        env:
+          PILOT_EXPECTED_BASE_SHA: ${{ inputs.pilot_expected_base_sha }}
+          ALLOW_PILOT_MIGRATIONS: ${{ inputs.allow_pilot_migrations }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: node scripts/verify-pilot-release-guards.mjs
+
+      - name: Build Next.js & OpenNext for Pilot
+        run: npm run pilot:build
+
+      - name: Post-Build — Verify Pilot Wrangler Isolation & Bundle
+        run: node scripts/verify-pilot-wrangler-isolation.mjs --require-resolved-ids --check-build
+
+      - name: Deploy Pilot Worker to Cloudflare Edge
+        run: |
+          OPEN_NEXT_DEPLOY=true npx wrangler deploy --config wrangler.pilot.toml --upload-source-maps=false --var "COMMIT_SHA:${{ github.sha }}" --var "DEPLOYED_AT:$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      - name: Post-Deploy — Verify Pilot Worker Version, Access Seal, Zero Prod Mutation & D1 Schema
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          PROD_VERSION_BEFORE: ${{ steps.pilot-release-guards.outputs.prod_version_before }}
+          PILOT_VERIFY_URL: ${{ vars.PILOT_VERIFY_URL || 'https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev' }}
+          PILOT_CF_ACCESS_CLIENT_ID: ${{ secrets.PILOT_CF_ACCESS_CLIENT_ID }}
+          PILOT_CF_ACCESS_CLIENT_SECRET: ${{ secrets.PILOT_CF_ACCESS_CLIENT_SECRET }}
+        run: node scripts/verify-pilot-post-deploy.mjs
