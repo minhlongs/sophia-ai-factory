@@ -14,7 +14,7 @@ export function usePublishQueue(locale: string) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/${locale}/api/publish/queue`);
+      const response = await fetch('/api/publish/queue');
       if (!response.ok) {
         throw new Error('Failed to fetch publish queue');
       }
@@ -35,7 +35,7 @@ export function usePublishQueue(locale: string) {
   const handleApprove = async (jobId: string) => {
     setApprovingJobId(jobId);
     try {
-      const response = await fetch(`/${locale}/api/publish/approve`, {
+      const response = await fetch('/api/publish/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobId }),
@@ -56,7 +56,7 @@ export function usePublishQueue(locale: string) {
 
   const handleRetry = async (jobId: string) => {
     try {
-      const response = await fetch(`/${locale}/api/publish/retry`, {
+      const response = await fetch('/api/publish/retry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobId }),
