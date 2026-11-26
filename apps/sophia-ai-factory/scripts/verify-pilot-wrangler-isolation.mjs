@@ -145,8 +145,8 @@ for (const forbiddenSection of ['[triggers]', '[[queues', '[[durable_objects']) 
 const requiredVars = {
   SOPHIA_PILOT_MODE: 'true',
   PILOT_INVITE_ONLY: 'true',
-  PILOT_MAX_GENERATIONS: '999999',
-  PILOT_MAX_ESTIMATED_SPEND_USD: '9999.00',
+  PILOT_MAX_GENERATIONS: '20',
+  PILOT_MAX_ESTIMATED_SPEND_USD: '4.00',
   PILOT_ESTIMATED_COST_PER_ATTEMPT_USD: '0.02',
   PILOT_MODEL_ID: 'openai/gpt-4o-mini',
   PILOT_MAX_OUTPUT_TOKENS: '2048',
@@ -161,6 +161,11 @@ for (const [key, expected] of Object.entries(requiredVars)) {
   if (!m || m[1] !== expected) {
     errors.push(`Expected ${key} = "${expected}" in wrangler.pilot.toml, got "${m?.[1] ?? 'missing'}"`);
   }
+}
+
+const windowModeMatch = pilotActive.match(/^\s*PILOT_WINDOW_MODE\s*=\s*"([^"]+)"/m);
+if (windowModeMatch && windowModeMatch[1] === 'OPEN_INTERNAL_RD') {
+  errors.push('Forbidden PILOT_WINDOW_MODE = "OPEN_INTERNAL_RD" found in commercial wrangler.pilot.toml');
 }
 
 const financingMatch = pilotActive.match(/^\s*PILOT_FINANCING_MODE\s*=\s*"([^"]+)"/m);
