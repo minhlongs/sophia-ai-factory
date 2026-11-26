@@ -1,10 +1,9 @@
 /**
  * Creator-to-VA Workspace RBAC with Immutable Affiliate-Link Locking.
  *
- * Clean-room field-level authorization (MIT pattern from stalniy/casl and
- * ottabase/ottabase): lets VAs/editors draft scripts and render videos while
- * strictly locking referralUrl, shortCode, publish, and delete_offer to the
- * workspace owner — preventing affiliate link hijacking.
+ * Clean-room fail-closed field-level authorization (MIT pattern from stalniy/casl
+ * and ottabase/ottabase): uses an explicit allowlist of mutable fields for
+ * `va_editor` and fails closed for any unknown role or non-allowlisted field.
  *
  * Layer: seed/security (pure isomorphic policy, zero external deps)
  *
@@ -21,23 +20,36 @@ export type WorkspaceAction =
   | 'delete_offer'
   | 'view_analytics';
 
-const LOCKED_OWNER_FIELDS = new Set(['referralUrl', 'referral_url', 'shortCode', 'short_code']);
+/** Explicit allowlist of fields a VA/editor is permitted to mutate. */
+const VA_MUTABLE_FIELDS = new Set([
+  'title',
+  'hook',
+  'script',
+  'scenes',
+  'caption',
+  'videoDraft',
+  'thumbnailDraft',
+]);
 
-const ROLE_ACTIONS: Record<WorkspaceRole, ReadonlySet<WorkspaceAction>> = {
-  owner: new Set([
-    'draft_script',
-    'render_video',
-    'edit_referral_url',
-    'publish_campaign',
-    'delete_offer',
-    'view_analytics',
-  ]),
-  va_editor: new Set(['draft_script', 'render_video', 'view_analytics']),
-  viewer: new Set(['view_analytics']),
-};
+const ROLE_ACTIONS = new Map<WorkspaceRole, ReadonlySet<WorkspaceAction>>([
+  [
+    'owner',
+    new Set<WorkspaceAction>([
+      'draft_script',
+      'render_video',
+      'edit_referral_url',
+      'publish_campaign',
+      'delete_offer',
+      'view_analytics',
+    ]),
+  ],
+  ['va_editor', new Set<WorkspaceAction>(['draft_script', 'render_video', 'view_analytics'])],
+  ['viewer', new Set<WorkspaceAction>(['view_analytics'])],
+]);
 
 export function canPerformWorkspaceAction(role: WorkspaceRole, action: WorkspaceAction): boolean {
-  return ROLE_ACTIONS[role].has(action);
+  const allowed = ROLE_ACTIONS.get(role);
+  return allowed ? allowed.has(action) : false;
 }
 
 export function assertFieldsMutableByRole(
@@ -47,9 +59,9 @@ export function assertFieldsMutableByRole(
   if (role === 'owner') {
     return { allowed: true, blockedFields: [] };
   }
-  if (role === 'viewer') {
-    return { allowed: false, blockedFields: [...mutatedFields] };
+  if (role === 'va_editor') {
+    const blocked = mutatedFields.filter((f) => !VA_MUTABLE_FIELDS.has(f.trim()));
+    return { allowed: blocked.length === 0, blockedFields: blocked };
   }
-  const blocked = mutatedFields.filter((f) => LOCKED_OWNER_FIELDS.has(f));
-  return { allowed: blocked.length === 0, blockedFields: blocked };
+  return { allowed: false, blockedFields: [...mutatedFields] };
 }
