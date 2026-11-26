@@ -99,22 +99,9 @@ export function DashboardNavItems({
     return isVi ? group.fallbackLabelVi : group.fallbackLabel;
   };
   const isFreeRdMode = userTier.toUpperCase() === "R&D $0";
-  const CORE_PRIMARY_IDS = new Set(["opc_today", "opc_results", "opc_connections"]);
-  const ADVANCED_USER_IDS = new Set([
-    "youtube_automation",
-    "publish_queue",
-    "missions",
-    "approvals",
-    "image_studio",
-    "niche_studio",
-  ]);
+  const CORE_PRIMARY_IDS = new Set(["opc_results", "opc_connections"]);
   const primaryItems = OPC_PRIMARY_NAV_GROUPS.filter((g) => CORE_PRIMARY_IDS.has(g.id));
-  const groupedModules = groupNavModules(SOPHIA_NAV_MODULES)
-    .map(({ group, items }) => ({
-      group,
-      items: items.filter((item) => isAdmin || ADVANCED_USER_IDS.has(item.id)),
-    }))
-    .filter(({ items }) => items.length > 0);
+  const groupedModules = isAdmin ? groupNavModules(SOPHIA_NAV_MODULES) : [];
 
   return (
     <div className="space-y-1 px-3 py-2 flex-1 overflow-y-auto">
@@ -158,35 +145,36 @@ export function DashboardNavItems({
         </nav>
       )}
 
-      {/* Every canonical module stays reachable as a grouped deep link inside
-          the collapsible drawer, so no route becomes unreachable. */}
-      <details className="pt-3 group" data-testid="sidebar-more-tools">
-        <summary className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
-          {labelFor("moreTools")}
-        </summary>
-        <div className="space-y-3 mt-1">
-          {groupedModules.map(({ group, items }) => (
-            <div key={group.id} data-testid={`nav-group-${group.id}`}>
-              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {groupLabel(group)}
-              </p>
-              <ul className="space-y-1">
-                {items.map((item) => (
-                  <li key={item.id}>
-                    <DashboardNavLinkItem
-                      href={item.href}
-                      active={isActive(item.href)}
-                      icon={item.icon}
-                      label={resolveNavLabel(t, item)}
-                      onClick={onCloseMobile}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </details>
+      {/* Admin-only deep links so standard users never see orphaned/legacy pages. */}
+      {isAdmin && groupedModules.length > 0 && (
+        <details className="pt-3 group" data-testid="sidebar-more-tools">
+          <summary className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
+            {labelFor("moreTools")}
+          </summary>
+          <div className="space-y-3 mt-1">
+            {groupedModules.map(({ group, items }) => (
+              <div key={group.id} data-testid={`nav-group-${group.id}`}>
+                <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {groupLabel(group)}
+                </p>
+                <ul className="space-y-1">
+                  {items.map((item) => (
+                    <li key={item.id}>
+                      <DashboardNavLinkItem
+                        href={item.href}
+                        active={isActive(item.href)}
+                        icon={item.icon}
+                        label={resolveNavLabel(t, item)}
+                        onClick={onCloseMobile}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
 
       {isAdmin && (
         <DashboardAdminNavLinks

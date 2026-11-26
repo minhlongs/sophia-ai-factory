@@ -44,7 +44,7 @@ describe('OPC primary navigation', () => {
     const { container } = render(<DashboardSidebarNav isAdmin />);
 
     const primaryNav = screen.getByRole('navigation', { name: 'Platform Navigation' });
-    expect(within(primaryNav).getAllByRole('link')).toHaveLength(3);
+    expect(within(primaryNav).getAllByRole('link')).toHaveLength(2);
 
     for (const item of SOPHIA_NAV_MODULES) {
       expect(
@@ -61,7 +61,7 @@ describe('OPC primary navigation', () => {
   it('renders Vietnamese primary labels when isVi is true', () => {
     render(<DashboardSidebarNav isVi={true} />);
     const primaryNav = screen.getByRole('navigation', { name: 'Nền Tảng AI' });
-    expect(within(primaryNav).getAllByRole('link').length).toBe(3);
+    expect(within(primaryNav).getAllByRole('link').length).toBe(2);
     expect(screen.getByText('Kết quả')).toBeDefined();
     expect(screen.getByText('Kết nối')).toBeDefined();
   });
