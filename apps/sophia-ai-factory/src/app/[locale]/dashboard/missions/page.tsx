@@ -15,7 +15,6 @@ import { getTranslations } from 'next-intl/server';
 import { logger } from '@/seed/utils/logger-utility';
 import { Link } from '@/navigation';
 import { listMissions } from '@/land/creative-mission/actions';
-import { StitchStudioDeckStrip } from '@/components/missions/stitch-studio-deck-strip';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('missionConsole');
@@ -61,7 +60,6 @@ export default async function MissionsPage() {
       <div className="mx-auto max-w-4xl px-4 py-8 md:px-6 lg:px-8">
         <h1 className="text-2xl font-bold text-foreground">{t('pageTitle')}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t('pageDescription')}</p>
-        <StitchStudioDeckStrip />
         <div className="mt-6 rounded-lg border border-border bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">{t('noWorkspace')}</p>
         </div>
@@ -89,8 +87,6 @@ export default async function MissionsPage() {
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-6 lg:px-8">
       <h1 className="text-2xl font-bold text-foreground">{t('pageTitle')}</h1>
       <p className="mt-1 text-sm text-muted-foreground">{t('pageDescription')}</p>
-
-      <StitchStudioDeckStrip />
 
       {missions.length === 0 ? (
         <div className="mt-6 rounded-lg border border-border bg-card p-8 text-center">
