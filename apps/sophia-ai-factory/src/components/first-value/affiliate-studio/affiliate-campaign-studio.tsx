@@ -52,6 +52,10 @@ import { AffiliateOffersCard, type NewAffiliateOfferInput } from './affiliate-of
 import { AffiliateOverviewCard } from './affiliate-overview-card';
 import { AffiliatePilotStepper } from './affiliate-pilot-stepper';
 import {
+  RdStudioWorkspaceBar,
+  type RdStudioTabId,
+} from './rd-studio-workspace-bar';
+import {
   AffiliateRevenueDashboardCard,
   type RecordPerformanceFormInput,
 } from './affiliate-revenue-dashboard-card';
@@ -114,6 +118,9 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [exportPayload, setExportPayload] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<RdStudioTabId>('setup');
+  const isTabVisible = (tab: Exclude<RdStudioTabId, 'all'>) =>
+    activeTab === 'all' || activeTab === tab;
 
   const activeOffer =
     offers.find((o) => o.id === selectedOfferId) ?? offers[0] ?? null;
@@ -451,6 +458,16 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
         </div>
       )}
 
+      <RdStudioWorkspaceBar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        byokConfigured={props.byokConfigured}
+        activeOfferName={activeOffer?.productName ?? null}
+        activeCampaignTitle={activeCampaign?.campaignName ?? null}
+        offersCount={offers.length}
+        campaignsCount={campaigns.length}
+      />
+
       <AffiliatePilotStepper
         hasOffer={offers.length > 0}
         hasApprovedCampaign={campaigns.some((c) => c.reviewState === 'approved')}
@@ -461,102 +478,110 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
         hasManualPublish={(props.pilot?.manualPublishes?.length ?? 0) > 0}
       />
 
-      <AffiliateOverviewCard
-        byokConfigured={props.byokConfigured}
-        offersCount={offers.length}
-        revenue={revenue}
-      />
-
-      <div id="api-keys">
-        <FirstValueByokCard
+      <div className={isTabVisible('setup') ? 'flex flex-col gap-6' : 'hidden'}>
+        <AffiliateOverviewCard
           byokConfigured={props.byokConfigured}
-          receipt={props.receipt}
-          isCustomerByokPilot
+          offersCount={offers.length}
+          revenue={revenue}
+        />
+
+        <div id="api-keys">
+          <FirstValueByokCard
+            byokConfigured={props.byokConfigured}
+            receipt={props.receipt}
+            isCustomerByokPilot
+            busy={props.busy}
+            onSavePilotKey={props.onSavePilotKey}
+            onClearPilotKey={props.onClearPilotKey}
+          />
+        </div>
+
+        <AffiliateOffersCard
+          offers={offers}
+          selectedOfferId={activeOffer?.id ?? null}
           busy={props.busy}
-          onSavePilotKey={props.onSavePilotKey}
-          onClearPilotKey={props.onClearPilotKey}
+          onSelectOffer={setSelectedOfferId}
+          onSaveOffer={handleSaveOffer}
+          onArchiveOffer={handleArchiveOffer}
         />
       </div>
 
-      <AffiliateOffersCard
-        offers={offers}
-        selectedOfferId={activeOffer?.id ?? null}
-        busy={props.busy}
-        onSelectOffer={setSelectedOfferId}
-        onSaveOffer={handleSaveOffer}
-        onArchiveOffer={handleArchiveOffer}
-      />
+      <div className={isTabVisible('script') ? 'flex flex-col gap-6' : 'hidden'}>
+        <AffiliateCampaignGeneratorCard
+          selectedOffer={activeOffer}
+          campaigns={campaigns}
+          activeCampaignId={activeCampaign?.id ?? null}
+          modelId={props.pilot?.modelId ?? 'openai/gpt-4o-mini'}
+          canGenerate={canGenerate}
+          busy={props.busy}
+          onSelectCampaign={(id) => {
+            setSelectedCampaignId(id);
+            setExportPayload(null);
+          }}
+          onGenerate={handleGenerateCampaign}
+        />
 
-      <AffiliateCampaignGeneratorCard
-        selectedOffer={activeOffer}
-        campaigns={campaigns}
-        activeCampaignId={activeCampaign?.id ?? null}
-        modelId={props.pilot?.modelId ?? 'openai/gpt-4o-mini'}
-        canGenerate={canGenerate}
-        busy={props.busy}
-        onSelectCampaign={(id) => {
-          setSelectedCampaignId(id);
-          setExportPayload(null);
-        }}
-        onGenerate={handleGenerateCampaign}
-      />
+        <AffiliateContentWorkspaceCard
+          campaign={activeCampaign}
+          exportPayload={exportPayload}
+          busy={props.busy}
+          onSaveEdit={handleSaveEdit}
+          onApprove={handleApprove}
+          onExport={handleExport}
+        />
+      </div>
 
-      <AffiliateContentWorkspaceCard
-        campaign={activeCampaign}
-        exportPayload={exportPayload}
-        busy={props.busy}
-        onSaveEdit={handleSaveEdit}
-        onApprove={handleApprove}
-        onExport={handleExport}
-      />
+      <div className={isTabVisible('studio') ? 'flex flex-col gap-6' : 'hidden'}>
+        <FirstValueMp4AffiliateCard
+          review={videoScriptReview}
+          busy={props.busy}
+          consentAccepted={Boolean(props.pilot?.consentAccepted)}
+          defaultDestinationUrl={activeCampaign?.referralUrl ?? activeOffer?.referralUrl ?? ''}
+          defaultCtaText={activeCampaign?.pack.callToAction ?? ''}
+          heygenConfigured={Boolean(props.pilot?.heygenByokConfigured)}
+          affiliateLinks={props.pilot?.affiliateLinks ?? []}
+          mp4Exports={props.pilot?.mp4Exports ?? []}
+          onCreateShortlink={handleCreateAffiliateShortlink}
+          onRecordBrowserMp4={handleRecordBrowserMp4}
+          onSaveHeyGenKey={handleSaveHeyGenKey}
+          onClearHeyGenKey={handleClearHeyGenKey}
+          onSubmitHeyGenMp4={handleSubmitHeyGenMp4}
+          onPollHeyGenMp4={handlePollHeyGenMp4}
+        />
 
-      <FirstValueMp4AffiliateCard
-        review={videoScriptReview}
-        busy={props.busy}
-        consentAccepted={Boolean(props.pilot?.consentAccepted)}
-        defaultDestinationUrl={activeCampaign?.referralUrl ?? activeOffer?.referralUrl ?? ''}
-        defaultCtaText={activeCampaign?.pack.callToAction ?? ''}
-        heygenConfigured={Boolean(props.pilot?.heygenByokConfigured)}
-        affiliateLinks={props.pilot?.affiliateLinks ?? []}
-        mp4Exports={props.pilot?.mp4Exports ?? []}
-        onCreateShortlink={handleCreateAffiliateShortlink}
-        onRecordBrowserMp4={handleRecordBrowserMp4}
-        onSaveHeyGenKey={handleSaveHeyGenKey}
-        onClearHeyGenKey={handleClearHeyGenKey}
-        onSubmitHeyGenMp4={handleSubmitHeyGenMp4}
-        onPollHeyGenMp4={handlePollHeyGenMp4}
-      />
+        <FirstValueManualPublishCard
+          review={videoScriptReview}
+          busy={props.busy}
+          consentAccepted={Boolean(props.pilot?.consentAccepted)}
+          affiliateLinks={props.pilot?.affiliateLinks ?? []}
+          mp4Exports={props.pilot?.mp4Exports ?? []}
+          manualPublishes={props.pilot?.manualPublishes ?? []}
+          onRecordManualPublish={handleRecordManualPublish}
+        />
+      </div>
 
-      <FirstValueManualPublishCard
-        review={videoScriptReview}
-        busy={props.busy}
-        consentAccepted={Boolean(props.pilot?.consentAccepted)}
-        affiliateLinks={props.pilot?.affiliateLinks ?? []}
-        mp4Exports={props.pilot?.mp4Exports ?? []}
-        manualPublishes={props.pilot?.manualPublishes ?? []}
-        onRecordManualPublish={handleRecordManualPublish}
-      />
+      <div className={isTabVisible('ops') ? 'flex flex-col gap-6' : 'hidden'}>
+        <AffiliateRevenueDashboardCard
+          revenue={revenue}
+          campaigns={campaigns}
+          entries={entries}
+          busy={props.busy}
+          onRecordPerformance={handleRecordPerformance}
+        />
 
-      <AffiliateRevenueDashboardCard
-        revenue={revenue}
-        campaigns={campaigns}
-        entries={entries}
-        busy={props.busy}
-        onRecordPerformance={handleRecordPerformance}
-      />
+        <FirstValueFeedbackCard
+          busy={props.busy}
+          artifactId={activeCampaign?.id ?? null}
+          feedbackItems={props.pilot?.feedbackItems ?? []}
+          onSubmitFeedback={props.onSubmitFeedback}
+        />
 
-      <FirstValueFeedbackCard
-        busy={props.busy}
-        artifactId={activeCampaign?.id ?? null}
-        feedbackItems={props.pilot?.feedbackItems ?? []}
-        onSubmitFeedback={props.onSubmitFeedback}
-      />
-
-      <FirstValueSupportCard
-        busy={props.busy}
-        requests={props.pilot?.supportRequests ?? []}
-        onSubmitRequest={props.onSubmitSupportRequest}
-      />
+        <FirstValueSupportCard
+          busy={props.busy}
+          requests={props.pilot?.supportRequests ?? []}
+          onSubmitRequest={props.onSubmitSupportRequest}
+        />
+      </div>
     </div>
   );
 }
