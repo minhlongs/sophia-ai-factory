@@ -13,6 +13,7 @@
  */
 
 import { getDisclaimerForJurisdiction } from '@/seed/config/crypto-disclaimer-registry';
+import { buildAutoGeoPromptInstruction } from '@/seed/aeo/autogeo-citation-rules';
 import {
   InvalidScriptStructureError,
   parseScriptJsonFromLlm,
@@ -165,6 +166,8 @@ export function buildAffiliateCampaignUserPrompt(
       : 'Write all campaign text in clear, persuasive business English (keep URLs exact).';
 
   return `${langInstruction}
+
+${buildAutoGeoPromptInstruction(locale)}
 
 Affiliate Offer Brief:
 - Vertical: ${offer.vertical === 'crypto' ? 'Crypto Affiliate (Regulated — zero profit guarantees)' : 'SaaS Affiliate'}

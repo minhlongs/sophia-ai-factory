@@ -11,6 +11,7 @@
  */
 
 import type { ScriptOutput } from '@/seed/ai/script-generator';
+import { atomizeScriptForOmnichannel } from '@/seed/ai/content-atomizer';
 import { buildDelayedCommentPlugPlan } from '@/forest/publishing/delayed-comment-plug';
 import {
   segmentsToSrt,
@@ -67,6 +68,7 @@ export function buildCapCutPublishCopy(args: {
     delayMinutes: 3,
     jurisdiction: args.disclosureTag.includes('QuảngCáo') ? 'VN' : 'GLOBAL',
   });
+  const atomized = atomizeScriptForOmnichannel(args);
   const lines = [
     `[CAPTION]`,
     `${plugPlan.cleanMainCaption}`,
@@ -75,6 +77,15 @@ export function buildCapCutPublishCopy(args: {
     ``,
     `[PINNED COMMENT / LINK] (Delayed +${plugPlan.delayMinutes}m)`,
     `${args.ctaText}: ${args.shortUrl} (${args.disclosureTag})`,
+    ``,
+    `[X / TWITTER THREAD]`,
+    ...atomized.xThread,
+    ``,
+    `[TELEGRAM CHANNEL]`,
+    atomized.telegramPost,
+    ``,
+    `[REDDIT VALUE POST]`,
+    atomized.redditPost,
   ];
   return lines.join('\n');
 }
