@@ -97,7 +97,13 @@ export function DashboardNavItems({
     }
     return isVi ? group.fallbackLabelVi : group.fallbackLabel;
   };
-  const groupedModules = groupNavModules(SOPHIA_NAV_MODULES);
+  const primaryHrefs = new Set<string>(OPC_PRIMARY_NAV_GROUPS.map((g) => g.href));
+  const groupedModules = groupNavModules(SOPHIA_NAV_MODULES)
+    .map(({ group, items }) => ({
+      group,
+      items: items.filter((item) => !primaryHrefs.has(item.href)),
+    }))
+    .filter(({ items }) => items.length > 0);
 
   return (
     <div className="space-y-1 px-3 py-2 flex-1 overflow-y-auto">
