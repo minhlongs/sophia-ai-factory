@@ -5269,7 +5269,7 @@
     "subtitle": "Xuất bản một-click đến YouTube, TikTok, Instagram và hơn nữa",
     "queue": {
       "title": "Hàng đợi Xuất bản",
-      "subtitle": "Theo dõi và quản lý công việc xuất bản WhatsApp",
+      "subtitle": "Theo dõi và quản lý lịch đăng video đa kênh (TikTok, YouTube Shorts, Reels)",
       "loading": "Đang tải hàng đợi...",
       "empty": {
         "title": "Chưa có Công việc Xuất bản",
@@ -5303,7 +5303,9 @@
       },
       "legend": {
         "title": "Chú thích Trạng thái"
-      }
+      },
+      "emptyDescription": "Lên lịch đăng video đầu tiên từ Affiliate Studio hoặc AI Missions.",
+      "createTemplate": "Mở Affiliate Studio"
     }
   },
   "analytics": {

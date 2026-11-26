@@ -5269,7 +5269,7 @@
     "subtitle": "One-click publishing to YouTube, TikTok, Instagram, and more",
     "queue": {
       "title": "Publish Queue",
-      "subtitle": "Monitor and manage your WhatsApp publish jobs",
+      "subtitle": "Monitor and manage omnichannel video publishing jobs (TikTok, YouTube Shorts, Reels)",
       "loading": "Loading publish queue...",
       "empty": {
         "title": "No Publish Jobs Yet",
@@ -5303,7 +5303,9 @@
       },
       "legend": {
         "title": "Status Legend"
-      }
+      },
+      "emptyDescription": "Schedule your first video publish from Affiliate Studio or AI Missions.",
+      "createTemplate": "Open Affiliate Studio"
     }
   },
   "analytics": {
