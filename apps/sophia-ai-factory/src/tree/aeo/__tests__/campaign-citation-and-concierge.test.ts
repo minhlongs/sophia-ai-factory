@@ -75,7 +75,7 @@ describe('Auto-Hosted GEO Citation & @Sophia_Bbot Concierge', () => {
 
     const llmsRes = await getLlmsTxt();
     expect(llmsRes.status).toBe(200);
-    expect(await llmsRes.text()).toContain('sophia-ai-factory.agencyos-openclaw.workers.dev');
+    expect(await llmsRes.text()).toContain('Sophia AI Factory');
 
     const mdRes = await getCitationMd(
       new NextRequest('http://localhost/c/notion-ai-2026/md'),
