@@ -11,6 +11,7 @@
  */
 
 import type { ScriptOutput } from '@/seed/ai/script-generator';
+import { buildDelayedCommentPlugPlan } from '@/forest/publishing/delayed-comment-plug';
 import {
   segmentsToSrt,
   type SubtitleSegment,
@@ -59,14 +60,20 @@ export function buildCapCutPublishCopy(args: {
   readonly disclosureTag: string;
 }): string {
   const hook = args.script.scenes[0]?.narration.trim() || args.script.title;
+  const plugPlan = buildDelayedCommentPlugPlan({
+    mainCaption: `${args.script.title}\n${hook}`,
+    ctaText: args.ctaText,
+    affiliateShortUrl: args.shortUrl,
+    delayMinutes: 3,
+    jurisdiction: args.disclosureTag.includes('QuảngCáo') ? 'VN' : 'GLOBAL',
+  });
   const lines = [
     `[CAPTION]`,
-    `${args.script.title}`,
-    `${hook}`,
+    `${plugPlan.cleanMainCaption}`,
     `${args.ctaText}`,
     `${args.disclosureTag} #saas #crypto #review #affiliate`,
     ``,
-    `[PINNED COMMENT / LINK]`,
+    `[PINNED COMMENT / LINK] (Delayed +${plugPlan.delayMinutes}m)`,
     `${args.ctaText}: ${args.shortUrl} (${args.disclosureTag})`,
   ];
   return lines.join('\n');

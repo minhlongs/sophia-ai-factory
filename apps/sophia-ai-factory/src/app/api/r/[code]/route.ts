@@ -13,6 +13,7 @@ import { NextRequest } from 'next/server';
 import { isValidShortCode } from '@/land/affiliate-shortlink/short-code-generator';
 import { logClick } from '@/land/affiliate-shortlink/click-logger';
 import { createServerClient, getD1 } from '@/seed/db/client';
+import { isPreviewOrCrawlerBot } from '@/seed/security/bot-user-agent';
 import {
   isPilotInviteOnlyEnabled,
   resolvePilotRefererOrigin,
@@ -127,17 +128,19 @@ export async function GET(
   const affiliateUrl = new URL(offer.affiliate_link);
   affiliateUrl.searchParams.set(subParam, tid);
 
-  logClick({
-    clickId,
-    campaignId: offer.campaign_id,
-    userId: offer.user_id,
-    offerId: offer.offer_id,
-    shortCode: code,
-    ip,
-    userAgent,
-    referer,
-    country,
-  });
+  if (!isPreviewOrCrawlerBot(userAgent)) {
+    logClick({
+      clickId,
+      campaignId: offer.campaign_id,
+      userId: offer.user_id,
+      offerId: offer.offer_id,
+      shortCode: code,
+      ip,
+      userAgent,
+      referer,
+      country,
+    });
+  }
 
   return Response.redirect(affiliateUrl.toString(), 302);
 }

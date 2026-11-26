@@ -9,6 +9,7 @@
  */
 
 import { z } from 'zod';
+import { parseLlmJsonWithRepair } from './schema-aligned-repair';
 import { failure, success, type Result } from '@/seed/types/result';
 
 export interface SanitizedResearchInput {
@@ -88,7 +89,14 @@ export function validateStructuredResearchOutput<T>(
   rawOutput: unknown,
   schema: z.ZodType<T> = StructuredResearchBriefSchema as unknown as z.ZodType<T>,
 ): Result<T, { code: string; message: string }> {
-  const parsed = schema.safeParse(rawOutput);
+  let candidate: unknown = rawOutput;
+  if (typeof rawOutput === 'string') {
+    const repaired = parseLlmJsonWithRepair(rawOutput);
+    if (repaired.ok) {
+      candidate = repaired.parsed;
+    }
+  }
+  const parsed = schema.safeParse(candidate);
   if (!parsed.success) {
     return failure({
       code: 'UNTRUSTED_OUTPUT_SCHEMA_VIOLATION',
