@@ -152,9 +152,9 @@ const requiredVars = {
   PILOT_MAX_OUTPUT_TOKENS: '2048',
   PILOT_MAX_RETRIES: '1',
   PAYMENTS_ENABLED: 'false',
-  B2_PUBLISH_ENABLED: 'false',
+  B2_PUBLISH_ENABLED: 'true',
   FEATURE_PAYOS: 'false',
-  NEXT_PUBLIC_DISTRIBUTE_ENABLED: '0',
+  NEXT_PUBLIC_DISTRIBUTE_ENABLED: '1',
 };
 for (const [key, expected] of Object.entries(requiredVars)) {
   const m = pilotActive.match(new RegExp(`^\\s*${key}\\s*=\\s*"([^"]+)"`, 'm'));
