@@ -1,9 +1,10 @@
 /**
- * Pilot Free AI Voice-Over Route (Edge TTS)
+ * Customer BYOK AI Voice-Over Route via OpenRouter Audio Speech API.
  *
- * Bridges the core `src/forest/edge-tts` module directly into the Customer Pilot
- * workspace so MMO affiliates can generate Vietnamese/English voice-over (.mp3)
- * from approved scripts at $0 Founder AI subsidy and without extra paid API keys.
+ * Replaces deprecated HTTP POST Bing Edge TTS (which requires WebSocket + DRM v2
+ * and fell back to synthetic beep audio) with genuine OpenRouter TTS
+ * (`POST https://openrouter.ai/api/v1/audio/speech`) using the customer's existing
+ * 1-Key OpenRouter BYOK key at $0 Founder AI subsidy.
  *
  * @module app/api/first-value/voice/route
  */
@@ -11,17 +12,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { synthesizeEdgeTts } from '@/forest/edge-tts';
+import {
+  recordFailure,
+  recordSuccess,
+  shouldAllowRequest,
+} from '@/seed/security/circuit-breaker';
+import { classifyHttpStatus, FailureKind } from '@/seed/types/failure-kind';
+import { lookupUserApiKey } from '@/tree/byok/user-api-key-store';
+
+const OPENROUTER_TTS_URL = 'https://openrouter.ai/api/v1/audio/speech';
+const DEFAULT_OPENROUTER_TTS_MODEL = 'openai/gpt-4o-mini-tts';
 
 const ALLOWED_PILOT_VOICES = [
   'vi-VN-HoaiMyNeural',
   'vi-VN-NamMinhNeural',
   'en-US-JennyNeural',
   'en-US-GuyNeural',
+  'alloy',
+  'nova',
+  'onyx',
 ] as const;
 
+const VOICE_TO_OPENROUTER_MAP: Record<(typeof ALLOWED_PILOT_VOICES)[number], string> = {
+  'vi-VN-HoaiMyNeural': 'nova',
+  'vi-VN-NamMinhNeural': 'onyx',
+  'en-US-JennyNeural': 'alloy',
+  'en-US-GuyNeural': 'onyx',
+  alloy: 'alloy',
+  nova: 'nova',
+  onyx: 'onyx',
+};
+
 const PilotVoiceRequestSchema = z.object({
-  text: z.string().trim().min(5).max(8000),
+  text: z.string().trim().min(5).max(4096),
   locale: z.enum(['vi', 'en']).default('vi'),
   gender: z.enum(['female', 'male']).default('female'),
   voice: z.enum(ALLOWED_PILOT_VOICES).optional(),
@@ -54,28 +77,80 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  let result: Awaited<ReturnType<typeof synthesizeEdgeTts>>;
-  try {
-    result = await synthesizeEdgeTts(parsed.data.text, parsed.data.locale, {
-      gender: parsed.data.gender,
-      voice: parsed.data.voice,
-    });
-  } catch {
-    return NextResponse.json({ error: 'Voice synthesis failed' }, { status: 500 });
+  const keyLookup = await lookupUserApiKey(user.id, 'openrouter').catch(() => null);
+  const apiKey = keyLookup?.status === 'FOUND' ? keyLookup.key.trim() : '';
+  if (!apiKey) {
+    return NextResponse.json(
+      {
+        code: 'BYOK_KEY_REQUIRED',
+        error: 'OpenRouter BYOK API key is required to synthesize voice-over.',
+      },
+      { status: 422 },
+    );
   }
 
-  const ext = result.mimeType === 'audio/mpeg' ? 'mp3' : 'wav';
-  const safeName = `${sanitizeFilename(parsed.data.filename)}.${ext}`;
-  const bytes = new Uint8Array(result.audioBuffer);
+  const breakerScope = `byok:${user.id}`;
+  if (!shouldAllowRequest('openrouter', breakerScope)) {
+    return NextResponse.json(
+      { code: 'OPENROUTER_BREAKER_OPEN', error: 'OpenRouter TTS temporarily paused due to upstream errors' },
+      { status: 503 },
+    );
+  }
 
-  return new NextResponse(bytes, {
+  const mappedVoice = parsed.data.voice
+    ? VOICE_TO_OPENROUTER_MAP[parsed.data.voice]
+    : parsed.data.gender === 'male'
+      ? 'onyx'
+      : 'nova';
+
+  let upstreamRes: Response;
+  try {
+    upstreamRes = await fetch(OPENROUTER_TTS_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
+        'X-Title': 'Sophia AI Factory',
+      },
+      body: JSON.stringify({
+        model: DEFAULT_OPENROUTER_TTS_MODEL,
+        voice: mappedVoice,
+        input: parsed.data.text,
+        response_format: 'mp3',
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch {
+    recordFailure('openrouter', FailureKind.NETWORK, breakerScope);
+    return NextResponse.json({ code: 'OPENROUTER_TTS_NETWORK_ERROR', error: 'Voice synthesis network error' }, { status: 502 });
+  }
+
+  if (!upstreamRes.ok) {
+    if (upstreamRes.status !== 401 && upstreamRes.status !== 402 && upstreamRes.status !== 403) {
+      recordFailure('openrouter', classifyHttpStatus(upstreamRes.status), breakerScope);
+    }
+    return NextResponse.json(
+      { code: `OPENROUTER_TTS_HTTP_${upstreamRes.status}`, error: 'Voice synthesis failed upstream' },
+      { status: upstreamRes.status === 401 || upstreamRes.status === 402 ? 422 : 502 },
+    );
+  }
+
+  recordSuccess('openrouter', breakerScope);
+  const audioBytes = new Uint8Array(await upstreamRes.arrayBuffer());
+  if (audioBytes.byteLength === 0) {
+    return NextResponse.json({ code: 'OPENROUTER_TTS_EMPTY', error: 'Empty audio returned' }, { status: 502 });
+  }
+
+  const safeName = `${sanitizeFilename(parsed.data.filename)}.mp3`;
+  return new NextResponse(audioBytes, {
     status: 200,
     headers: {
-      'Content-Type': result.mimeType,
+      'Content-Type': 'audio/mpeg',
       'Content-Disposition': `attachment; filename="${safeName}"`,
       'Cache-Control': 'no-store',
-      'X-Sophia-Voice': result.voice,
-      'X-Sophia-Duration-Sec': String(result.durationSec),
+      'X-Sophia-Voice': mappedVoice,
+      'X-Sophia-Tts-Provider': 'openrouter-byok',
     },
   });
 }

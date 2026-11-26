@@ -5,106 +5,98 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 const mockGetCurrentUser = vi.fn();
-const mockSynthesizeEdgeTts = vi.fn();
+const mockLookupUserApiKey = vi.fn();
 
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: () => mockGetCurrentUser(),
 }));
 
-vi.mock('@/forest/edge-tts', () => ({
-  synthesizeEdgeTts: (...args: unknown[]) => mockSynthesizeEdgeTts(...args),
+vi.mock('@/tree/byok/user-api-key-store', () => ({
+  lookupUserApiKey: (...args: unknown[]) => mockLookupUserApiKey(...args),
 }));
 
 import { POST } from '../route';
 
-describe('POST /api/first-value/voice', () => {
+describe('POST /api/first-value/voice (OpenRouter 1-Key BYOK TTS)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
   });
 
-  it('returns 401 when unauthenticated', async () => {
-    mockGetCurrentUser.mockResolvedValue(null);
-    const req = new NextRequest('http://localhost/api/first-value/voice', {
-      method: 'POST',
-      body: JSON.stringify({ text: 'Xin chào anh chị' }),
-    });
-    const res = await POST(req);
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 400 on invalid JSON or short text', async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: 'u1', email: 'pilot@example.com' });
-    const badJsonReq = new NextRequest('http://localhost/api/first-value/voice', {
-      method: 'POST',
-      body: 'not-json',
-    });
-    expect((await POST(badJsonReq)).status).toBe(400);
-
-    const shortReq = new NextRequest('http://localhost/api/first-value/voice', {
-      method: 'POST',
-      body: JSON.stringify({ text: 'hi' }),
-    });
-    expect((await POST(shortReq)).status).toBe(400);
-  });
-
-  it('synthesizes Vietnamese Edge TTS audio and returns mp3 attachment', async () => {
-    mockGetCurrentUser.mockResolvedValue({ id: 'u1', email: 'pilot@example.com' });
-    mockSynthesizeEdgeTts.mockResolvedValue({
-      audioBuffer: new Uint8Array([0x49, 0x44, 0x33, 0x03]),
-      mimeType: 'audio/mpeg',
-      durationSec: 12,
-      voice: 'vi-VN-HoaiMyNeural',
-      rate: '+0%',
-      wordCount: 15,
-    });
-
-    const req = new NextRequest('http://localhost/api/first-value/voice', {
-      method: 'POST',
-      body: JSON.stringify({
-        text: 'Đây là kịch bản review sản phẩm siêu hot cho anh chị em.',
-        locale: 'vi',
-        gender: 'female',
-        voice: 'vi-VN-HoaiMyNeural',
-        filename: 'camp_123',
+  it('returns 401 when unauthenticated and 400 on invalid payload', async () => {
+    mockGetCurrentUser.mockResolvedValueOnce(null);
+    const unauth = await POST(
+      new NextRequest('http://localhost/api/first-value/voice', {
+        method: 'POST',
+        body: JSON.stringify({ text: 'Xin chào anh chị' }),
       }),
-    });
-
-    const res = await POST(req);
-    expect(res.status).toBe(200);
-    expect(res.headers.get('Content-Type')).toBe('audio/mpeg');
-    expect(res.headers.get('Content-Disposition')).toContain('camp_123.mp3');
-    expect(res.headers.get('X-Sophia-Voice')).toBe('vi-VN-HoaiMyNeural');
-    expect(mockSynthesizeEdgeTts).toHaveBeenCalledWith(
-      'Đây là kịch bản review sản phẩm siêu hot cho anh chị em.',
-      'vi',
-      { gender: 'female', voice: 'vi-VN-HoaiMyNeural' },
     );
+    expect(unauth.status).toBe(401);
+
+    mockGetCurrentUser.mockResolvedValue({ id: 'u1', email: 'pilot@example.com' });
+    const badJson = await POST(
+      new NextRequest('http://localhost/api/first-value/voice', {
+        method: 'POST',
+        body: 'not-json',
+      }),
+    );
+    expect(badJson.status).toBe(400);
+
+    const shortText = await POST(
+      new NextRequest('http://localhost/api/first-value/voice', {
+        method: 'POST',
+        body: JSON.stringify({ text: 'hi' }),
+      }),
+    );
+    expect(shortText.status).toBe(400);
   });
 
-  it('returns 500 when Edge TTS synthesis throws and handles wav fallback', async () => {
+  it('returns 422 when customer OpenRouter BYOK key is missing', async () => {
     mockGetCurrentUser.mockResolvedValue({ id: 'u1', email: 'pilot@example.com' });
-    mockSynthesizeEdgeTts.mockRejectedValueOnce(new Error('edge timeout'));
+    mockLookupUserApiKey.mockResolvedValue(null);
 
-    const errReq = new NextRequest('http://localhost/api/first-value/voice', {
-      method: 'POST',
-      body: JSON.stringify({ text: 'Kịch bản test lỗi tổng hợp giọng đọc.' }),
-    });
-    expect((await POST(errReq)).status).toBe(500);
+    const res = await POST(
+      new NextRequest('http://localhost/api/first-value/voice', {
+        method: 'POST',
+        body: JSON.stringify({ text: 'Đây là kịch bản review SaaS cho team nhỏ.' }),
+      }),
+    );
+    expect(res.status).toBe(422);
+  });
 
-    mockSynthesizeEdgeTts.mockResolvedValueOnce({
-      audioBuffer: new Uint8Array([0x52, 0x49, 0x46, 0x46]),
-      mimeType: 'audio/wav',
-      durationSec: 4,
-      voice: 'vi-VN-HoaiMyNeural',
-      rate: '+0%',
-      wordCount: 8,
+  it('synthesizes real mp3 audio via OpenRouter BYOK TTS and surfaces upstream errors honestly', async () => {
+    mockGetCurrentUser.mockResolvedValue({ id: 'u1', email: 'pilot@example.com' });
+    mockLookupUserApiKey.mockResolvedValue({ status: 'FOUND', key: 'sk-or-v1-test-key' });
+
+    const mockFetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(new Uint8Array([0x49, 0x44, 0x33, 0x03]).buffer),
     });
-    const wavReq = new NextRequest('http://localhost/api/first-value/voice', {
-      method: 'POST',
-      body: JSON.stringify({ text: 'Kịch bản fallback wav khi mạng lỗi.' }),
-    });
-    const wavRes = await POST(wavReq);
-    expect(wavRes.status).toBe(200);
-    expect(wavRes.headers.get('Content-Disposition')).toContain('.wav');
+    vi.stubGlobal('fetch', mockFetch);
+
+    const okRes = await POST(
+      new NextRequest('http://localhost/api/first-value/voice', {
+        method: 'POST',
+        body: JSON.stringify({
+          text: 'Đây là kịch bản review SaaS siêu mượt cho anh chị em.',
+          locale: 'vi',
+          voice: 'vi-VN-HoaiMyNeural',
+          filename: 'camp_123',
+        }),
+      }),
+    );
+    expect(okRes.status).toBe(200);
+    expect(okRes.headers.get('Content-Type')).toBe('audio/mpeg');
+    expect(okRes.headers.get('Content-Disposition')).toContain('camp_123.mp3');
+    expect(okRes.headers.get('X-Sophia-Tts-Provider')).toBe('openrouter-byok');
+
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 503 });
+    const errRes = await POST(
+      new NextRequest('http://localhost/api/first-value/voice', {
+        method: 'POST',
+        body: JSON.stringify({ text: 'Kịch bản kiểm tra lỗi upstream 503.' }),
+      }),
+    );
+    expect(errRes.status).toBe(502);
   });
 });

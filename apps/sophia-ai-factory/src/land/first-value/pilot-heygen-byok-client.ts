@@ -21,6 +21,32 @@ const HEYGEN_STATUS_URL = 'https://api.heygen.com/v1/video_status.get';
 const DEFAULT_AVATAR_ID = 'Anna_public_3_20240108';
 const DEFAULT_VOICE_ID = '2d5b0e6cf36f460aa7fc47e3eee4ba54';
 const PILOT_VERTICAL_DIMENSION = { width: 720, height: 1280 };
+const HEYGEN_MAX_SCRIPT_CHARS = 5000;
+
+async function extractHeyGenErrorSuffix(res: Response): Promise<string> {
+  const reqId = res.headers.get('x-heygen-request-id') ?? '';
+  const retryAfter = res.status === 429 ? res.headers.get('retry-after') ?? '' : '';
+  let code = '';
+  try {
+    const body = (await res.json()) as {
+      error?: { code?: string; message?: string } | string;
+      message?: string;
+    };
+    if (typeof body.error === 'string') {
+      code = body.error.slice(0, 64);
+    } else if (body.error?.code) {
+      code = body.error.code.slice(0, 64);
+    } else if (body.error?.message) {
+      code = body.error.message.slice(0, 64);
+    } else if (body.message) {
+      code = body.message.slice(0, 64);
+    }
+  } catch {
+    // Non-JSON upstream error body
+  }
+  const parts = [code, retryAfter ? `retry_after=${retryAfter}` : '', reqId ? `req=${reqId}` : ''].filter(Boolean);
+  return parts.length > 0 ? `:${parts.join('|')}` : '';
+}
 
 const APPROVED_HEYGEN_MEDIA_SUFFIXES = [
   'heygen.ai',
@@ -55,6 +81,14 @@ export async function submitPilotHeyGenByokVideo(input: {
   readonly script: string;
   readonly title: string;
 }): Promise<{ readonly videoId: string }> {
+  const cleanScript = input.script.trim();
+  if (cleanScript.length === 0) {
+    throw new Error('HEYGEN_SCRIPT_EMPTY');
+  }
+  if (cleanScript.length > HEYGEN_MAX_SCRIPT_CHARS) {
+    throw new Error(`HEYGEN_SCRIPT_TOO_LONG:${cleanScript.length}>${HEYGEN_MAX_SCRIPT_CHARS}`);
+  }
+
   const breakerRef = input.userId ? `byok:${input.userId}` : 'byok:pilot';
   if (!shouldAllowRequest('heygen', breakerRef)) {
     throw new Error('HEYGEN_BREAKER_OPEN');
@@ -90,7 +124,8 @@ export async function submitPilotHeyGenByokVideo(input: {
     if (res.status !== 401 && res.status !== 402 && res.status !== 403) {
       recordFailure('heygen', classifyHttpStatus(res.status), breakerRef);
     }
-    throw new Error(`HEYGEN_SUBMIT_HTTP_${res.status}`);
+    const suffix = await extractHeyGenErrorSuffix(res);
+    throw new Error(`HEYGEN_SUBMIT_HTTP_${res.status}${suffix}`);
   }
 
   recordSuccess('heygen', breakerRef);
@@ -150,7 +185,10 @@ export async function fetchPilotHeyGenByokStatus(input: {
     };
   };
   const rawStatus = json.data?.status;
-  if (rawStatus === 'completed' && json.data?.video_url) {
+  if (rawStatus === 'completed') {
+    if (!json.data?.video_url) {
+      return { status: 'failed', errorMessage: 'HEYGEN_COMPLETED_WITHOUT_VIDEO_URL' };
+    }
     const safeUrl = assertSafeHeyGenMediaUrl(json.data.video_url).toString();
     return {
       status: 'completed',
@@ -159,13 +197,16 @@ export async function fetchPilotHeyGenByokStatus(input: {
     };
   }
   if (rawStatus === 'failed') {
-    const errObj = json.data?.error;
+    const errObj = json.data?.error as
+      | { code?: string; detail?: string; message?: string }
+      | string
+      | null
+      | undefined;
     const msg =
       typeof errObj === 'string'
         ? errObj
-        : typeof errObj?.message === 'string'
-          ? errObj.message
-          : 'HeyGen reported render failure';
+        : [errObj?.code, errObj?.message, errObj?.detail].filter(Boolean).join(': ') ||
+          'HeyGen reported render failure';
     return { status: 'failed', errorMessage: msg };
   }
   return { status: 'processing' };
