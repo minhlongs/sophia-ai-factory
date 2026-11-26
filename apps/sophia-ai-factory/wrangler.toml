@@ -140,7 +140,7 @@ preview_id = "f2cf595dec5543dc96f6370bebbc8754"
 [vars]
 # Technical Worker identity (Cloudflare-owned, independent of brand domain renewal)
 WORKER_TECHNICAL_URL = "https://sophia-ai-factory.agencyos-openclaw.workers.dev"
-ALLOWED_HOSTS = "sophia-ai-factory.agencyos-openclaw.workers.dev,sophia.agencyos.network"
+ALLOWED_HOSTS = "sophia-ai-factory.agencyos-openclaw.workers.dev"
 
 # Auth canonical URLs (Workers runtime env parity — dynamic per-request host via Better Auth allowedHosts)
 BETTER_AUTH_URL = "https://sophia-ai-factory.agencyos-openclaw.workers.dev"
