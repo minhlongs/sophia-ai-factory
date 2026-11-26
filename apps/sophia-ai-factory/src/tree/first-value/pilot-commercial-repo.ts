@@ -181,7 +181,7 @@ export async function updatePilotMp4ExportStatus(
            byte_size = COALESCE(?, byte_size),
            error_code = ?,
            updated_at_iso = ?
-       WHERE id = ? AND org_id = ? AND user_id = ?`,
+       WHERE id = ? AND org_id = ? AND user_id = ? AND status = 'processing'`,
     )
     .bind(
       args.status,
