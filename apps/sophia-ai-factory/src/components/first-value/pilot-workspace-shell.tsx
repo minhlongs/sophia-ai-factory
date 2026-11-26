@@ -105,10 +105,10 @@ export function PilotWorkspaceShell({ email, isVi, children }: PilotWorkspaceShe
               Sophia AI Factory
             </span>
             <span className="rounded-full bg-primary/15 px-2.5 py-0.5 font-mono text-xs font-semibold text-primary">
-              Private Beta
+              {isVi ? 'R&D Studio • $0 RaaS' : 'Internal R&D • $0 RaaS'}
             </span>
             <span className="hidden rounded-full bg-muted px-2.5 py-0.5 font-mono text-xs font-medium text-muted-foreground sm:inline">
-              {isVi ? 'Affiliate Revenue Studio' : 'Affiliate Revenue Studio'}
+              Crypto &amp; SaaS Affiliate OS
             </span>
           </div>
 

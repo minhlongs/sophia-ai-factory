@@ -530,7 +530,7 @@ describe('FirstValueSupportCard & PilotWorkspaceShell', () => {
       </PilotWorkspaceShell>,
     );
 
-    expect(screen.getByText('Private Beta')).toBeTruthy();
+    expect(screen.getByText('R&D Studio • $0 RaaS')).toBeTruthy();
     expect(screen.getAllByText('Hỗ trợ & Xóa dữ liệu').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Affiliate Offers').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Doanh thu & Hoa hồng').length).toBeGreaterThan(0);
