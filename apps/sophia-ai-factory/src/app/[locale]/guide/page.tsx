@@ -5,6 +5,7 @@ import { buildCorePagePayload } from '@/seed/aeo';
 import { normalizeAeoLocale } from '@/tree/aeo';
 import { DualReadPageSection } from '@/forest/components/aeo';
 import type { GuideActiveTarget } from '@/seed/guide';
+import { GuideQuickstart2026 } from './guide-quickstart-2026';
 import { GuideSections } from './guide-sections';
 import { GuideWorkbench } from './guide-workbench';
 
@@ -59,6 +60,8 @@ export default async function GuidePage({
             {t('gettingStarted.hero_subtitle')}
           </p>
         </div>
+
+        <GuideQuickstart2026 locale={normalizedLocale} />
 
         <GuideWorkbench locale={normalizedLocale} initialTarget={GUIDE_INITIAL_TARGET} />
 

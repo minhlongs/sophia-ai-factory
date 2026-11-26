@@ -17,6 +17,8 @@
 
 import React from "react";
 import { usePathname } from "next/navigation";
+import { Compass, Zap } from "lucide-react";
+import { Link } from "@/navigation";
 import { cn } from "@/seed/utils/cn";
 import {
   SOPHIA_NAV_MODULES,
@@ -74,6 +76,27 @@ export function DashboardSidebarNav({
               Autonomous Video
             </p>
           </div>
+        </div>
+
+        <div className="px-3 pt-3 pb-1 flex flex-col gap-1.5 border-b border-border/60 dark:border-white/[0.06]">
+          <Link
+            href="/dashboard/first-value"
+            className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/15 transition-colors"
+          >
+            <Zap className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">
+              {isVi ? "Affiliate Studio (4 Bước)" : "Affiliate Studio (4 Steps)"}
+            </span>
+          </Link>
+          <Link
+            href="/guide"
+            className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <Compass className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">
+              {isVi ? "Hướng dẫn 5 phút" : "5-Min Quickstart Guide"}
+            </span>
+          </Link>
         </div>
 
         <DashboardNavItems
