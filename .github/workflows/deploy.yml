@@ -194,6 +194,12 @@ jobs:
         if: ${{ inputs.dry_run != true }}
         run: OPEN_NEXT_DEPLOY=true npx wrangler deploy --config wrangler.toml --env "" --upload-source-maps=false
 
+      - name: 'Stage 3a-pilot: Auto-Sync Permanent Internal R&D Pilot Worker (100% Parity, $0 RaaS)'
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          node scripts/verify-pilot-wrangler-isolation.mjs --require-resolved-ids
+          OPEN_NEXT_DEPLOY=true npx wrangler deploy --config wrangler.pilot.toml --upload-source-maps=false --var "COMMIT_SHA:${{ github.sha }}" --var "DEPLOYED_AT:$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
       - name: 'Stage 3b: Inject Secret Metadata (COMMIT_SHA / DEPLOYED_AT / DEPLOY_BRANCH)'
         if: ${{ inputs.dry_run != true }}
         run: |
