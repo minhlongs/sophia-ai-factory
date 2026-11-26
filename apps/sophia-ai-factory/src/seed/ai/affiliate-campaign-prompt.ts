@@ -63,9 +63,11 @@ export interface AffiliateCampaignPack {
 const PROHIBITED_CRYPTO_CLAIMS: readonly RegExp[] = [
   /\bguaranteed\s+(?:profit|profits|returns|income|yield|gains)\b/i,
   /\brisk[-\s]?free\s+(?:profit|returns|crypto|yield|investment)\b/i,
+  /\bget\s+rich\s+quick\b/i,
   /\b100%\s+(?:win\s*rate|safe|guaranteed)\b/i,
   /cam\s*kết\s*(?:lợi\s*nhuận|lãi|x\d+|nhân\s*tài\s*sản)/i,
-  /lợi\s*nhuận\s*đảm\s*bảo/i,
+  /lợi\s*nhuận\s*(?:đảm\s*bảo|khủng)/i,
+  /kiếm\s*tiền\s*nhanh/i,
   /chắc\s*chắn\s*(?:lãi|thắng|sinh\s*lời)/i,
   /không\s*rủi\s*ro/i,
 ];

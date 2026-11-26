@@ -4,6 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   fetchPilotHeyGenByokStatus,
+  sanitizeScriptForHeyGenModeration,
   submitPilotHeyGenByokVideo,
 } from '../pilot-heygen-byok-client';
 
@@ -111,5 +112,16 @@ describe('pilot-heygen-byok-client core hardening', () => {
     expect(detailedErr.status).toBe('failed');
     expect(detailedErr.errorMessage).toContain('avatar_expired');
     expect(detailedErr.errorMessage).toContain('Avatar retired');
+  });
+
+  it('sanitizes high-risk financial/crypto phrases pre-flight to prevent HeyGen moderation_rejected', () => {
+    const res = sanitizeScriptForHeyGenModeration(
+      'Join this forex broker for guaranteed profit and kiếm tiền nhanh on sàn giao dịch crypto!',
+    );
+    expect(res.replacedCount).toBeGreaterThanOrEqual(4);
+    expect(res.sanitized.toLowerCase()).not.toContain('forex');
+    expect(res.sanitized.toLowerCase()).not.toContain('guaranteed profit');
+    expect(res.sanitized.toLowerCase()).not.toContain('kiếm tiền nhanh');
+    expect(res.sanitized.toLowerCase()).not.toContain('sàn giao dịch');
   });
 });
