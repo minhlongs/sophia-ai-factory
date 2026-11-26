@@ -17,6 +17,10 @@ import {
   type EncodedPilotMp4Artifact,
   type PilotMp4SlideSpec,
 } from '@/seed/video/pilot-mp4-encoder';
+import {
+  buildKaraokeWordCues,
+  evaluateFrameStateAtIndex,
+} from '@/seed/video/webcodecs-timeline-spec';
 
 function wrapCanvasText(
   ctx: CanvasRenderingContext2D,
@@ -170,15 +174,34 @@ export function buildSlidesFromAcceptedScript(args: {
   readonly shortUrl: string;
   readonly disclosureTag: string;
 }): readonly PilotMp4SlideSpec[] {
-  const sceneSlides: PilotMp4SlideSpec[] = args.script.scenes.map((scene, index) => ({
-    label: `SCENE ${scene.scene_number} • ${args.disclosureTag}`,
-    headline: scene.title?.trim() || args.script.title,
-    body: scene.narration,
-    footerCta: args.ctaText,
-    referralShortUrl: args.shortUrl,
-    durationSec: Math.max(2, Math.min(90, Math.round(scene.duration_estimate || 6))),
-    accentIndex: index,
+  const timelineScenes = args.script.scenes.map((s) => ({
+    sceneNumber: s.scene_number,
+    narration: s.narration,
+    durationSec: Math.max(2, Math.min(90, Math.round(s.duration_estimate || 6))),
   }));
+  const karaokeCues = buildKaraokeWordCues(timelineScenes);
+  let cursorSec = 0;
+
+  const sceneSlides: PilotMp4SlideSpec[] = args.script.scenes.map((scene, index) => {
+    const durationSec = Math.max(2, Math.min(90, Math.round(scene.duration_estimate || 6)));
+    const midFrame = evaluateFrameStateAtIndex(
+      timelineScenes,
+      karaokeCues,
+      Math.floor((cursorSec + durationSec * 0.5) * 30),
+      30,
+    );
+    cursorSec += durationSec;
+    const karaokeCaption = midFrame.captionWindow.map((c) => c.word).join(' ');
+    return {
+      label: `SCENE ${scene.scene_number} • ${args.disclosureTag} • ${midFrame.kenBurnsScale.toFixed(2)}x`,
+      headline: scene.title?.trim() || args.script.title,
+      body: karaokeCaption || scene.narration,
+      footerCta: args.ctaText,
+      referralShortUrl: args.shortUrl,
+      durationSec,
+      accentIndex: index,
+    };
+  });
 
   sceneSlides.push({
     label: `CALL TO ACTION • ${args.disclosureTag}`,
