@@ -19,7 +19,7 @@ export async function GET(
     .replace(/[^a-z0-9-_]/gi, '')
     .slice(0, 48) || 'sophia';
 
-  const secret = (process.env.BETTER_AUTH_SECRET ?? process.env.CRON_SECRET ?? '').trim();
+  const secret = (process.env.MEDIA_KIT_SIGNING_SECRET ?? '').trim();
   const claims = {
     workspaceSlug,
     periodDays: 30,

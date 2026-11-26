@@ -55,6 +55,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const signature = request.headers.get('x-signature-ed25519') ?? '';
   const timestamp = request.headers.get('x-signature-timestamp') ?? '';
+  const tsSec = Number.parseInt(timestamp, 10);
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (!/^\d+$/.test(timestamp) || !Number.isFinite(tsSec) || Math.abs(nowSec - tsSec) > 300) {
+    return NextResponse.json({ error: 'Invalid or stale timestamp' }, { status: 401 });
+  }
   const rawBody = await request.text();
 
   const valid = await verifyDiscordEd25519(rawBody, signature, timestamp, publicKey);
