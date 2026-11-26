@@ -76,8 +76,19 @@ describe('ak-xia Mega Moat R3-R15 (6 verified 3-0 cores)', () => {
       rawBody: '{"event":"conversion"}',
       secret: 'whsec_test_secret_key',
       signatureHeader: sig,
+      nowSec: 1764160010,
     });
     expect(verified).toBe(true);
+
+    const replayed = await verifyStandardWebhookSignature({
+      webhookId: 'msg_123',
+      timestampSec: 1764160000,
+      rawBody: '{"event":"conversion"}',
+      secret: 'whsec_test_secret_key',
+      signatureHeader: sig,
+      nowSec: 1764160500,
+    });
+    expect(replayed).toBe(false);
   });
 
   it('signs and verifies privacy-preserving Media Kit JWS attestations', async () => {

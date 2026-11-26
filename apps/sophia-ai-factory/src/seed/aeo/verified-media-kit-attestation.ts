@@ -49,6 +49,17 @@ export async function signVerifiedMediaKitJws(
   return `${signingInput}.${signature}`;
 }
 
+function constantTimeEqual(a: string, b: string): boolean {
+  const bytesA = new TextEncoder().encode(a);
+  const bytesB = new TextEncoder().encode(b);
+  if (bytesA.length !== bytesB.length) return false;
+  let diff = 0;
+  for (let i = 0; i < bytesA.length; i++) {
+    diff |= bytesA[i] ^ bytesB[i];
+  }
+  return diff === 0;
+}
+
 export async function verifyMediaKitJws(
   token: string,
   signingSecret: string,
@@ -56,8 +67,16 @@ export async function verifyMediaKitJws(
   const parts = token.split('.');
   if (parts.length !== 3) return { valid: false, claims: null };
   const [header, payload, signature] = parts;
+  try {
+    const decodedHeader = JSON.parse(atob(header.replace(/-/g, '+').replace(/_/g, '/'))) as {
+      alg?: string;
+    };
+    if (decodedHeader.alg !== 'HS256') return { valid: false, claims: null };
+  } catch {
+    return { valid: false, claims: null };
+  }
   const expectedSig = await hmacSha256(`${header}.${payload}`, signingSecret);
-  if (signature !== expectedSig) return { valid: false, claims: null };
+  if (!constantTimeEqual(signature, expectedSig)) return { valid: false, claims: null };
   try {
     const padded = payload.replace(/-/g, '+').replace(/_/g, '/');
     const json = atob(padded);
