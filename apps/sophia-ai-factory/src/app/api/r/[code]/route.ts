@@ -13,6 +13,7 @@ import { NextRequest } from 'next/server';
 import { isValidShortCode } from '@/land/affiliate-shortlink/short-code-generator';
 import { logClick } from '@/land/affiliate-shortlink/click-logger';
 import { createServerClient, getD1 } from '@/seed/db/client';
+import { evaluateAsnClickFraud } from '@/seed/security/asn-click-fraud-shield';
 import { isPreviewOrCrawlerBot } from '@/seed/security/bot-user-agent';
 import {
   isPilotInviteOnlyEnabled,
@@ -128,7 +129,12 @@ export async function GET(
   const affiliateUrl = new URL(offer.affiliate_link);
   affiliateUrl.searchParams.set(subParam, tid);
 
-  if (!isPreviewOrCrawlerBot(userAgent)) {
+  const cfAsn =
+    (request as unknown as { cf?: { asn?: number } }).cf?.asn ??
+    request.headers.get('x-cf-asn');
+  const asnFraud = evaluateAsnClickFraud(cfAsn);
+
+  if (!isPreviewOrCrawlerBot(userAgent) && !asnFraud.suspicious) {
     logClick({
       clickId,
       campaignId: offer.campaign_id,
