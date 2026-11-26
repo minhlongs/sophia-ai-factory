@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { getMcuMonthlyLimit } from '@/seed/config/tiers/unified-limits';
 import { isPilotInviteOnlyEnabled } from '@/seed/pilot/pilot-access-policy';
+import { isOpenInternalRdMode } from '@/seed/pilot/pilot-auth-guard';
 import { getBalance } from '@/tree/mcu/credits-repo';
 import { DashboardShell } from '@/forest/dashboard/dashboard-shell';
 import { PilotWorkspaceShell } from '@/components/first-value/pilot-workspace-shell';
@@ -21,7 +22,7 @@ export default async function DashboardLayout({
   const isVi = locale === 'vi';
   const user = await getCurrentUser();
 
-  if (isPilotInviteOnlyEnabled()) {
+  if (isPilotInviteOnlyEnabled() && !isOpenInternalRdMode()) {
     return (
       <PilotWorkspaceShell email={user?.email ?? ''} isVi={isVi}>
         {children}

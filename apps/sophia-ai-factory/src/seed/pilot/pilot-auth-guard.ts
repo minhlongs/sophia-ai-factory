@@ -202,6 +202,7 @@ export function enforcePilotFeatureDisabled(
 
   if (
     inviteOnly &&
+    !isOpenInternalRdMode(env) &&
     (normalized === '/api' || normalized.startsWith('/api/')) &&
     !matchesPrefix(normalized, PILOT_ALLOWED_API_PREFIXES)
   ) {
@@ -216,6 +217,10 @@ export function enforcePilotFeatureDisabled(
   }
 
   return null;
+}
+
+export function isOpenInternalRdMode(env: PilotEnvSource = process.env): boolean {
+  return (env.PILOT_WINDOW_MODE ?? '').trim().toUpperCase() === 'OPEN_INTERNAL_RD';
 }
 
 const SAFE_READ_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -240,7 +245,7 @@ export function enforcePilotPageScopeRedirect(
   request: { readonly url: string; readonly method?: string; readonly nextUrl?: { readonly pathname: string } },
   env: PilotEnvSource = process.env,
 ): NextResponse | null {
-  if (!isPilotInviteOnlyEnabled(env)) {
+  if (!isPilotInviteOnlyEnabled(env) || isOpenInternalRdMode(env)) {
     return null;
   }
 
@@ -285,7 +290,7 @@ export function enforcePilotServerActionDisabled(
   env: PilotEnvSource = process.env,
   method: string = 'POST',
 ): NextResponse | null {
-  if (!isPilotInviteOnlyEnabled(env)) {
+  if (!isPilotInviteOnlyEnabled(env) || isOpenInternalRdMode(env)) {
     return null;
   }
 
