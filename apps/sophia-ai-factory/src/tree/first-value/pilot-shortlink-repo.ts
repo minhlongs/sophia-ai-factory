@@ -52,8 +52,27 @@ export async function hashPilotVisitorIp(
     .join('');
 }
 
+const PREVIEW_BOT_UA_RE =
+  /TelegramBot|Zalo|facebookexternalhit|Slackbot|Twitterbot|Discordbot|WhatsApp|Googlebot|bingbot|Bytespider|HeadlessChrome/i;
+
+export function isPreviewBotUserAgent(userAgent?: string | null): boolean {
+  if (!userAgent) return false;
+  return PREVIEW_BOT_UA_RE.test(userAgent);
+}
+
 export function resolveAffiliateSubIdParam(networkHint: string): string {
   switch (networkHint.trim().toLowerCase()) {
+    case 'partnerstack':
+      return 'ps_xid';
+    case 'rewardful':
+      return 'via';
+    case 'impact':
+      return 'subId1';
+    case 'binance':
+    case 'bybit':
+    case 'okx':
+    case 'bitget':
+      return 'sub_id';
     case 'tiktok_shop':
     case 'tiktok-shop':
       return 'aff_sub';
@@ -247,6 +266,7 @@ export async function resolveAndRecordPilotShortlinkClick(
     readonly ip: string | null;
     readonly country: string | null;
     readonly referer: string | null;
+    readonly userAgent?: string | null;
     readonly nowIso?: string;
   },
 ): Promise<{ readonly redirectUrl: string } | null> {
@@ -292,12 +312,13 @@ export async function resolveAndRecordPilotShortlinkClick(
     }
   }
 
-  try {
-    await d1
-      .prepare(
-        `INSERT INTO pilot_affiliate_clicks (
-          id, link_id, org_id, user_id, short_code, ip_hash,
-          country_code, referrer_host, provenance, clicked_at_iso
+  if (!isPreviewBotUserAgent(params.userAgent)) {
+    try {
+      await d1
+        .prepare(
+          `INSERT INTO pilot_affiliate_clicks (
+            id, link_id, org_id, user_id, short_code, ip_hash,
+            country_code, referrer_host, provenance, clicked_at_iso
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'SERVER_VERIFIED_CLICK', ?)`,
       )
       .bind(
@@ -312,8 +333,9 @@ export async function resolveAndRecordPilotShortlinkClick(
         params.nowIso ?? new Date().toISOString(),
       )
       .run();
-  } catch {
-    // Redirect proceeds if click write contends transiently
+    } catch {
+      // Redirect proceeds if click write contends transiently
+    }
   }
 
   return { redirectUrl: destination.toString() };

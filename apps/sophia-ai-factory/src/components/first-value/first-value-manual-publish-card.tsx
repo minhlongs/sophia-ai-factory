@@ -19,6 +19,7 @@ import type {
   PilotManualPublishSummary,
   PilotMp4ExportSummary,
 } from '@/seed/pilot/pilot-access-policy';
+import { PilotDistributionHub } from './pilot-distribution-hub';
 
 export interface FirstValueManualPublishCardProps {
   readonly review: DurableFirstValueReview | null;
@@ -148,6 +149,15 @@ export function FirstValueManualPublishCard(props: FirstValueManualPublishCardPr
           SERVER_VERIFIED_CLICK: {totalServerClicks}
         </span>
       </div>
+
+      {props.review && activeLink && (
+        <PilotDistributionHub
+          script={props.review.script}
+          ctaText={activeLink.ctaText}
+          shortUrl={activeLink.shortUrl}
+          disclosureTag={activeLink.disclosureTag}
+        />
+      )}
 
       {readyCaptionPack && (
         <div className="rounded-lg border border-border bg-muted/40 p-3">

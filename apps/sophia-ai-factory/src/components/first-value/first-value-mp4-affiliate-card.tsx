@@ -274,13 +274,7 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
               }
               className="rounded-lg border border-input bg-background px-3 py-2 text-xs text-foreground"
             >
-              <option value="generic">Generic / SaaS (sub_id)</option>
-              <option value="shopee">Shopee Affiliate (utm_content)</option>
-              <option value="tiktok_shop">TikTok Shop (aff_sub)</option>
-              <option value="accesstrade">AccessTrade (utm_content)</option>
-              <option value="clickbank">ClickBank (tid)</option>
-              <option value="amazon">Amazon Associates (tag)</option>
-              <option value="awin">Awin (clickref)</option>
+              <option value="generic">SaaS / Crypto Partner (PartnerStack / Impact / Exchange — sub_id)</option>
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
