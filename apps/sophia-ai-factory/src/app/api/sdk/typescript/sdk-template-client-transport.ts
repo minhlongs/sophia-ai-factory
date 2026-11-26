@@ -28,11 +28,11 @@ export class SophiaClient {
   constructor(optsOrToken: SophiaClientOptions | string, baseUrl?: string) {
     if (typeof optsOrToken === 'string') {
       this.apiKey = optsOrToken;
-      this.baseUrl = (baseUrl ?? 'https://sophia.agencyos.network').replace(/\\/$/, '');
+      this.baseUrl = (baseUrl ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev').replace(/\\/$/, '');
       this.timeoutMs = 30000;
     } else {
       this.apiKey = optsOrToken.apiKey ?? optsOrToken.token ?? '';
-      this.baseUrl = (optsOrToken.baseUrl ?? baseUrl ?? 'https://sophia.agencyos.network').replace(/\\/$/, '');
+      this.baseUrl = (optsOrToken.baseUrl ?? baseUrl ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev').replace(/\\/$/, '');
       this.timeoutMs = optsOrToken.timeoutMs ?? 30000;
     }
   }

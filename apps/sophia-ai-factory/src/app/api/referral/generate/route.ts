@@ -39,7 +39,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       .single();
 
     if (existing) {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://sophia.agencyos.network";
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://sophia-ai-factory.agencyos-openclaw.workers.dev";
       return NextResponse.json({
         code: existing.code,
         shareUrl: `${baseUrl}/signup?ref=${existing.code}`,
@@ -93,7 +93,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://sophia.agencyos.network";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://sophia-ai-factory.agencyos-openclaw.workers.dev";
     return NextResponse.json(
       {
         code: created.code,

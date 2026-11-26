@@ -82,7 +82,7 @@ describe('runDistributeStep disclosure on the distribution path', () => {
 
   it('appends the FTC affiliate disclosure when a tracked link is in the description', async () => {
     const result = await runDistributeStep(
-      makeParams({ affiliateOffer: { productName: 'SmartSuite Workflow', shortUrl: 'https://sophia.agencyos.network/r/abc123' } }),
+      makeParams({ affiliateOffer: { productName: 'SmartSuite Workflow', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/abc123' } }),
     );
 
     expect(distribute).toHaveBeenCalledTimes(1);
@@ -95,7 +95,7 @@ describe('runDistributeStep disclosure on the distribution path', () => {
     await runDistributeStep(
       makeParams({
         locale: 'vi',
-        affiliateOffer: { productName: 'SmartSuite Workflow', shortUrl: 'https://sophia.agencyos.network/r/abc123' },
+        affiliateOffer: { productName: 'SmartSuite Workflow', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/abc123' },
       }),
     );
 
@@ -107,7 +107,7 @@ describe('runDistributeStep disclosure on the distribution path', () => {
     await runDistributeStep(
       makeParams({
         jurisdiction: 'US',
-        affiliateOffer: { productName: 'KuCoin Trading Rebate', shortUrl: 'https://sophia.agencyos.network/r/x', category: 'Crypto Exchange' },
+        affiliateOffer: { productName: 'KuCoin Trading Rebate', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/x', category: 'Crypto Exchange' },
       }),
     );
 
@@ -119,7 +119,7 @@ describe('runDistributeStep disclosure on the distribution path', () => {
     const result = await runDistributeStep(
       makeParams({
         jurisdiction: '   ',
-        affiliateOffer: { productName: 'KuCoin Trading Rebate', shortUrl: 'https://sophia.agencyos.network/r/x', category: 'Crypto Exchange' },
+        affiliateOffer: { productName: 'KuCoin Trading Rebate', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/x', category: 'Crypto Exchange' },
       }),
     );
 
@@ -134,7 +134,7 @@ describe('runDistributeStep disclosure on the distribution path', () => {
     const result = await runDistributeStep(
       makeParams({
         jurisdiction: undefined,
-        affiliateOffer: { productName: 'Futures copy trading', shortUrl: 'https://sophia.agencyos.network/r/y' },
+        affiliateOffer: { productName: 'Futures copy trading', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/y' },
       }),
     );
 
@@ -146,7 +146,7 @@ describe('runDistributeStep disclosure on the distribution path', () => {
     const result = await runDistributeStep(
       makeParams({
         jurisdiction: 'VN',
-        affiliateOffer: { productName: 'KuCoin Trading Rebate', shortUrl: 'https://sophia.agencyos.network/r/z', category: 'Crypto Exchange' },
+        affiliateOffer: { productName: 'KuCoin Trading Rebate', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/z', category: 'Crypto Exchange' },
       }),
     );
 
@@ -159,7 +159,7 @@ describe('runDistributeStep disclosure on the distribution path', () => {
     const result = await runDistributeStep(
       makeParams({
         jurisdiction: 'US',
-        affiliateOffer: { productName: 'KuCoin Trading Rebate', shortUrl: 'https://sophia.agencyos.network/r/x', category: 'Crypto Exchange' },
+        affiliateOffer: { productName: 'KuCoin Trading Rebate', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/x', category: 'Crypto Exchange' },
       }),
     );
 
@@ -183,7 +183,7 @@ describe('runDistributeStep disclosure on the distribution path', () => {
     const result = await runDistributeStep(
       makeParams({
         jurisdiction: 'US',
-        affiliateOffer: { productName: 'SmartSuite Workflow', shortUrl: 'https://sophia.agencyos.network/r/abc123' },
+        affiliateOffer: { productName: 'SmartSuite Workflow', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/abc123' },
       }),
     );
 

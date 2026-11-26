@@ -64,7 +64,7 @@ function providerPost(
   pathname: string,
   headers: Record<string, string> = {},
 ): NextRequest {
-  return new NextRequest(`https://sophia.agencyos.network${pathname}`, {
+  return new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev${pathname}`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -77,7 +77,7 @@ function providerPost(
 describe('middleware postback & webhook reachability (real CSRF + public-route gates)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv('ALLOWED_HOSTS', 'sophia.agencyos.network');
+    vi.stubEnv('ALLOWED_HOSTS', 'sophia-ai-factory.agencyos-openclaw.workers.dev');
   });
 
   it.each([

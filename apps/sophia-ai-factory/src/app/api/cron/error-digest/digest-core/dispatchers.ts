@@ -56,7 +56,7 @@ export async function sendFounderEmail(to: string, subject: string, body: string
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Sophia Monitor <noreply@sophia.agencyos.network>',
+        from: 'Sophia Monitor <noreply@sophia-ai-factory.agencyos-openclaw.workers.dev>',
         to: [to],
         subject,
         text: body,

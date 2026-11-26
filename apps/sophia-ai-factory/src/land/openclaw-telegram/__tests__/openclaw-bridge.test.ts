@@ -164,7 +164,7 @@ describe('openclaw-bridge', () => {
     // applyPromoCode is the leaf; createCustomerUser is mocked indirectly via getD1 mock setup
     vi.mocked(applyPromoCode).mockResolvedValue({
       redemptionId: 'r1',
-      magicLink: 'https://sophia.agencyos.network/auth/magic/abc',
+      magicLink: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/auth/magic/abc',
       handoverId: 'h1',
       trialDaysGranted: 7,
     } as Awaited<ReturnType<typeof applyPromoCode>>);
@@ -177,7 +177,7 @@ describe('openclaw-bridge', () => {
     } as any);
     const result = await callRedeemFree100({ code: 'FREE100', email: 'new@test.com' });
     expect(result.success).toBe(true);
-    expect(result.magicLink).toBe('https://sophia.agencyos.network/auth/magic/abc');
+    expect(result.magicLink).toBe('https://sophia-ai-factory.agencyos-openclaw.workers.dev/auth/magic/abc');
     expect(result.handoverId).toBe('h1');
   });
 });

@@ -64,7 +64,7 @@ function externalPost(
   pathname: string,
   headers: Record<string, string> = {},
 ): NextRequest {
-  return new NextRequest(`https://sophia.agencyos.network${pathname}`, {
+  return new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev${pathname}`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -80,7 +80,7 @@ describe('middleware double-gate reachability for PayOS IPN and Telegram webhook
     vi.unstubAllEnvs();
     vi.stubEnv('INTERNAL_API_SECRET', 'prod-internal-secret-configured');
     vi.stubEnv('REQUIRE_AGENCY_ID', 'true');
-    vi.stubEnv('ALLOWED_HOSTS', 'sophia.agencyos.network');
+    vi.stubEnv('ALLOWED_HOSTS', 'sophia-ai-factory.agencyos-openclaw.workers.dev');
   });
 
   it.each([

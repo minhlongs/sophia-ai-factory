@@ -58,7 +58,7 @@ export function matchBestYieldOffer(
       : 'CJ';
 
   // Construct Smart-Link router redirect URL
-  const geoRoutingUrl = `https://sophia.agencyos.network/api/r/${best.offer.id}?geo=${userCountryCode.toUpperCase()}&yield=${best.yieldUsd}`;
+  const geoRoutingUrl = `https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/r/${best.offer.id}?geo=${userCountryCode.toUpperCase()}&yield=${best.yieldUsd}`;
 
   return {
     offerId: best.offer.id,

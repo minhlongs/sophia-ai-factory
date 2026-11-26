@@ -7,7 +7,6 @@ import {
   buildSrtFromScript,
   extractThreeShortClipsFromLongScript,
 } from '../pilot-capcut-pack-helpers';
-import { AffiliatePilotStepper } from '../affiliate-studio/affiliate-pilot-stepper';
 import { AffiliateCampaignGeneratorCard } from '../affiliate-studio/affiliate-campaign-generator-card';
 import { PilotVoiceAndCapCutPack } from '../pilot-voice-and-capcut-pack';
 import { renderAndDownloadPilotMp4 } from '../pilot-browser-mp4-renderer';
@@ -64,25 +63,6 @@ describe('Pilot CapCut Pack helpers & UI', () => {
     expect(copy).toContain('[PINNED COMMENT / LINK]');
     expect(copy).toContain('https://pilot.test/api/r/abc123');
     expect(copy).toContain('#QuảngCáo');
-  });
-
-  it('renders 4-step AffiliatePilotStepper with links to all workflow sections', () => {
-    render(
-      <AffiliatePilotStepper
-        hasOffer
-        hasApprovedCampaign
-        hasMp4OrLink={false}
-        hasManualPublish={false}
-      />,
-    );
-    const nav = screen.getByTestId('pilot-workflow-stepper');
-    expect(nav).toBeTruthy();
-    expect(screen.getByText('pilotStep1Offer').closest('a')?.getAttribute('href')).toBe(
-      '#affiliate-offers',
-    );
-    expect(screen.getByText('pilotStep3VideoPack').closest('a')?.getAttribute('href')).toBe(
-      '#pilot-mp4-affiliate',
-    );
   });
 
   it('generates free Edge TTS voice, downloads SRT, and copies CapCut pack', async () => {

@@ -11,7 +11,7 @@ describe('renderEmail', () => {
     const result = renderEmail('welcome-magic-link', {
       ownerFullName: 'Nguyen Van A',
       tier: 'BASIC',
-      magicLinkUrl: 'https://sophia.agencyos.network/vi/welcome/token123',
+      magicLinkUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/welcome/token123',
       locale: 'vi',
     });
     expect(result.html).toContain('Sophia AI Factory');

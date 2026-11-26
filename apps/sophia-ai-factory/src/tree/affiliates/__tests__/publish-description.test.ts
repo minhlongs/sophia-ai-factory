@@ -19,7 +19,7 @@ describe('composePublishDescription', () => {
   it('places every mandated disclosure above the affiliate link', () => {
     const composed = composePublishDescription({
       baseDescription: BASE,
-      offer: { productName: 'Exchange', shortUrl: 'https://sophia.agencyos.network/r/link0001' },
+      offer: { productName: 'Exchange', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/link0001' },
       verdict: verdict(),
       jurisdiction: 'US',
       locale: 'en',
@@ -36,7 +36,7 @@ describe('composePublishDescription', () => {
   it('returns the base description untouched for a blocked verdict', () => {
     const composed = composePublishDescription({
       baseDescription: BASE,
-      offer: { productName: 'Exchange', shortUrl: 'https://sophia.agencyos.network/r/link0001' },
+      offer: { productName: 'Exchange', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/link0001' },
       verdict: verdict({ allowed: false, reason: 'crypto_prohibited_in_jurisdiction', detail: 'Prohibited.' }),
       jurisdiction: 'VN',
       locale: 'en',
@@ -51,7 +51,7 @@ describe('composePublishDescription', () => {
   it('treats a verdict whose mandated wording cannot be built as a block', () => {
     const composed = composePublishDescription({
       baseDescription: BASE,
-      offer: { productName: 'Exchange', shortUrl: 'https://sophia.agencyos.network/r/link0003' },
+      offer: { productName: 'Exchange', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/link0003' },
       verdict: verdict(),
       jurisdiction: 'US',
       locale: 'en',
@@ -68,14 +68,14 @@ describe('composePublishDescription', () => {
   it('emits no wording when the verdict demands none', () => {
     const composed = composePublishDescription({
       baseDescription: BASE,
-      offer: { productName: 'Tool', shortUrl: 'https://sophia.agencyos.network/r/link0002' },
+      offer: { productName: 'Tool', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/link0002' },
       verdict: verdict({ requiresAffiliateDisclosure: false, requiresFinancialDisclaimer: false, vertical: 'other' }),
       jurisdiction: null,
       locale: 'en',
     });
 
     expect(composed.blocked).toBe(false);
-    expect(composed.description).toBe(`${BASE}\n\n👉 https://sophia.agencyos.network/r/link0002`);
+    expect(composed.description).toBe(`${BASE}\n\n👉 https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/link0002`);
     expect(composed.affiliateDisclosureEmitted).toBe(false);
   });
 

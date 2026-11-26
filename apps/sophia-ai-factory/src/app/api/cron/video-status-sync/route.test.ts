@@ -196,7 +196,7 @@ describe('GET /api/cron/video-status-sync', () => {
       }),
     } as unknown as Awaited<ReturnType<typeof getHeyGenClient>>)
     vi.mocked(downloadAndStore).mockResolvedValueOnce({
-      permanentUrl: 'https://videos.sophia.agencyos.network/videos/user-abc/vid-001.mp4',
+      permanentUrl: 'https://videos.sophia-ai-factory.agencyos-openclaw.workers.dev/videos/user-abc/vid-001.mp4',
       bucket: 'VIDEO_BUCKET',
       path: 'videos/user-abc/vid-001.mp4',
       sizeBytes: 1024000,

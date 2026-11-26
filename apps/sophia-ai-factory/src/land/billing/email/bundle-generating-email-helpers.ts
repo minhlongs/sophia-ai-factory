@@ -40,7 +40,7 @@ export async function sendBundleGeneratingEmail(
     return { success: true, alreadySent: true };
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
   const locale = ctx.locale?.startsWith('vi') ? ('vi' as const) : ('en' as const);
   const statusPageUrl = `${appUrl}/${locale}/dashboard/orders`;
 
@@ -66,7 +66,7 @@ export async function sendBundleGeneratingEmail(
       });
     } else {
       const { data, error } = await resend.emails.send({
-        from: 'Sophia AI <billing@sophia.agencyos.network>',
+        from: 'Sophia AI <billing@sophia-ai-factory.agencyos-openclaw.workers.dev>',
         to: ctx.userEmail,
         subject,
         text,

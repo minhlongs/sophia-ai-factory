@@ -59,7 +59,7 @@ describe('kokoro-tts-adapter', () => {
   it('routes Vietnamese locale (vi / vi-VN) directly to BYOK ElevenLabs fallback', async () => {
     const byokFallback = vi.fn().mockResolvedValue({
       success: true,
-      audioUrl: 'https://cdn.sophia.agencyos.network/orgs/org_alpha/vo_vi.mp3',
+      audioUrl: 'https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev/orgs/org_alpha/vo_vi.mp3',
       durationSec: 18.5,
       provider: 'elevenlabs' as const,
     });
@@ -91,7 +91,7 @@ describe('kokoro-tts-adapter', () => {
   it('falls back cleanly to BYOK voiceover on pure-edge Workers when neither baseUrl/KOKORO_API_URL nor custom fetchFn is configured', async () => {
     const byokFallback = vi.fn().mockResolvedValue({
       success: true,
-      audioUrl: 'https://cdn.sophia.agencyos.network/orgs/org_alpha/vo_en_edge.mp3',
+      audioUrl: 'https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev/orgs/org_alpha/vo_en_edge.mp3',
       durationSec: 11.2,
       provider: 'elevenlabs' as const,
     });

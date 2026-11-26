@@ -16,7 +16,7 @@ import {
 
 describe('passkey-and-otp-plugins (Auth 2027)', () => {
   it('resolveRpId extracts hostname dynamically from baseURL and falls back to localhost', () => {
-    expect(resolveRpId('https://sophia.agencyos.network')).toBe('sophia.agencyos.network');
+    expect(resolveRpId('https://sophia-ai-factory.agencyos-openclaw.workers.dev')).toBe('sophia-ai-factory.agencyos-openclaw.workers.dev');
     expect(resolveRpId('http://localhost:3000/api/auth')).toBe('localhost');
     expect(resolveRpId('invalid-url')).toBe('localhost');
   });
@@ -29,7 +29,7 @@ describe('passkey-and-otp-plugins (Auth 2027)', () => {
   });
 
   it('creates passkey, emailOTP, and twoFactor plugin configurations cleanly', async () => {
-    const pk = createPasskeyPlugin('https://sophia.agencyos.network');
+    const pk = createPasskeyPlugin('https://sophia-ai-factory.agencyos-openclaw.workers.dev');
     const otp = createEmailOtpPlugin();
     const mfa = createTwoFactorPlugin();
 

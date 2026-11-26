@@ -68,7 +68,7 @@ export async function runAgent(taskId: string, orgId: string, userTier: string):
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${openRouterKey}`,
-        'HTTP-Referer': process.env.APP_URL || 'https://sophia.agencyos.network',
+        'HTTP-Referer': process.env.APP_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
         'X-Title': 'Sophia AI Factory',
       },
       body: JSON.stringify({ model, messages, temperature, stream: false }),

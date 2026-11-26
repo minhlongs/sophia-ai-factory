@@ -65,7 +65,7 @@ describe('Creator Recruitment & Negotiation FSM Engine', () => {
 
   it('generates compliant RFC 8058 one-click unsubscribe header', () => {
     const header = generateCanSpamOneClickHeader('kol_4491', 'secret-key');
-    expect(header).toContain('https://sophia.agencyos.network/api/optout');
+    expect(header).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/optout');
     expect(header).toContain('kol_4491');
   });
 });

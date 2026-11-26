@@ -11,7 +11,7 @@ import { PRODUCTION_TECHNICAL_HOSTNAME, PILOT_TECHNICAL_HOSTNAME } from '@/seed/
 export const CANONICAL_DOMAINS = new Set([
   PRODUCTION_TECHNICAL_HOSTNAME,
   PILOT_TECHNICAL_HOSTNAME,
-  'sophia.agencyos.network',
+  'sophia-ai-factory.agencyos-openclaw.workers.dev',
   'localhost',
   '127.0.0.1',
   '::1',
@@ -58,7 +58,7 @@ export function normalizeHostname(rawHost: string | null | undefined): string {
  * Checks if a hostname belongs to platform infrastructure or local development.
  * Ignores:
  * - localhost, 127.0.0.1 (IPv4 loopback block 127.0.0.0/8), ::1
- * - sophia.agencyos.network and *.agencyos.network
+ * - sophia-ai-factory.agencyos-openclaw.workers.dev and *.agencyos.network
  * - *.pages.dev (Cloudflare Pages preview deployments)
  * - *.workers.dev (Cloudflare Workers preview deployments)
  * - Hostnames matching NEXT_PUBLIC_APP_URL or APP_URL env vars

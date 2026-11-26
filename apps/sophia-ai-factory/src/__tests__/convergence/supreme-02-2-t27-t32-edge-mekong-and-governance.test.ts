@@ -74,7 +74,7 @@ describe('Supreme Command #02.2 — T27..T32: D1 Mekong Store, HMAC Pull-Worker 
     const makeWorkerReq = async (payload: Record<string, unknown>, sigOverride?: string) => {
       const raw = JSON.stringify(payload);
       const sig = sigOverride ?? (await signMekongWorkerPayload(secret, tsSec, raw));
-      return new NextRequest('https://sophia.agencyos.network/api/convergence/vertical-slice', {
+      return new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/convergence/vertical-slice', {
         method: 'POST', headers: { [MEKONG_SIGNATURE_HEADER]: sig, [MEKONG_TIMESTAMP_HEADER]: String(tsSec) }, body: raw,
       });
     };
@@ -86,7 +86,7 @@ describe('Supreme Command #02.2 — T27..T32: D1 Mekong Store, HMAC Pull-Worker 
     expect((await verifyMekongWorkerHmac({ secret, signatureHeader: 'bad', timestampHeader: String(tsSec - 301), rawBody: '{}', nowMs })).ok).toBe(false);
     expect(isPublicApiRoute('/api/convergence/vertical-slice')).toBe(true);
     expect(verifyCsrfToken(reqWithHmac)).toBe(true);
-    expect(isWorkerPullActionRequest(new NextRequest('https://sophia.agencyos.network/api/convergence/vertical-slice'), claimPayload)).toBe(true);
+    expect(isWorkerPullActionRequest(new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/convergence/vertical-slice'), claimPayload)).toBe(true);
 
     expect((await POST(await makeWorkerReq(claimPayload, 'invalid_sig'))).status).toBe(401);
     expect((await POST(await makeWorkerReq({ action: 'claim_next_job', workspaceId: '' }))).status).toBe(400);

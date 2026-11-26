@@ -55,7 +55,7 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Sophia AI <noreply@sophia.agencyos.network>',
+        from: 'Sophia AI <noreply@sophia-ai-factory.agencyos-openclaw.workers.dev>',
         to: [toEmail],
         subject: 'Sophia AI — Test Email',
         html: '<h1>Test email</h1><p>Your Sophia AI integration is working correctly.</p>',

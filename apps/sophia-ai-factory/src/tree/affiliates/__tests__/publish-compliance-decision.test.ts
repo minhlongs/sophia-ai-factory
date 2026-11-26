@@ -4,7 +4,7 @@ import { decidePublishCompliance } from '../publish-compliance-decision';
 const BASE = 'AI-generated video content for crypto beginners';
 
 function offer(name: string, category: string | null = 'crypto') {
-  return { productName: name, shortUrl: 'https://sophia.agencyos.network/r/abc12345', category };
+  return { productName: name, shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/abc12345', category };
 }
 
 describe('decidePublishCompliance', () => {
@@ -18,7 +18,7 @@ describe('decidePublishCompliance', () => {
 
     expect(decision.mayPublish).toBe(true);
     expect(decision.description).toContain('affiliate links');
-    expect(decision.description).toContain('👉 https://sophia.agencyos.network/r/abc12345');
+    expect(decision.description).toContain('👉 https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/abc12345');
     expect(decision.affiliateDisclosureEmitted).toBe(true);
   });
 
@@ -49,7 +49,7 @@ describe('decidePublishCompliance', () => {
   });
 
   it('keeps unregulated SaaS publishing allowed without a declared jurisdiction', () => {
-    const saas = { productName: 'Notion Team', shortUrl: 'https://sophia.agencyos.network/r/saas1234', category: 'saas' as string | null };
+    const saas = { productName: 'Notion Team', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/saas1234', category: 'saas' as string | null };
     const decision = decidePublishCompliance({
       baseDescription: 'AI-generated video content for productivity teams',
       offer: saas,
@@ -64,7 +64,7 @@ describe('decidePublishCompliance', () => {
     // The link is still published. A disclosure line now precedes it, which is
     // the intended change: an affiliate link without a disclosure is the
     // violation this gate exists to stop. Financial disclaimer stays absent.
-    expect(decision.description).toContain('👉 https://sophia.agencyos.network/r/saas1234');
+    expect(decision.description).toContain('👉 https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/saas1234');
     expect(decision.description).toContain('This content contains affiliate links');
     expect(decision.financialDisclaimerEmitted).toBe(false);
     expect(decision.description.indexOf('affiliate links')).toBeLessThan(
@@ -75,7 +75,7 @@ describe('decidePublishCompliance', () => {
   it('emits the affiliate disclosure for a link in a non-financial vertical', () => {
     const decision = decidePublishCompliance({
       baseDescription: 'AI-generated video content for productivity teams',
-      offer: { productName: 'Notion Team', shortUrl: 'https://sophia.agencyos.network/r/saas1234', category: 'saas' },
+      offer: { productName: 'Notion Team', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/saas1234', category: 'saas' },
       jurisdiction: 'US',
       locale: 'en',
     });

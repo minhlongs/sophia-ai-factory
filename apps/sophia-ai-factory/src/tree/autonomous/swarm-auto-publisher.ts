@@ -79,7 +79,7 @@ export function generateMultiPlatformSyndication(
 ): AutoPublisherOutput {
   const platforms = input.targetPlatforms || ['youtube', 'tiktok', 'instagram'];
   const markets = input.targetMarkets || ['VN', 'JP'];
-  const baseAffiliateUrl = input.baseAffiliateUrl || 'https://sophia.agencyos.network/offers/ai';
+  const baseAffiliateUrl = input.baseAffiliateUrl || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/offers/ai';
   const refDate = input.referenceDate || new Date();
 
   const publishedPayloads: PlatformPublishPayload[] = [];

@@ -30,7 +30,7 @@ describe('live proof runtime', () => {
   });
 
   it('guards production even when the hostname has a trailing dot', () => {
-    expect(() => runConfig(baseEnv({ SOPHIA_LIVE_BASE_URL: 'https://sophia.agencyos.network.' })))
+    expect(() => runConfig(baseEnv({ SOPHIA_LIVE_BASE_URL: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev.' })))
       .toThrow('production target requires SOPHIA_LIVE_ALLOW_PRODUCTION=1');
   });
 

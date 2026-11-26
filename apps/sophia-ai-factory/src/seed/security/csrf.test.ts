@@ -20,7 +20,7 @@ function makeRequest(method: string, pathname: string, opts?: {
   cookieToken?: string
   headerToken?: string
 }): NextRequest {
-  const url = `https://sophia.agencyos.network${pathname}`
+  const url = `https://sophia-ai-factory.agencyos-openclaw.workers.dev${pathname}`
   const headers = new Headers()
   if (opts?.headerToken) headers.set(CSRF_HEADER_NAME, opts.headerToken)
   if (opts?.cookieToken) headers.set('cookie', `${CSRF_COOKIE_NAME}=${opts.cookieToken}`)
@@ -128,7 +128,7 @@ describe('requiresCsrfCheck', () => {
   })
 
   it('allows the ingestion workflow POST without a browser CSRF cookie', () => {
-    const request = new NextRequest('https://sophia.agencyos.network/api/ingestion/trigger', {
+    const request = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/ingestion/trigger', {
       method: 'POST',
       headers: { authorization: 'Bearer test-cron-secret', 'content-type': 'application/json' },
       body: JSON.stringify({ networks: ['clickbank', 'shareasale'] }),

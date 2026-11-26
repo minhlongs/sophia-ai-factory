@@ -44,7 +44,7 @@ export async function createTopupInvoice(
     const invoiceId = String(result.id);
     const invoiceUrl =
       result.invoice_url ??
-      `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'}/dashboard/billing`;
+      `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev'}/dashboard/billing`;
 
     const db = createServerClient();
     await db.from('pending_topups').insert({

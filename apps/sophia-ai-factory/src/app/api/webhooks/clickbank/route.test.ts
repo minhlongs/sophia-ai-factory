@@ -62,7 +62,7 @@ const mockPrepare = vi.fn(() => ({ bind: mockBind }))
 const mockDb = { prepare: mockPrepare }
 
 function makeRequest(body = '', sig = 'valid-sig'): NextRequest {
-  return new NextRequest('https://sophia.agencyos.network/api/webhooks/clickbank', {
+  return new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/clickbank', {
     method: 'POST',
     body,
     headers: { 'x-clickbank-signature': sig, 'content-type': 'application/x-www-form-urlencoded' },

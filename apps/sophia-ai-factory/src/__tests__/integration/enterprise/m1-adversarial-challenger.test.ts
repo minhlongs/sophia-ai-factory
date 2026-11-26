@@ -270,8 +270,8 @@ describe('Empirical Challenger: Milestone 1 Remediations Adversarial Suite', () 
         { host: 'portal.pages.dev', reason: 'Cloudflare pages subdomain' },
         { host: 'workers.dev', reason: 'Cloudflare workers root' },
         { host: 'app.workers.dev', reason: 'Cloudflare workers subdomain' },
-        { host: 'sophia.agencyos.network', reason: 'platform root domain' },
-        { host: 'sub.sophia.agencyos.network', reason: 'platform subdomain' },
+        { host: 'sophia-ai-factory.agencyos-openclaw.workers.dev', reason: 'platform root domain' },
+        { host: 'sub.sophia-ai-factory.agencyos-openclaw.workers.dev', reason: 'platform subdomain' },
         { host: 'agencyos.network', reason: 'platform root' },
         { host: 'admin.agencyos.network', reason: 'platform admin domain' },
       ];

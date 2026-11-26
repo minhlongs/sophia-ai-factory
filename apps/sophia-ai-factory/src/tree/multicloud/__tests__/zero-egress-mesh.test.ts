@@ -75,13 +75,13 @@ describe('Zero-Egress Storage Fabric — Unit Tests', () => {
       ) VALUES
       (
         'pool_r2_primary_apac', 'r2-primary-apac', 'cloudflare_r2', 'primary',
-        'sophia-videos-apac', 'https://pub-r2-apac.sophia.agencyos.network', 'apac',
+        'sophia-videos-apac', 'https://pub-r2-apac.sophia-ai-factory.agencyos-openclaw.workers.dev', 'apac',
         1, 1428571428571, 125000, 'synced', 0,
         'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 0.0, 'active', 1
       ),
       (
         'pool_r2_primary_nam', 'r2-primary-nam', 'cloudflare_r2', 'primary',
-        'sophia-videos-nam', 'https://pub-r2-nam.sophia.agencyos.network', 'nam',
+        'sophia-videos-nam', 'https://pub-r2-nam.sophia-ai-factory.agencyos-openclaw.workers.dev', 'nam',
         1, 2857142857142, 250000, 'synced', 0,
         'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 0.0, 'active', 1
       ),
@@ -140,7 +140,7 @@ describe('Zero-Egress Storage Fabric — Unit Tests', () => {
       expect(route.provider).toBe('cloudflare_r2');
       expect(route.isZeroEgress).toBe(true);
       expect(route.egressCostCents).toBe(0);
-      expect(route.downloadUrl).toBe('https://pub-r2-apac.sophia.agencyos.network/renders/2026/video-999.mp4');
+      expect(route.downloadUrl).toBe('https://pub-r2-apac.sophia-ai-factory.agencyos-openclaw.workers.dev/renders/2026/video-999.mp4');
       expect(route.integrityVerified).toBe(true);
     });
 

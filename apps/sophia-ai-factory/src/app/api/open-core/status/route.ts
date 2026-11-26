@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
     userTier,
     hasValidRaasLicense,
     licensedTier,
-    pricingUrl: 'https://sophia.agencyos.network/pricing',
+    pricingUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/pricing',
     features,
     catalogAudit,
     blueprintAudit,

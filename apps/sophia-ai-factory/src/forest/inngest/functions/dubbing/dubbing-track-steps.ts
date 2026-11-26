@@ -36,7 +36,7 @@ export async function synthesizeLocaleAudioTracks(params: {
     });
 
     const audioKey = `tenants/${tenantId}/videos/${videoId}/dubbing/${jobId}/${locale}.mp3`;
-    urls[locale] = `https://storage.sophia.agencyos.network/${audioKey}`;
+    urls[locale] = `https://storage.sophia-ai-factory.agencyos-openclaw.workers.dev/${audioKey}`;
 
     logger.info('[VideoVoiceDubbing] Synthesized audio track', {
       jobId,
@@ -66,8 +66,8 @@ export function generateLocaleSubtitleTracks(params: {
 
     const baseKey = `tenants/${tenantId}/videos/${videoId}/dubbing/${jobId}/subtitles_${locale}`;
     urls[locale] = {
-      srt: `https://storage.sophia.agencyos.network/${baseKey}.srt`,
-      vtt: `https://storage.sophia.agencyos.network/${baseKey}.vtt`,
+      srt: `https://storage.sophia-ai-factory.agencyos-openclaw.workers.dev/${baseKey}.srt`,
+      vtt: `https://storage.sophia-ai-factory.agencyos-openclaw.workers.dev/${baseKey}.vtt`,
     };
 
     logger.info('[VideoVoiceDubbing] Generated subtitle tracks', {

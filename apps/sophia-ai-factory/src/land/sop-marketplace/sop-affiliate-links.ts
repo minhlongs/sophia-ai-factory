@@ -51,6 +51,6 @@ export async function getSopAffiliateLink(
 }
 
 export function buildSopReferralUrl(code: string): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
   return `${appUrl}/ref/${code}`;
 }

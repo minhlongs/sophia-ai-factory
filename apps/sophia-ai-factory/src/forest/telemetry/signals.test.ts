@@ -57,7 +57,7 @@ describe('auth-helper: requireAuth', () => {
     const spy = vi.spyOn(sessionModule, 'getCurrentUserFromHeaders').mockResolvedValue(null)
 
     const { requireAuth } = await import('@/tree/signals/auth-helper')
-    const req = new Request('https://sophia.agencyos.network/api/signals/track') as unknown as import('next/server').NextRequest
+    const req = new Request('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/signals/track') as unknown as import('next/server').NextRequest
     const result = await requireAuth(req)
     expect(result).toBeInstanceOf(Response)
     expect((result as Response).status).toBe(401)
@@ -67,7 +67,7 @@ describe('auth-helper: requireAuth', () => {
 
   it('(c) accepts valid CRON_SECRET bearer', async () => {
     const { requireAuth } = await import('@/tree/signals/auth-helper')
-    const req = new Request('https://sophia.agencyos.network/api/signals/track', {
+    const req = new Request('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/signals/track', {
       headers: { Authorization: 'Bearer test-cron-secret-abc' },
     }) as unknown as import('next/server').NextRequest
     const result = await requireAuth(req)
@@ -88,7 +88,7 @@ describe('auth-helper: requireAuth', () => {
 
     // Re-import to pick up spy (same module instance is fine since we spy)
     const { requireAuth } = await import('@/tree/signals/auth-helper')
-    const req = new Request('https://sophia.agencyos.network/api/signals/track') as unknown as import('next/server').NextRequest
+    const req = new Request('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/signals/track') as unknown as import('next/server').NextRequest
     const result = await requireAuth(req)
     expect(result).toEqual({ type: 'session', userId: 'user-123' })
 
@@ -97,7 +97,7 @@ describe('auth-helper: requireAuth', () => {
 
   it('rejects wrong bearer token → 401', async () => {
     const { requireAuth } = await import('@/tree/signals/auth-helper')
-    const req = new Request('https://sophia.agencyos.network/api/signals/track', {
+    const req = new Request('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/signals/track', {
       headers: { Authorization: 'Bearer wrong-secret' },
     }) as unknown as import('next/server').NextRequest
     const result = await requireAuth(req)
@@ -195,7 +195,7 @@ describe('NOWPayments webhook: tier_upgraded emission', () => {
       invoice_id: '4559269964',
     })
 
-    const req = new Request('https://sophia.agencyos.network/api/webhooks/nowpayments', {
+    const req = new Request('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/nowpayments', {
       method: 'POST',
       headers: { 'x-nowpayments-sig': 'valid-sig', 'content-type': 'application/json' },
       body,

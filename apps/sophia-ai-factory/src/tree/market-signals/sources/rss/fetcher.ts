@@ -17,7 +17,7 @@ export async function fetchGoogleTrendsSignals(config: RssSourceConfig): Promise
     const response = await fetch(rssUrl, {
       headers: {
         Accept: 'application/rss+xml, application/xml, text/xml',
-        'User-Agent': 'Sophia-AI-Factory/1.0 (+https://sophia.agencyos.network)',
+        'User-Agent': 'Sophia-AI-Factory/1.0 (+https://sophia-ai-factory.agencyos-openclaw.workers.dev)',
       },
     });
 

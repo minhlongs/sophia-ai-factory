@@ -57,7 +57,7 @@ export async function getTrialEndingSoon(
 export async function sendTrialEndedEmail(email: string): Promise<void> {
   const resend = getResend();
   if (!resend || !email) return;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
   try {
     await resend.emails.send({
       from: 'Sophia AI <noreply@mekongmind.com>',
@@ -93,7 +93,7 @@ export async function sendTrialEndedEmail(email: string): Promise<void> {
 export async function sendTrialWarningEmail(email: string, daysLeft: number): Promise<void> {
   const resend = getResend();
   if (!resend || !email) return;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
   try {
     await resend.emails.send({
       from: 'Sophia AI <noreply@mekongmind.com>',

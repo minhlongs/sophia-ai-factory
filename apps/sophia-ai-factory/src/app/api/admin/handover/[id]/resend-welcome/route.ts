@@ -53,7 +53,7 @@ export async function POST(request: NextRequest, { params }: RouteParams): Promi
 
   // Regenerate magic link
   const token = await createMagicLinkToken(id);
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
   const magicLinkUrl = `${baseUrl}/vi/welcome/${token}`;
 
   const installedSops: string[] = handover.starter_sops

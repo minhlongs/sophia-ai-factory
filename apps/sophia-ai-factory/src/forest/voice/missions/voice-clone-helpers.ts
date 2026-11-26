@@ -42,7 +42,7 @@ export function stubResponse(name: string, description: string, reason: string):
       voice_id: 'stub-voice-preview-001',
       name,
       description,
-      preview_url: 'https://sophia.agencyos.network/api/media/stub-voice-preview.mp3',
+      preview_url: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/media/stub-voice-preview.mp3',
       status: 'processing',
       is_stub: true,
       stub_reason: reason,

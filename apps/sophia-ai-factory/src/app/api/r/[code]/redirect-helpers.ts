@@ -29,7 +29,7 @@ export interface AffiliateOfferEngineRow {
 }
 
 export const HOMEPAGE_URL =
-  process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+  process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 
 export function getSubIdParam(networkId: string): string {
   switch (networkId) {

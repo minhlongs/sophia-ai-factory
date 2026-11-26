@@ -39,7 +39,7 @@ describe('Draft Publish Job Store & 1-Click Approval', () => {
     userId: 'usr_ceo_42',
     channelId: 'yt_ceo_shorts',
     platform: 'YOUTUBE_SHORTS' as const,
-    videoUrl: 'https://r2.sophia.agencyos.network/videos/growth_hack.mp4',
+    videoUrl: 'https://r2.sophia-ai-factory.agencyos-openclaw.workers.dev/videos/growth_hack.mp4',
     title: 'Automated Revenue Loops in 2026',
     description: 'Autonomous multi-platform syndication demonstration.',
     tags: ['SaaS', 'Revenue', 'Autonomous'],

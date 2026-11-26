@@ -100,7 +100,7 @@ let activeD1: D1Database;
 
 let mockCurrentUser: { id: string; email: string; role: string } | null = {
   id: 'usr_admin_123',
-  email: 'admin@sophia.agencyos.network',
+  email: 'admin@sophia-ai-factory.agencyos-openclaw.workers.dev',
   role: 'admin',
 };
 
@@ -119,7 +119,7 @@ describe('CDN Land Actions', () => {
     activeD1 = createTestD1();
     mockCurrentUser = {
       id: 'usr_admin_123',
-      email: 'admin@sophia.agencyos.network',
+      email: 'admin@sophia-ai-factory.agencyos-openclaw.workers.dev',
       role: 'admin',
     };
   });

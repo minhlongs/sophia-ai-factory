@@ -188,7 +188,7 @@ describe('Edge POP Discovery & Discovery Route', () => {
   describe('Edge Discovery API Route Handler (GET /api/cdn/discover)', () => {
     it('returns 200 with structured JSON and edge headers for valid query', async () => {
       const req = new NextRequest(
-        'https://sophia.agencyos.network/api/cdn/discover?assetId=asset_viral_01&aspectRatio=9:16&format=webp',
+        'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cdn/discover?assetId=asset_viral_01&aspectRatio=9:16&format=webp',
         {
           headers: {
             'cf-ipcountry': 'VN',
@@ -218,7 +218,7 @@ describe('Edge POP Discovery & Discovery Route', () => {
     });
 
     it('returns 400 Bad Request when assetId parameter is missing', async () => {
-      const req = new NextRequest('https://sophia.agencyos.network/api/cdn/discover');
+      const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cdn/discover');
       const res = await GET(req);
       expect(res.status).toBe(400);
 
@@ -228,7 +228,7 @@ describe('Edge POP Discovery & Discovery Route', () => {
 
     it('returns 400 Bad Request when aspectRatio is invalid', async () => {
       const req = new NextRequest(
-        'https://sophia.agencyos.network/api/cdn/discover?assetId=asset_1&aspectRatio=21:9'
+        'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cdn/discover?assetId=asset_1&aspectRatio=21:9'
       );
       const res = await GET(req);
       expect(res.status).toBe(400);
@@ -239,7 +239,7 @@ describe('Edge POP Discovery & Discovery Route', () => {
 
     it('returns 400 Bad Request when format is invalid', async () => {
       const req = new NextRequest(
-        'https://sophia.agencyos.network/api/cdn/discover?assetId=asset_1&format=bmp'
+        'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cdn/discover?assetId=asset_1&format=bmp'
       );
       const res = await GET(req);
       expect(res.status).toBe(400);
@@ -250,7 +250,7 @@ describe('Edge POP Discovery & Discovery Route', () => {
 
     it('returns 404 Not Found when asset explicitly missing', async () => {
       const req = new NextRequest(
-        'https://sophia.agencyos.network/api/cdn/discover?assetId=missing_asset_999'
+        'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cdn/discover?assetId=missing_asset_999'
       );
       const res = await GET(req);
       expect(res.status).toBe(404);
@@ -261,7 +261,7 @@ describe('Edge POP Discovery & Discovery Route', () => {
 
     it('returns 404 Not Found for arbitrary non-existent asset IDs without prefix dependency', async () => {
       const req = new NextRequest(
-        'https://sophia.agencyos.network/api/cdn/discover?assetId=arbitrary_unregistered_asset_777'
+        'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cdn/discover?assetId=arbitrary_unregistered_asset_777'
       );
       const res = await GET(req);
       expect(res.status).toBe(404);

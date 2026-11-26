@@ -239,7 +239,7 @@ describe('Enterprise Organizations & 5-Tier RBAC E2E Test Suite', () => {
         const invite = await createOrgInvitation(db, org.orgId, 'invitee@url.com', 'admin', ownerUserId);
 
         expect(invite.inviteUrl).toBe(
-          `https://sophia.agencyos.network/invitations/accept?token=${invite.token}`
+          `https://sophia-ai-factory.agencyos-openclaw.workers.dev/invitations/accept?token=${invite.token}`
         );
       });
 

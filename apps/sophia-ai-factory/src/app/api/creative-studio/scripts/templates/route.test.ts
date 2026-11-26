@@ -17,11 +17,11 @@ vi.mock('@/seed/db/resolve-user-tier', () => ({
 import { GET, POST } from './route';
 
 function makeGet(path = '/api/creative-studio/scripts/templates'): NextRequest {
-  return new NextRequest(`https://sophia.agencyos.network${path}`);
+  return new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev${path}`);
 }
 
 function makePost(body: unknown): NextRequest {
-  return new NextRequest('https://sophia.agencyos.network/api/creative-studio/scripts/templates', {
+  return new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/creative-studio/scripts/templates', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),

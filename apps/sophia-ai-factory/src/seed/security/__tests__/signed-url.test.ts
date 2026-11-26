@@ -218,12 +218,12 @@ describe('signed-url (HMAC-SHA256 24-hour video download tokens)', () => {
 
   it('buildSignedDownloadUrl formats URL properly', () => {
     const url = buildSignedDownloadUrl(
-      'https://sophia.agencyos.network',
+      'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
       'vid_123',
       'token.sig'
     );
     expect(url).toBe(
-      'https://sophia.agencyos.network/api/videos/vid_123/download?token=token.sig'
+      'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/videos/vid_123/download?token=token.sig'
     );
   });
 

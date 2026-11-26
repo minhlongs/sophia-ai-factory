@@ -16,7 +16,7 @@ export interface BridgeLinkOptions {
 }
 
 export function generateSaaSBridgeUrl(options: BridgeLinkOptions): string {
-  const baseUrl = `https://sophia.agencyos.network/${options.locale}/affiliate/bridge/${options.productId}`;
+  const baseUrl = `https://sophia-ai-factory.agencyos-openclaw.workers.dev/${options.locale}/affiliate/bridge/${options.productId}`;
   const params = new URLSearchParams({
     campaign: options.campaignId || 'default',
     ref: 'sophia_ai',

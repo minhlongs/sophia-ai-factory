@@ -91,7 +91,7 @@ export const GET = withRateLimit(async function GET(_request: NextRequest): Prom
         campaignId: r.campaign_id,
         active: r.active === 1,
         createdAt: r.created_at,
-        shortUrl: `https://track.sophia.agencyos.network/r/${r.id}`,
+        shortUrl: `https://track.sophia-ai-factory.agencyos-openclaw.workers.dev/r/${r.id}`,
       })),
     });
   } catch (err) {

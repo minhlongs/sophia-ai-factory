@@ -70,9 +70,9 @@ describe('processAutonomousVideoPipelineJob - SDP Distribution Bridge', () => {
     campaignId: 'camp_alpha_1',
     niche: 'saas_global' as const,
     productName: 'Sophia AI',
-    productUrl: 'https://sophia.agencyos.network',
+    productUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
     productDescription: 'Autonomous video generation',
-    affiliateBaseUrl: 'https://aff.sophia.agencyos.network',
+    affiliateBaseUrl: 'https://aff.sophia-ai-factory.agencyos-openclaw.workers.dev',
   };
 
   beforeEach(() => {

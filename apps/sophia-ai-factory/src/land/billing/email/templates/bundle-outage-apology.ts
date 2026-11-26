@@ -6,7 +6,7 @@
  * @module lib/billing/email/templates/bundle-outage-apology
  */
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev'
 const DASHBOARD_URL = `${APP_URL}/dashboard/orders`
 const SUPPORT_EMAIL = 'support@mekongmind.com'
 

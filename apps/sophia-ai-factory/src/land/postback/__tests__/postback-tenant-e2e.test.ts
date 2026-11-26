@@ -77,7 +77,7 @@ function hmacHex(secret: string, raw: string): string {
 
 function canonicalRequest(linkId: string, body: Record<string, unknown>, secret: string): Request {
   const raw = JSON.stringify({ link_id: linkId, ...body });
-  return new Request('https://sophia.agencyos.network/api/postback/tiktok_shop', {
+  return new Request('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/postback/tiktok_shop', {
     method: 'POST',
     body: raw,
     headers: { 'Content-Type': 'application/json', 'x-tiktok-signature': hmacHex(secret, raw) },
@@ -91,7 +91,7 @@ function accesstradeRequest(
 ): Request {
   const raw = JSON.stringify(body);
   const url =
-    'https://sophia.agencyos.network/api/webhooks/accesstrade' +
+    'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/accesstrade' +
     (tenantHint ? `?tenant_id=${tenantHint}` : '');
   return new Request(url, {
     method: 'POST',
@@ -209,7 +209,7 @@ describe('postback tenant-scope local e2e (real migrations + real vault + real H
 
   it('canonical tiktok_shop: mutated payload fails closed (401), row count stable, audit logged', async () => {
     const raw = JSON.stringify({ link_id: LINK_A, external_id: 'e2e-conv-evil', amount_usd: 999 });
-    const req = new Request('https://sophia.agencyos.network/api/postback/tiktok_shop', {
+    const req = new Request('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/postback/tiktok_shop', {
       method: 'POST',
       body: raw + ' ', // signed body differs from sent body
       headers: {

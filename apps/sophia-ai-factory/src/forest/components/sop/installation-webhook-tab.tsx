@@ -9,7 +9,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/seed/components/ui/button';
 import { Copy, RefreshCw, Check } from 'lucide-react';
 
-const PROD_BASE = 'https://sophia.agencyos.network';
+const PROD_BASE = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 
 interface Props {
   installationId: string;

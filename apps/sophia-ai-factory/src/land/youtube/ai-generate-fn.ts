@@ -38,7 +38,7 @@ async function postChat(
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network',
+      'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
       'X-Title': 'Sophia AI Factory',
     },
     body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature }),

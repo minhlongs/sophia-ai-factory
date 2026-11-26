@@ -13,7 +13,7 @@ import type { Day1ProbeOptions } from './types';
  */
 export async function probeEdgeResponsiveness(options?: Day1ProbeOptions): Promise<CheckpointResult> {
   const start = Date.now();
-  const baseUrl = options?.baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+  const baseUrl = options?.baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 
   try {
     if (options?.skipNetworkCalls) {

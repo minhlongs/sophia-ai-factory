@@ -43,8 +43,8 @@ export interface FeatureGateEvaluation {
 const OFFICIAL_HOSTS: ReadonlySet<string> = new Set([
   PRODUCTION_TECHNICAL_HOSTNAME,
   PILOT_TECHNICAL_HOSTNAME,
-  'sophia.agencyos.network',
-  'staging.sophia.agencyos.network',
+  'sophia-ai-factory.agencyos-openclaw.workers.dev',
+  'staging.sophia-ai-factory.agencyos-openclaw.workers.dev',
 ]);
 
 const TIER_RANK: Readonly<Record<OpenCoreFeatureSpec['minPaidTier'], number>> = {

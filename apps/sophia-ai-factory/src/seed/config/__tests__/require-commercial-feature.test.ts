@@ -47,7 +47,7 @@ describe('requireCommercialFeature', () => {
       CLOUD_FEATURE,
       buildEditionContext({
         licensedTier: 'BASIC',
-        appUrl: 'https://sophia.agencyos.network',
+        appUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
       }),
     );
 
@@ -75,7 +75,7 @@ describe('requireCommercialFeature', () => {
       CLOUD_FEATURE,
       buildEditionContext({
         licensedTier: 'ENTERPRISE',
-        appUrl: 'https://evil-sophia.agencyos.network.attacker.test',
+        appUrl: 'https://evil-sophia-ai-factory.agencyos-openclaw.workers.dev.attacker.test',
       }),
     );
 

@@ -90,7 +90,7 @@ export async function summarizeWithAI(eventsSummary: string): Promise<string> {
   try {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${openRouterKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://sophia.agencyos.network' },
+      headers: { Authorization: `Bearer ${openRouterKey}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://sophia-ai-factory.agencyos-openclaw.workers.dev' },
       body: JSON.stringify({ model: 'openai/gpt-4o-mini', messages, max_tokens: 600 }),
     })
     if (res.ok) {

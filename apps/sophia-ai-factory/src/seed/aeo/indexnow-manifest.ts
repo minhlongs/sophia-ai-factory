@@ -59,7 +59,7 @@ export function getAllBilingualUrls(): string[] {
 
 export function buildIndexNowSubmissionPayload() {
   return {
-    host: 'sophia.agencyos.network',
+    host: 'sophia-ai-factory.agencyos-openclaw.workers.dev',
     key: INDEXNOW_KEY,
     keyLocation: `${SOPHIA_BASE_URL}/api/aeo/indexnow`,
     urlList: getAllBilingualUrls(),

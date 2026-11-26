@@ -9,7 +9,7 @@ import { SophiaClient } from '../index';
 async function main() {
   const sophia = new SophiaClient({
     apiKey: process.env.SOPHIA_API_KEY ?? '',
-    baseUrl: process.env.SOPHIA_BASE_URL ?? 'https://sophia.agencyos.network',
+    baseUrl: process.env.SOPHIA_BASE_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
   });
 
   // Create video mission — output to stderr so stdout stays clean for piping

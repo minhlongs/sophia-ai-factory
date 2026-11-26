@@ -71,7 +71,7 @@ describe('runDistribution compliance (live campaign path)', () => {
       title: 'Crypto explainer',
       audience: 'crypto beginners',
       tier: 'BASIC',
-      affiliateOffer: { productName: 'Exchange Rebate', shortUrl: 'https://sophia.agencyos.network/r/link0001' },
+      affiliateOffer: { productName: 'Exchange Rebate', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/link0001' },
     });
 
     expect(outcome.allSucceeded).toBe(false);
@@ -91,7 +91,7 @@ describe('runDistribution compliance (live campaign path)', () => {
       title: 'Crypto explainer',
       audience: 'crypto beginners',
       tier: 'BASIC',
-      affiliateOffer: { productName: 'Exchange Rebate', shortUrl: 'https://sophia.agencyos.network/r/link0002' },
+      affiliateOffer: { productName: 'Exchange Rebate', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/link0002' },
     });
 
     expect(outcome.compliance.published).toBe(false);
@@ -109,7 +109,7 @@ describe('runDistribution compliance (live campaign path)', () => {
       title: 'Crypto explainer',
       audience: 'crypto beginners',
       tier: 'BASIC',
-      affiliateOffer: { productName: 'Exchange Rebate', shortUrl: 'https://sophia.agencyos.network/r/link0003' },
+      affiliateOffer: { productName: 'Exchange Rebate', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/link0003' },
     });
 
     expect(mocks.distribute).toHaveBeenCalledTimes(1);
@@ -130,13 +130,13 @@ describe('runDistribution compliance (live campaign path)', () => {
       title: 'Productivity tips',
       audience: 'productivity teams',
       tier: 'BASIC',
-      affiliateOffer: { productName: 'Notion Team', shortUrl: 'https://sophia.agencyos.network/r/link0004' },
+      affiliateOffer: { productName: 'Notion Team', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/link0004' },
     });
 
     expect(outcome.compliance.published).toBe(true);
     expect(mocks.distribute).toHaveBeenCalledTimes(1);
     const sent = mocks.distribute.mock.calls[0]![0] as { description: string };
-    expect(sent.description).toContain('https://sophia.agencyos.network/r/link0004');
+    expect(sent.description).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/link0004');
   });
 
   it('publishes a campaign with no affiliate offer unchanged', async () => {
@@ -167,7 +167,7 @@ describe('runDistribution compliance (live campaign path)', () => {
       title: 'Crypto explainer',
       audience: 'crypto beginners',
       tier: 'BASIC',
-      affiliateOffer: { productName: 'Exchange Rebate', shortUrl: 'https://sophia.agencyos.network/r/link0005' },
+      affiliateOffer: { productName: 'Exchange Rebate', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/link0005' },
     });
 
     expect(mocks.selfHeal).toHaveBeenCalledTimes(1);

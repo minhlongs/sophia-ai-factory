@@ -6,7 +6,7 @@
  * @module lib/billing/email/templates/one-time-bundle-ready
  */
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev'
 const DASHBOARD_URL = `${APP_URL}/dashboard/videos`
 const PRICING_URL = `${APP_URL}/pricing`
 const SUPPORT_EMAIL = 'support@mekongmind.com'

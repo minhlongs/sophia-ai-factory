@@ -52,7 +52,7 @@ export async function dispatchSocialDistributionForPipeline(
     return { jobsCreated: 0, reason: 'NO_ACTIVE_CHANNELS' };
   }
 
-  const videoUrl = data.videoUrl ?? `https://storage.sophia.agencyos.network/videos/${data.campaignId}/final.mp4`;
+  const videoUrl = data.videoUrl ?? `https://storage.sophia-ai-factory.agencyos-openclaw.workers.dev/videos/${data.campaignId}/final.mp4`;
   const initialStatus = data.autoPublish === true ? 'PENDING' : 'DRAFT';
   const createdJobs: Array<{ jobId: string; platform: SocialPlatform; status: string }> = [];
 

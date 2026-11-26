@@ -32,7 +32,7 @@ export async function callOpenRouter(
 
   const maxTokens = options?.maxTokens ?? 4096
   const timeoutMs = options?.timeoutMs ?? 120_000
-  const referer = options?.referer ?? 'https://sophia.agencyos.network'
+  const referer = options?.referer ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev'
   let lastError: Error | null = null
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {

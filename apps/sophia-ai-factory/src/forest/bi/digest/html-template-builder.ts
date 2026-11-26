@@ -30,7 +30,7 @@ export function renderExecutiveDigestInnerHtml(
 ): string {
   const isVi = options.locale === 'vi';
   const primaryColor = options.branding?.primaryColor || '#0f172a';
-  const portalUrl = options.portalUrl ?? 'https://sophia.agencyos.network/dashboard/analytics';
+  const portalUrl = options.portalUrl ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/dashboard/analytics';
 
   const mrrUsd = (metrics.mrrCents / 100).toFixed(2);
   const affiliateUsd = (metrics.affiliateRevenueCents / 100).toFixed(2);

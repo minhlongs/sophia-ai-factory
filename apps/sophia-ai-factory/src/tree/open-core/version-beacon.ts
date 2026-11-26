@@ -1,7 +1,7 @@
 /**
  * Privacy-Safe Open-Core Release & Security Advisory Beacon
  *
- * Checks `https://sophia.agencyos.network/api/version` for new upstream releases
+ * Checks `https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/version` for new upstream releases
  * when running in self-hosted Community mode.
  *
  * Privacy invariant: Sends ZERO customer data, ZERO API keys, and ZERO PII.
@@ -19,7 +19,7 @@ import {
 import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 
 const CIRCUIT_PROVIDER_ID = 'sophia-version-beacon';
-const DEFAULT_CLOUD_VERSION_URL = 'https://sophia.agencyos.network/api/version';
+const DEFAULT_CLOUD_VERSION_URL = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/version';
 
 export interface VersionBeaconCheckOptions {
   readonly localShortSha: string;
@@ -53,7 +53,7 @@ export async function checkUpstreamReleaseBeacon(
       localShortSha: localNorm,
       upstreamShortSha: null,
       updateAvailable: false,
-      cloudUpgradeUrl: 'https://sophia.agencyos.network/pricing',
+      cloudUpgradeUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/pricing',
     };
   }
 
@@ -63,7 +63,7 @@ export async function checkUpstreamReleaseBeacon(
       localShortSha: localNorm,
       upstreamShortSha: null,
       updateAvailable: false,
-      cloudUpgradeUrl: 'https://sophia.agencyos.network/pricing',
+      cloudUpgradeUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/pricing',
     };
   }
 
@@ -86,7 +86,7 @@ export async function checkUpstreamReleaseBeacon(
         localShortSha: localNorm,
         upstreamShortSha: null,
         updateAvailable: false,
-        cloudUpgradeUrl: 'https://sophia.agencyos.network/pricing',
+        cloudUpgradeUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/pricing',
       };
     }
 
@@ -106,7 +106,7 @@ export async function checkUpstreamReleaseBeacon(
       localShortSha: localNorm,
       upstreamShortSha: upstreamNorm,
       updateAvailable,
-      cloudUpgradeUrl: 'https://sophia.agencyos.network/pricing',
+      cloudUpgradeUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/pricing',
     };
   } catch (err) {
     clearTimeout(timer);
@@ -116,7 +116,7 @@ export async function checkUpstreamReleaseBeacon(
       localShortSha: localNorm,
       upstreamShortSha: null,
       updateAvailable: false,
-      cloudUpgradeUrl: 'https://sophia.agencyos.network/pricing',
+      cloudUpgradeUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/pricing',
     };
   }
 }

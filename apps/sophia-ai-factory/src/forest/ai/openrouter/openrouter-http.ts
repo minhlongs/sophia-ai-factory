@@ -45,7 +45,7 @@ export async function executeOpenRouterRequest(
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://sophia.agencyos.network',
+        'HTTP-Referer': 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
         ...options.extraHeaders,
       },
       body: JSON.stringify(body),

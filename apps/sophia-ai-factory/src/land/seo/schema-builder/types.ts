@@ -1,6 +1,6 @@
 import type { SolutionIndustry } from '@/seed/types/solutions-types';
 
-export const SITE_URL = 'https://sophia.agencyos.network';
+export const SITE_URL = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 
 export interface SchemaSoftwareApplication {
   '@type': 'SoftwareApplication';

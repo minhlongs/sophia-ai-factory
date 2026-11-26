@@ -218,7 +218,7 @@ describe('Cache Mesh Service', () => {
     it('registers cache tag and retrieves it by resource URL', async () => {
       const tag = await registerCacheTag(db, {
         tagName: 'asset_hero_video',
-        resourceUrl: 'https://cdn.sophia.agencyos.network/assets/t1/v1.mp4',
+        resourceUrl: 'https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev/assets/t1/v1.mp4',
         assetType: 'video',
         tenantId: 'tenant_enterprise_1',
         contentHash: 'hash_abc123',
@@ -232,7 +232,7 @@ describe('Cache Mesh Service', () => {
 
       const fetched = await getCacheTagsForResource(
         db,
-        'https://cdn.sophia.agencyos.network/assets/t1/v1.mp4'
+        'https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev/assets/t1/v1.mp4'
       );
       expect(fetched).toHaveLength(1);
       expect(fetched[0]!.tagName).toBe('asset_hero_video');
@@ -242,7 +242,7 @@ describe('Cache Mesh Service', () => {
     it('purges cache tag by tag name and updates state', async () => {
       await registerCacheTag(db, {
         tagName: 'asset_to_purge',
-        resourceUrl: 'https://cdn.sophia.agencyos.network/assets/t1/thumb.webp',
+        resourceUrl: 'https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev/assets/t1/thumb.webp',
         assetType: 'thumbnail',
         tenantId: 'tenant_2',
         contentHash: 'hash_xyz',

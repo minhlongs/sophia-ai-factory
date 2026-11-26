@@ -32,7 +32,7 @@ export function normalizeAffiliateJoinUrl(joinUrl: string): string {
   if (!joinUrl.startsWith('https://') && !joinUrl.startsWith('http://localhost')) {
     return joinUrl.startsWith('http://')
       ? joinUrl.replace('http://', 'https://')
-      : `https://sophia.agencyos.network${joinUrl.startsWith('/') ? '' : '/'}${joinUrl}`;
+      : `https://sophia-ai-factory.agencyos-openclaw.workers.dev${joinUrl.startsWith('/') ? '' : '/'}${joinUrl}`;
   }
   return joinUrl;
 }

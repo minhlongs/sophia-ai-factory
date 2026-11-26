@@ -11,7 +11,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import type { ReconcileResult } from './reconcile-query'
 
 const SUPPORT_EMAIL = 'support@mekongmind.com'
-const FROM_EMAIL = 'Sophia AI <ops@sophia.agencyos.network>'
+const FROM_EMAIL = 'Sophia AI <ops@sophia-ai-factory.agencyos-openclaw.workers.dev>'
 
 function getResend(): Resend | null {
   const key = process.env.RESEND_API_KEY

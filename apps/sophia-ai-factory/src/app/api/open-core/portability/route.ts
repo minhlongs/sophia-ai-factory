@@ -73,7 +73,7 @@ export async function GET(_request: NextRequest) {
     success: true,
     userId: user.id,
     bundle,
-    settingsUrl: 'https://sophia.agencyos.network/vi/dashboard/settings?tab=openCore',
+    settingsUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/dashboard/settings?tab=openCore',
   });
 }
 

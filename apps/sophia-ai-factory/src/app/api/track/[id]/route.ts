@@ -5,7 +5,7 @@
  * Returns 410 Gone for inactive links, 404 for unknown links.
  *
  * Edge runtime: runs on Cloudflare Workers.
- * Subdomain: track.sophia.agencyos.network → CNAME → workers.dev
+ * Subdomain: track.sophia-ai-factory.agencyos-openclaw.workers.dev → CNAME → workers.dev
  * (See src/lib/tracking/tracking-README.md for DNS setup)
  */
 

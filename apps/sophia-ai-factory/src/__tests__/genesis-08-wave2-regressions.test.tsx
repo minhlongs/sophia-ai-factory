@@ -207,7 +207,7 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
 
   it('A-P0-3: /api/webhooks/payos returns 503 (never 200) when FEATURE_PAYOS=false so PayOS retries are preserved', async () => {
     process.env.FEATURE_PAYOS = 'false';
-    const req = new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', {
+    const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/payos', {
       method: 'POST',
       body: JSON.stringify({ code: '00', data: { orderCode: 123, amount: 1_990_000 } }),
     });
@@ -335,7 +335,7 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
       secret,
     );
 
-    const req = new NextRequest('https://sophia.agencyos.network/api/payos/ipn', {
+    const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/payos/ipn', {
       method: 'POST',
       body: bodyStr,
     });
@@ -366,7 +366,7 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
       await db.exec(readFileSync(resolve('migrations', migration), 'utf8'));
     }
     await db.exec("CREATE TABLE org_members(user_id TEXT, org_id TEXT); INSERT INTO org_members VALUES ('user_pilot_buyer', 'org_pilot_buyer')");
-    const promoAttempt = new NextRequest('https://sophia.agencyos.network/api/checkout', {
+    const promoAttempt = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -379,7 +379,7 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
     const promoRes = await checkoutPost(promoAttempt);
     expect(promoRes.status).toBe(400);
 
-    const missingAgreementPilot = new NextRequest('https://sophia.agencyos.network/api/checkout', {
+    const missingAgreementPilot = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -396,7 +396,7 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
 
     mocks.getD1.mockResolvedValueOnce(db);
     mocks.createServerClient.mockReturnValueOnce(new D1Client(db));
-    const cleanPilot = new NextRequest('https://sophia.agencyos.network/api/checkout', {
+    const cleanPilot = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -431,7 +431,7 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
     });
     expect(mocks.findActivePendingOrder).not.toHaveBeenCalled();
 
-    const standardPayOs = new NextRequest('https://sophia.agencyos.network/api/checkout', {
+    const standardPayOs = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -488,7 +488,7 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
         }),
       });
 
-      const req = new NextRequest('https://sophia.agencyos.network/api/cron/mcu-monthly-reset');
+      const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cron/mcu-monthly-reset');
       const res = await mcuResetGet(req);
       const body = (await res.json()) as { ok: boolean; processed: number };
 
@@ -512,7 +512,7 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
       tenant_id: 'org_alpha',
       channel_id: 'tt_chan_1',
       platform: 'tiktok',
-      media_ref: 'https://media.sophia.agencyos.network/org_alpha/v1.mp4',
+      media_ref: 'https://media.sophia-ai-factory.agencyos-openclaw.workers.dev/org_alpha/v1.mp4',
       decision: 'approved',
       requester_id: 'u_creator',
       reviewer_id: 'u_admin',
@@ -548,7 +548,7 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
                         tenant_id: 'org_alpha',
                         channel_id: 'tt_chan_1',
                         platform: 'tiktok',
-                        media_ref: 'https://media.sophia.agencyos.network/org_alpha/v1.mp4',
+                        media_ref: 'https://media.sophia-ai-factory.agencyos-openclaw.workers.dev/org_alpha/v1.mp4',
                         decision: 'approved',
                         reviewer_id: 'u_admin',
                         comment: null,
@@ -583,7 +583,7 @@ describe('Supreme Command #08 — Wave 2 Security & Contract Regressions', () =>
         tenantId: 'org_alpha',
         channelId: 'tt_chan_1',
         platform: 'tiktok',
-        mediaRef: 'https://media.sophia.agencyos.network/org_alpha/v1.mp4',
+        mediaRef: 'https://media.sophia-ai-factory.agencyos-openclaw.workers.dev/org_alpha/v1.mp4',
         requestedPrivacy: 'public',
         nowSeconds: () => 1_794_700_000,
       },

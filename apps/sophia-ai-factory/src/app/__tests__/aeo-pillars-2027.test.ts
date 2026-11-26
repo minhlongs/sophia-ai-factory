@@ -39,7 +39,7 @@ describe('2027 AEO / GEO 4 Pillars & 14 Secondary Surfaces', () => {
       expect(payloadVi?.telemetryProof?.activeNichesCount).toBe(51);
       expect(payloadVi?.telemetryProof?.byokZeroMarkup).toBe(true);
 
-      const req = new NextRequest(`https://sophia.agencyos.network/api/aeo/markdown?path=/en/${surface}&locale=en`);
+      const req = new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/aeo/markdown?path=/en/${surface}&locale=en`);
       const res = await getAeoMarkdown(req);
       expect(res.status).toBe(200);
       const md = await res.text();
@@ -50,7 +50,7 @@ describe('2027 AEO / GEO 4 Pillars & 14 Secondary Surfaces', () => {
   it('Pillar 1: buildLlmDeepLinkUrls generates ChatGPT, Claude, and Perplexity URLs with secret redaction', () => {
     const fakeKey = ['sk-or-v1-', 'abcdef1234567890abcdef1234567890'].join('');
     const links = buildLlmDeepLinkUrls({
-      canonicalUrl: 'https://sophia.agencyos.network/vi/pricing',
+      canonicalUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/pricing',
       isVi: true,
       contextSnippet: `Tài liệu với mã bí mật ${fakeKey}`,
     });
@@ -90,14 +90,14 @@ describe('2027 AEO / GEO 4 Pillars & 14 Secondary Surfaces', () => {
     const urls = getAllBilingualUrls();
     expect(urls.length).toBeGreaterThanOrEqual(120);
 
-    const reqJson = new NextRequest('https://sophia.agencyos.network/api/aeo/indexnow?format=json');
+    const reqJson = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/aeo/indexnow?format=json');
     const resJson = await getIndexNow(reqJson);
     expect(resJson.status).toBe(200);
     const data = (await resJson.json()) as { urlList: string[] };
     expect(data.urlList.length).toBeGreaterThanOrEqual(120);
     expect(data.urlList.length).toBe(urls.length);
 
-    const reqTxt = new NextRequest('https://sophia.agencyos.network/api/aeo/indexnow?format=key');
+    const reqTxt = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/aeo/indexnow?format=key');
     const resTxt = await getIndexNow(reqTxt);
     expect(resTxt.status).toBe(200);
     expect(resTxt.headers.get('Content-Type')).toContain('text/plain');

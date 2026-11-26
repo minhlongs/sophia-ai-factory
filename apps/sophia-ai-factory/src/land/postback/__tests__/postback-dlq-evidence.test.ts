@@ -202,11 +202,11 @@ describe('serializeDlqHeaders — fail-closed allowlist', () => {
 describe('serializeDlqEndpoint — canonical identity', () => {
   it('drops the query string, including an Awin query HMAC', async () => {
     const raw =
-      'https://sophia.agencyos.network/api/webhooks/awin?signature=abc123hmac&email=user%40corp.com&tenant_id=t-1'
+      'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/awin?signature=abc123hmac&email=user%40corp.com&tenant_id=t-1'
 
     const endpoint = serializeDlqEndpoint(raw)
 
-    expect(endpoint).toBe('https://sophia.agencyos.network/api/webhooks/awin')
+    expect(endpoint).toBe('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/awin')
     expect(endpoint).not.toContain('abc123hmac')
     expect(endpoint).not.toContain('user%40corp.com')
     expect(endpoint).not.toContain('t-1')
@@ -214,15 +214,15 @@ describe('serializeDlqEndpoint — canonical identity', () => {
 
   it('drops a session identifier carried in the query string', async () => {
     const endpoint = serializeDlqEndpoint(
-      'https://sophia.agencyos.network/api/webhooks/saas-crypto/binance?session=eyJhbGciOi.payload',
+      'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/saas-crypto/binance?session=eyJhbGciOi.payload',
     )
 
-    expect(endpoint).toBe('https://sophia.agencyos.network/api/webhooks/saas-crypto/binance')
+    expect(endpoint).toBe('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/saas-crypto/binance')
   })
 
   it('keeps the path so different routes stay distinguishable', async () => {
-    const a = serializeDlqEndpoint('https://sophia.agencyos.network/api/webhooks/accesstrade')
-    const b = serializeDlqEndpoint('https://sophia.agencyos.network/api/webhooks/awin')
+    const a = serializeDlqEndpoint('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/accesstrade')
+    const b = serializeDlqEndpoint('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/awin')
 
     expect(a).not.toBe(b)
   })
@@ -236,7 +236,7 @@ describe('serializeDlqEndpoint — canonical identity', () => {
 
   it('bounds an oversized pathname and marks the truncation visibly', () => {
     const hugePath = `/api/webhooks/awin/${'p'.repeat(DLQ_EVIDENCE_POLICY.maxEndpointLength)}`
-    const stored = serializeDlqEndpoint(`https://sophia.agencyos.network${hugePath}`)
+    const stored = serializeDlqEndpoint(`https://sophia-ai-factory.agencyos-openclaw.workers.dev${hugePath}`)
 
     expect(stored).toHaveLength(
       DLQ_EVIDENCE_POLICY.maxEndpointLength + DLQ_EVIDENCE_POLICY.truncatedSuffix.length,

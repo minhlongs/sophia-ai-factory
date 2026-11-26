@@ -28,7 +28,7 @@ const mockPrepare = vi.fn(() => ({ bind: mockBind }));
 const mockDb = { prepare: mockPrepare };
 
 function makeRequest(): NextRequest {
-  return new NextRequest('https://sophia.agencyos.network/api/user/wallet');
+  return new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/user/wallet');
 }
 
 beforeEach(() => {

@@ -43,7 +43,7 @@ describe('hostname-resolver', () => {
 
     it('strips multiple trailing DNS dots completely', () => {
       expect(normalizeHostname('portal.agency.com...')).toBe('portal.agency.com');
-      expect(normalizeHostname('sophia.agencyos.network..')).toBe('sophia.agencyos.network');
+      expect(normalizeHostname('sophia-ai-factory.agencyos-openclaw.workers.dev..')).toBe('sophia-ai-factory.agencyos-openclaw.workers.dev');
     });
 
     it('returns empty string for null, undefined, or empty input', () => {
@@ -55,7 +55,7 @@ describe('hostname-resolver', () => {
 
   describe('isInternalOrCanonicalHostname', () => {
     it('identifies platform canonical domains', () => {
-      expect(isInternalOrCanonicalHostname('sophia.agencyos.network')).toBe(true);
+      expect(isInternalOrCanonicalHostname('sophia-ai-factory.agencyos-openclaw.workers.dev')).toBe(true);
       expect(isInternalOrCanonicalHostname('sub.agencyos.network')).toBe(true);
       expect(isInternalOrCanonicalHostname('agencyos.network')).toBe(true);
     });
@@ -119,7 +119,7 @@ describe('hostname-resolver', () => {
         prepare: vi.fn(),
       } as unknown as D1Database;
 
-      const result = await resolveTenantFromHostname(mockDb, 'sophia.agencyos.network');
+      const result = await resolveTenantFromHostname(mockDb, 'sophia-ai-factory.agencyos-openclaw.workers.dev');
 
       expect(result.isInternal).toBe(true);
       expect(result.isCustomDomain).toBe(false);

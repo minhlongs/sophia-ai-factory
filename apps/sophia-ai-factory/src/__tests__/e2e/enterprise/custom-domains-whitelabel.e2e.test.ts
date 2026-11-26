@@ -68,7 +68,7 @@ describe('Enterprise Custom Domains & White-Label E2E Test Suite', () => {
         expect(domain.hostname).toBe('videos.agencyalpha.com');
         expect(domain.status).toBe('pending_validation');
         expect(domain.ssl_status).toBe('pending');
-        expect(domain.cname_target).toBe('cname.sophia.agencyos.network');
+        expect(domain.cname_target).toBe('cname.sophia-ai-factory.agencyos-openclaw.workers.dev');
         expect(domain.verification_token).toMatch(/^cf-custom-domain-/);
       });
 
@@ -458,7 +458,7 @@ describe('Enterprise Custom Domains & White-Label E2E Test Suite', () => {
       // Step 1: Agency registers custom domain
       const domain = await registerCustomDomain(db, testOrgId, 'creator.growthscale.io');
       expect(domain.status).toBe('pending_validation');
-      expect(domain.cname_target).toBe('cname.sophia.agencyos.network');
+      expect(domain.cname_target).toBe('cname.sophia-ai-factory.agencyos-openclaw.workers.dev');
 
       // Step 2: Edge resolution before verification returns null (safety check)
       const earlyResolve = await resolveTenantFromHostname(db, 'creator.growthscale.io');

@@ -35,7 +35,7 @@ export function createInvoiceUrl(
   }
 
   const resolvedOrderId = orderId || `sophia_${userId}_${Date.now()}`;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 
   const successParams = new URLSearchParams({ tier: tierId, order_id: resolvedOrderId });
   if (customerEmail) successParams.set('email', encodeURIComponent(customerEmail));
@@ -60,7 +60,7 @@ export function createOneTimeInvoiceUrl(
   orderId?: string,
 ): string {
   const resolvedOrderId = orderId || `sophia_${userId}_${Date.now()}`;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 
   const successParams = new URLSearchParams({ sku: sku.id, order_id: resolvedOrderId });
   if (customerEmail) successParams.set('email', encodeURIComponent(customerEmail));

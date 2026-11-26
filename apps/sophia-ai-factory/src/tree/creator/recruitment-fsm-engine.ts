@@ -98,5 +98,5 @@ export function generateCanSpamOneClickHeader(kolId: string, hmacSecret: string)
     hash = (hash << 5) - hash + raw.charCodeAt(i);
     hash |= 0;
   }
-  return `<https://sophia.agencyos.network/api/optout?id=${kolId}&token=${Math.abs(hash).toString(16)}>`;
+  return `<https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/optout?id=${kolId}&token=${Math.abs(hash).toString(16)}>`;
 }

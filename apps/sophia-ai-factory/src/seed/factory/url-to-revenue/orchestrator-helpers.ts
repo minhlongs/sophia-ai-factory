@@ -63,7 +63,7 @@ export function buildVariantPrompt(
     meta.price ? `Price: ${meta.price}` : '',
     `Affiliate URL: ${url}`,
     trackingId
-      ? `Tracking URL: https://track.sophia.agencyos.network/r/${trackingId}`
+      ? `Tracking URL: https://track.sophia-ai-factory.agencyos-openclaw.workers.dev/r/${trackingId}`
       : '',
   ]
     .filter(Boolean)

@@ -86,7 +86,7 @@ export async function handleCheckoutTrigger(
           orderId,
         },
       );
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
       checkoutUrl = `${appUrl}/pricing?promo=${promoCode}&tier=${tier}`;
     }
 

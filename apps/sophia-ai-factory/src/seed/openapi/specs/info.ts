@@ -12,5 +12,5 @@ export const OPENAPI_INFO = {
 } as const;
 
 export const OPENAPI_SERVERS = [
-  { url: 'https://sophia.agencyos.network', description: 'Production' },
+  { url: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev', description: 'Production' },
 ] as const;

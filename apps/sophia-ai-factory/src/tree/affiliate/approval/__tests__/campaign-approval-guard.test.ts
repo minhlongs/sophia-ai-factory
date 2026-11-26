@@ -17,7 +17,7 @@ import {
 describe('campaign-approval-guard', () => {
   const basePayload: CampaignApprovalPayload = {
     scriptBody: 'Comprehensive review of PartnerStack B2B SaaS workflow.',
-    affiliateTargetUrl: 'https://sophia.agencyos.network/r/ps123',
+    affiliateTargetUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/ps123',
     jurisdiction: 'US',
     disclosureText: '#ad #affiliate — We may earn a commission at no extra cost to you.',
     maxRenderCostCents: 20,
@@ -57,7 +57,7 @@ describe('campaign-approval-guard', () => {
 
     const mutatedPayload: CampaignApprovalPayload = {
       ...basePayload,
-      affiliateTargetUrl: 'https://sophia.agencyos.network/r/tampered999',
+      affiliateTargetUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/tampered999',
     };
 
     const res = await verifyCampaignApprovalIntegrity(stored, mutatedPayload);

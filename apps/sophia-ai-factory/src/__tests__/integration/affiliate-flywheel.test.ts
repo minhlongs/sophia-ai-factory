@@ -40,7 +40,7 @@ describe('Affiliate Flywheel Integration Pipeline', () => {
       locale: 'vi',
     });
 
-    expect(bridgeUrl).toContain('https://sophia.agencyos.network/vi/affiliate/bridge/');
+    expect(bridgeUrl).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/affiliate/bridge/');
     expect(bridgeUrl).toContain('code=SAVE20');
 
     // 3. Route: Validate Geo-routing fallback based on IP

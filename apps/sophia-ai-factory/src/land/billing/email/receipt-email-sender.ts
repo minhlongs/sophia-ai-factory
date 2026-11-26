@@ -67,7 +67,7 @@ export async function sendReceiptEmail(input: ReceiptInput): Promise<void> {
   }
   finalHtml = appendEmailFooter(finalHtml, tenantBranding.footerMarkdown)
 
-  const FROM_DEFAULT = process.env.RESEND_FROM_EMAIL || 'noreply@sophia.agencyos.network'
+  const FROM_DEFAULT = process.env.RESEND_FROM_EMAIL || 'noreply@sophia-ai-factory.agencyos-openclaw.workers.dev'
   const fromDisplay = tenantBranding.fromName
     ? `${tenantBranding.fromName} <${FROM_DEFAULT}>`
     : FROM_DEFAULT

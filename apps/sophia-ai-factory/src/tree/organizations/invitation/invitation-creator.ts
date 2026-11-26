@@ -66,7 +66,7 @@ export async function createOrgInvitation(
     allocated: quota.allocated,
   });
 
-  const baseUrl = appBaseUrl || 'https://sophia.agencyos.network';
+  const baseUrl = appBaseUrl || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
   const inviteUrl = `${baseUrl}/invitations/accept?token=${rawToken}`;
 
   return {

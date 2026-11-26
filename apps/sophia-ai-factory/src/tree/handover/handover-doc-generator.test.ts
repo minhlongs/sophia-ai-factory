@@ -78,7 +78,7 @@ describe('generateHandoverDoc — account section', () => {
 
   it('includes login URL', () => {
     const doc = generateHandoverDoc(baseInput)
-    expect(doc).toContain('https://sophia.agencyos.network/login')
+    expect(doc).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev/login')
   })
 })
 

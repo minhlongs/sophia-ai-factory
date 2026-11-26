@@ -101,23 +101,23 @@ describe('Multi-Cloud Router & Failover Engine — Unit Tests', () => {
       ) VALUES
       (
         'region_cf_primary_apac', 'cf-sin', 'cloudflare', 'primary_edge', 'active',
-        'https://apac-edge.sophia.agencyos.network', 'apac', 1.3521, 103.8198, 12.4, 18.2, 1.0, 1, 10000, 0, 0
+        'https://apac-edge.sophia-ai-factory.agencyos-openclaw.workers.dev', 'apac', 1.3521, 103.8198, 12.4, 18.2, 1.0, 1, 10000, 0, 0
       ),
       (
         'region_cf_primary_nam', 'cf-iad', 'cloudflare', 'primary_edge', 'active',
-        'https://nam-edge.sophia.agencyos.network', 'nam', 39.0438, -77.4874, 11.8, 17.5, 1.0, 1, 10000, 0, 0
+        'https://nam-edge.sophia-ai-factory.agencyos-openclaw.workers.dev', 'nam', 39.0438, -77.4874, 11.8, 17.5, 1.0, 1, 10000, 0, 0
       ),
       (
         'region_aws_fallback_nam', 'aws-us-east-1', 'aws', 'fallback_edge', 'active',
-        'https://aws-edge-nam.sophia.agencyos.network', 'nam', 38.9339, -77.1773, 24.5, 35.2, 1.0, 1, 5000, 0, 0
+        'https://aws-edge-nam.sophia-ai-factory.agencyos-openclaw.workers.dev', 'nam', 38.9339, -77.1773, 24.5, 35.2, 1.0, 1, 5000, 0, 0
       ),
       (
         'region_gcp_burst_nam', 'gcp-us-central1', 'gcp', 'gpu_burst_node', 'active',
-        'https://gcp-gpu-nam.sophia.agencyos.network', 'nam', 41.8781, -93.0977, 32.0, 45.0, 1.0, 1, 1000, 64, 8
+        'https://gcp-gpu-nam.sophia-ai-factory.agencyos-openclaw.workers.dev', 'nam', 41.8781, -93.0977, 32.0, 45.0, 1.0, 1, 1000, 64, 8
       ),
       (
         'region_gcp_burst_apac', 'gcp-asia-southeast1', 'gcp', 'gpu_burst_node', 'active',
-        'https://gcp-gpu-apac.sophia.agencyos.network', 'apac', 1.3521, 103.8198, 34.5, 48.0, 1.0, 1, 1000, 32, 4
+        'https://gcp-gpu-apac.sophia-ai-factory.agencyos-openclaw.workers.dev', 'apac', 1.3521, 103.8198, 34.5, 48.0, 1.0, 1, 1000, 32, 4
       );
     `);
 
@@ -138,7 +138,7 @@ describe('Multi-Cloud Router & Failover Engine — Unit Tests', () => {
       expect(decision.isGpuBurst).toBe(false);
       expect(decision.isFallback).toBe(false);
       expect(decision.estimatedLatencyMs).toBe(12.4);
-      expect(decision.targetEndpointUrl).toBe('https://apac-edge.sophia.agencyos.network');
+      expect(decision.targetEndpointUrl).toBe('https://apac-edge.sophia-ai-factory.agencyos-openclaw.workers.dev');
     });
 
     it('selects fallback edge when primary edge in the zone is degraded', async () => {

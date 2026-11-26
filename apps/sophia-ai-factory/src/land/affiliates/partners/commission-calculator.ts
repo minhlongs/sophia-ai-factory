@@ -27,7 +27,7 @@ export function generatePartnerCode(seed?: string): string {
  * Generate a personalized share link with tracking parameters.
  */
 export function generateShareLink(code: string, options: ShareLinkOptions = {}): string {
-  const base = (options.baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network').replace(/\/$/, '');
+  const base = (options.baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev').replace(/\/$/, '');
   const url = new URL(base);
   url.searchParams.set('ref', code);
 

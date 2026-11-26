@@ -537,7 +537,7 @@ describe('Enterprise Outbound Webhooks — Integration Tests', () => {
     it('POST /api/v1/webhooks creates endpoint and returns 201 with secret', async () => {
       mocks.mockGetCurrentUser.mockResolvedValue({ id: userAdminId, email: 'admin@orga.com', role: 'user' });
 
-      const req = new NextRequest('https://sophia.agencyos.network/api/v1/webhooks', {
+      const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/webhooks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -557,7 +557,7 @@ describe('Enterprise Outbound Webhooks — Integration Tests', () => {
     it('POST /api/v1/webhooks rejects insecure HTTP URL with 400', async () => {
       mocks.mockGetCurrentUser.mockResolvedValue({ id: userAdminId, email: 'admin@orga.com', role: 'user' });
 
-      const req = new NextRequest('https://sophia.agencyos.network/api/v1/webhooks', {
+      const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/webhooks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -580,7 +580,7 @@ describe('Enterprise Outbound Webhooks — Integration Tests', () => {
         events: ['video.rendered'],
       });
 
-      const req = new NextRequest('https://sophia.agencyos.network/api/v1/webhooks', {
+      const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/webhooks', {
         method: 'GET',
       });
 

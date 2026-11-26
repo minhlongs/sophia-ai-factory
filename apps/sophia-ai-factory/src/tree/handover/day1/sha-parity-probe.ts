@@ -32,7 +32,7 @@ export {
 export async function probeShaParity(options?: Day1ProbeOptions): Promise<CheckpointResult> {
   const start = Date.now();
   const rawLocalSha = (process.env.COMMIT_SHA || process.env.NEXT_PUBLIC_COMMIT_SHA || '').trim();
-  const baseUrl = options?.baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+  const baseUrl = options?.baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 
   try {
     const { liveSha, networkReachable } = await fetchLiveSha(baseUrl, options);

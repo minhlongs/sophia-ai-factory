@@ -44,7 +44,7 @@ export async function handleLicenseValidationPreview(
       {
         success: false, valid: false, mode: 'validation_preview', persisted: false,
         reason: verification.reason ?? 'SIGNATURE_MISMATCH',
-        pricingUrl: 'https://sophia.agencyos.network/pricing',
+        pricingUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/pricing',
       },
       { status: 422 },
     );

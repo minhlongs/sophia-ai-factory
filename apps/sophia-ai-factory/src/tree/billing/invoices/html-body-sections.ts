@@ -25,7 +25,7 @@ export function renderEntityGridHtml(
         <div class="entity-name">Sophia AI Factory Co., Ltd</div>
         <div class="entity-detail">${L.sellerTaxIdLabel}: 0317894562</div>
         <div class="entity-detail">Bitexco Financial Tower, District 1, Ho Chi Minh City, Vietnam</div>
-        <div class="entity-detail">support@sophia.agencyos.network</div>
+        <div class="entity-detail">support@sophia-ai-factory.agencyos-openclaw.workers.dev</div>
       </div>
 
       <div class="entity-col">

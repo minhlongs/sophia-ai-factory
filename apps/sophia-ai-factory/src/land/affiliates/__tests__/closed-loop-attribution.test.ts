@@ -28,10 +28,10 @@ vi.mock('@/seed/inngest/client', () => ({
 describe('Commerce Video Attribution Injector', () => {
   it('builds referral URLs with clean query parameters', () => {
     const urlWithoutSub = buildAttributedReferralUrl('VIP_ALEX');
-    expect(urlWithoutSub).toBe('https://sophia.agencyos.network/r/VIP_ALEX');
+    expect(urlWithoutSub).toBe('https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/VIP_ALEX');
 
     const urlWithSub = buildAttributedReferralUrl('VIP_ALEX', 'tiktok_bio');
-    expect(urlWithSub).toBe('https://sophia.agencyos.network/r/VIP_ALEX?sub_id=tiktok_bio');
+    expect(urlWithSub).toBe('https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/VIP_ALEX?sub_id=tiktok_bio');
   });
 
   it('generates structured multi-platform metadata', () => {

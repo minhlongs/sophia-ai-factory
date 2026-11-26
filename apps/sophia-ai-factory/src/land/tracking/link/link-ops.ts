@@ -29,7 +29,7 @@ export async function createTrackingLink(
     active: 1,
   });
 
-  const shortUrl = `https://track.sophia.agencyos.network/r/${id}`;
+  const shortUrl = `https://track.sophia-ai-factory.agencyos-openclaw.workers.dev/r/${id}`;
   return { id, shortUrl };
 }
 
@@ -68,6 +68,6 @@ export async function getTrackingLink(
     campaignId: row.campaign_id,
     active: row.active === 1,
     createdAt: row.created_at,
-    shortUrl: `https://track.sophia.agencyos.network/r/${row.id}`,
+    shortUrl: `https://track.sophia-ai-factory.agencyos-openclaw.workers.dev/r/${row.id}`,
   };
 }

@@ -15,7 +15,7 @@ export interface TTSSynthesizeParams {
   language: string;
   tenantId: string;
   jobId: string;
-  /** Base URL of the Next.js worker (e.g. https://sophia.agencyos.network) */
+  /** Base URL of the Next.js worker (e.g. https://sophia-ai-factory.agencyos-openclaw.workers.dev) */
   baseUrl: string;
   /** Internal token for x-internal-token header */
   internalToken: string;

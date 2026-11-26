@@ -30,7 +30,7 @@ vi.mock('@/seed/inngest/client', () => ({
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn().mockResolvedValue({
     id: 'usr-v7-creator',
-    email: 'creator@sophia.agencyos.network',
+    email: 'creator@sophia-ai-factory.agencyos-openclaw.workers.dev',
   }),
 }));
 

@@ -87,7 +87,7 @@ const FAKE_HANDOVER: CustomerHandoverRow = {
 
 /** Build a minimal NextRequest for the route handler */
 function buildRequest(token: string): NextRequest {
-  return new NextRequest(`https://sophia.agencyos.network/api/welcome/validate/${token}`, {
+  return new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/welcome/validate/${token}`, {
     method: 'POST',
   });
 }

@@ -36,7 +36,7 @@ export async function sendWinBackTelegramAlert(
       `• Sản lượng video (Velocity): *${customer.velocityScore}/25* (${customer.rawMetrics.videosCreated30d} video/30 ngày)\n` +
       `• Số dư MCU (Capacity): *${customer.capacityScore}/25* (${customer.rawMetrics.creditsRemaining} MCU)\n` +
       `• Độ tin cậy render (Reliability): *${customer.reliabilityScore}/25* (${Math.round(customer.rawMetrics.renderSuccessRate * 100)}% thành công)\n\n` +
-      `⚡ Đã tự động gửi email kích hoạt lại. Bấm vào Bảng điều khiển để can thiệp 1-Click: https://sophia.agencyos.network/admin/growth-analytics`;
+      `⚡ Đã tự động gửi email kích hoạt lại. Bấm vào Bảng điều khiển để can thiệp 1-Click: https://sophia-ai-factory.agencyos-openclaw.workers.dev/admin/growth-analytics`;
 
     const tgResult = await sendTelegramMessage(adminChatId, alertText);
     return !!tgResult;

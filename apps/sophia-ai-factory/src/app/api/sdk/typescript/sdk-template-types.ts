@@ -8,7 +8,7 @@ import { SDK_DOMAIN_TYPES_PART } from './sdk-template-domain-types';
 
 export const SDK_TYPES_PART = `/**
  * Sophia AI Factory SDK — auto-generated single-file client.
- * Source of truth: https://sophia.agencyos.network/api/sdk/typescript
+ * Source of truth: https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/sdk/typescript
  */
 
 export interface SophiaClientOptions {

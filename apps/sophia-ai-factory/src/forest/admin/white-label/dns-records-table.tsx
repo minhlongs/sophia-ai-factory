@@ -76,7 +76,7 @@ export function DnsRecordsTable({
 }: DnsRecordsTableProps) {
   const ownership = parseDns(dom.ownership_verification);
   const sslDcv = parseDns(dom.ssl_verification);
-  const target = dom.cname_target || 'cname.sophia.agencyos.network';
+  const target = dom.cname_target || 'cname.sophia-ai-factory.agencyos-openclaw.workers.dev';
 
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 space-y-3">

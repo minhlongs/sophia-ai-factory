@@ -1,5 +1,5 @@
 /**
- * Dynamic sitemap for SEO, AEO & GEO — sophia.agencyos.network
+ * Dynamic sitemap for SEO, AEO & GEO — sophia-ai-factory.agencyos-openclaw.workers.dev
  * Next.js generates /sitemap.xml from this file.
  * Excludes auth-gated routes (dashboard, admin, auth, onboarding, welcome, checkout).
  */

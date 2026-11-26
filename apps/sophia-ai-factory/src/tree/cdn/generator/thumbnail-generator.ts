@@ -27,7 +27,7 @@ export function generateThumbnailVariantSpecs(
 ): AssetThumbnailVariant[] {
   const ratios = input.aspectRatios ?? ASPECT_RATIOS;
   const formats = input.formats ?? ['webp', 'avif'];
-  const baseUrl = input.cdnBaseUrl ?? 'https://cdn.sophia.agencyos.network';
+  const baseUrl = input.cdnBaseUrl ?? 'https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev';
   const now = Date.now();
 
   const variants: AssetThumbnailVariant[] = [];

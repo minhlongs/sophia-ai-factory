@@ -32,13 +32,13 @@ export class SophiaClient {
     if (typeof optsOrToken === 'string') {
       this.config = {
         apiKey: optsOrToken,
-        baseUrl: (baseUrl ?? 'https://sophia.agencyos.network').replace(/\/$/, ''),
+        baseUrl: (baseUrl ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev').replace(/\/$/, ''),
         timeoutMs: 30000,
       };
     } else {
       this.config = {
         apiKey: optsOrToken.apiKey ?? optsOrToken.token ?? '',
-        baseUrl: (optsOrToken.baseUrl ?? baseUrl ?? 'https://sophia.agencyos.network').replace(/\/$/, ''),
+        baseUrl: (optsOrToken.baseUrl ?? baseUrl ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev').replace(/\/$/, ''),
         timeoutMs: optsOrToken.timeoutMs ?? 30000,
       };
     }

@@ -75,7 +75,7 @@ describe('Webhook Viral Performance Metrics Ingestion', () => {
         },
       });
 
-      const req = new Request('https://sophia.agencyos.network/api/webhooks/youtube-notification', {
+      const req = new Request('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/youtube-notification', {
         method: 'POST',
         body,
         headers: { 'Content-Type': 'application/json' },
@@ -131,7 +131,7 @@ describe('Webhook Viral Performance Metrics Ingestion', () => {
         },
       });
 
-      const req = new Request('https://sophia.agencyos.network/api/webhooks/tiktok-notification', {
+      const req = new Request('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/tiktok-notification', {
         method: 'POST',
         body,
         headers: { 'Content-Type': 'application/json' },
@@ -223,7 +223,7 @@ describe('Webhook Viral Performance Metrics Ingestion', () => {
         .map((b) => b.toString(16).padStart(2, '0'))
         .join('');
 
-      const req = new Request('https://sophia.agencyos.network/api/webhooks/tiktok-shop', {
+      const req = new Request('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/tiktok-shop', {
         method: 'POST',
         body: orderPayload,
         headers: {

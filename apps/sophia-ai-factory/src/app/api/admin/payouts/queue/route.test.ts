@@ -27,7 +27,7 @@ const mockPrepare = vi.fn(() => ({ bind: mockBind }));
 const mockDb = { prepare: mockPrepare };
 
 function makeRequest(params = ''): NextRequest {
-  return new NextRequest(`https://sophia.agencyos.network/api/admin/payouts/queue${params}`, {
+  return new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/admin/payouts/queue${params}`, {
     headers: { cookie: 'session=test' },
   });
 }

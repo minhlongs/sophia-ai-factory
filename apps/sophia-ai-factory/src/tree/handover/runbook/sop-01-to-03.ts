@@ -27,15 +27,15 @@ export const SOP_01_QUICKSTART: RunbookContent = {
 Establish sovereign operational access to the Sophia AI Factory platform within 10 minutes of handover.
 
 ## Step 1: Initial Sign-in & Authentication
-1. Navigate to your dedicated production domain: \`https://sophia.agencyos.network\` (or your custom domain).
+1. Navigate to your dedicated production domain: \`https://sophia-ai-factory.agencyos-openclaw.workers.dev\` (or your custom domain).
 2. Enter your authorized administrator email address.
 3. Use the magic link dispatched to your inbox or input your pre-provisioned password.
 4. Verify you land on \`/dashboard\` with \`admin\` or \`owner\` permissions.
 
 ## Step 2: Edge Health Smoke Probe
 \`\`\`bash
-curl -s https://sophia.agencyos.network/api/version | jq
-curl -s https://sophia.agencyos.network/api/health | jq
+curl -s https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/version | jq
+curl -s https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/health | jq
 \`\`\`
 
 ## Step 3: First Test Video Mission
@@ -49,15 +49,15 @@ curl -s https://sophia.agencyos.network/api/health | jq
 Thiết lập quyền quản trị và vận hành độc lập nền tảng Sophia AI Factory trong vòng 10 phút sau khi bàn giao.
 
 ## Bước 1: Đăng Nhập Lần Đầu & Xác Thực
-1. Truy cập tên miền chính thức: \`https://sophia.agencyos.network\`.
+1. Truy cập tên miền chính thức: \`https://sophia-ai-factory.agencyos-openclaw.workers.dev\`.
 2. Nhập email quản trị viên đã được cấp phép.
 3. Sử dụng magic link hoặc mật khẩu đã cấp.
 4. Xác nhận bạn truy cập thành công vào \`/dashboard\` với vai trò \`admin\` hoặc \`owner\`.
 
 ## Bước 2: Kiểm Tra Nhanh Máy Chủ Edge
 \`\`\`bash
-curl -s https://sophia.agencyos.network/api/version | jq
-curl -s https://sophia.agencyos.network/api/health | jq
+curl -s https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/version | jq
+curl -s https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/health | jq
 \`\`\`
 
 ## Bước 3: Thử Nghiệm Tạo Video Đầu Tiên
@@ -82,7 +82,7 @@ export const SOP_02_ONBOARDING: RunbookContent = {
   contentEn: `# 02. Workspace & Brand Setup
 
 ## 1. Custom Domain CNAME Configuration
-1. In DNS provider, add a CNAME record: \`studio\` -> \`sophia.agencyos.network\`.
+1. In DNS provider, add a CNAME record: \`studio\` -> \`sophia-ai-factory.agencyos-openclaw.workers.dev\`.
 2. In Sophia Admin: Navigate to \`/admin/custom-domains\` and add your hostname.
 3. Verification probe will validate SSL issuance within 5 minutes.
 
@@ -92,7 +92,7 @@ Upload agency assets under \`/dashboard/settings/branding\` (Primary Brand Color
   contentVi: `# 02. Thiết Lập Studio & Thương Hiệu
 
 ## 1. Cấu Hình Tên Miền Riêng (CNAME)
-1. Trong trang DNS, tạo bản ghi CNAME: \`studio\` -> \`sophia.agencyos.network\`.
+1. Trong trang DNS, tạo bản ghi CNAME: \`studio\` -> \`sophia-ai-factory.agencyos-openclaw.workers.dev\`.
 2. Trong phần Quản trị Sophia: Vào \`/admin/custom-domains\` và thêm tên miền.
 3. Hệ thống sẽ tự động kích hoạt SSL trong 5 phút.
 

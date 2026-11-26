@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS custom_domains (
   verification_errors TEXT NOT NULL DEFAULT '[]',
   ownership_verification TEXT NOT NULL DEFAULT '{}',
   ssl_verification TEXT NOT NULL DEFAULT '{}',
-  cname_target TEXT NOT NULL DEFAULT 'cname.sophia.agencyos.network',
+  cname_target TEXT NOT NULL DEFAULT 'cname.sophia-ai-factory.agencyos-openclaw.workers.dev',
   cname_verified INTEGER NOT NULL DEFAULT 0,
   active INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL DEFAULT 0,
@@ -340,10 +340,10 @@ describe('Milestone 1 Custom Domains — Adversarial Stress Test Suite', () => {
 
     it('forbids platform domains and handles FQDN checks for single-label names', () => {
       const platformDomains = [
-        'sophia.agencyos.network',
+        'sophia-ai-factory.agencyos-openclaw.workers.dev',
         'agencyos.network',
         'workers.dev',
-        'sub.sophia.agencyos.network',
+        'sub.sophia-ai-factory.agencyos-openclaw.workers.dev',
         'deep.sub.agencyos.network',
         'evil.workers.dev',
       ];
@@ -841,7 +841,7 @@ describe('Milestone 1 Custom Domains — Adversarial Stress Test Suite', () => {
           ) VALUES (
             ?1, ?2, ?3, ?4, 'pending_validation', 'pending',
             '{corrupted_json_syntax', '<<<invalid_json>>>', 'not_a_json_object',
-            'cname.sophia.agencyos.network', 0, 0, 100, 100
+            'cname.sophia-ai-factory.agencyos-openclaw.workers.dev', 0, 0, 100, 100
           )`,
         )
         .bind(corruptDomainId, defaultOrgId, 'corrupt-json.com', 'cf_corrupt_1')

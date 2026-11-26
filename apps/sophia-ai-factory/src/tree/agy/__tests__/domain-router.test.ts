@@ -142,10 +142,10 @@ describe('AGY Domain Router', () => {
         slug: null,
         normalized: 'agencyos.network',
       });
-      expect(classifySubdomain('sophia.agencyos.network')).toEqual({
+      expect(classifySubdomain('sophia-ai-factory.agencyos-openclaw.workers.dev')).toEqual({
         type: 'canonical',
         slug: null,
-        normalized: 'sophia.agencyos.network',
+        normalized: 'sophia-ai-factory.agencyos-openclaw.workers.dev',
       });
       expect(classifySubdomain('deep.nested.agencyos.network')).toEqual({
         type: 'canonical',
@@ -231,7 +231,7 @@ describe('AGY Domain Router', () => {
     });
 
     it('returns null for reserved subdomains', () => {
-      expect(resolveAgencySlugFromHostname('sophia.agencyos.network')).toBeNull();
+      expect(resolveAgencySlugFromHostname('sophia-ai-factory.agencyos-openclaw.workers.dev')).toBeNull();
       expect(resolveAgencySlugFromHostname('api.agencyos.network')).toBeNull();
       expect(resolveAgencySlugFromHostname('admin.agencyos.network')).toBeNull();
       expect(resolveAgencySlugFromHostname('sub.agencyos.network')).toBeNull();
@@ -249,7 +249,7 @@ describe('AGY Domain Router', () => {
       expect(isAgencySubdomain('acme.agencyos.network')).toBe(true);
       expect(isAgencySubdomain('growth.agencyos.network')).toBe(true);
       expect(isAgencySubdomain('sub.agencyos.network')).toBe(false);
-      expect(isAgencySubdomain('sophia.agencyos.network')).toBe(false);
+      expect(isAgencySubdomain('sophia-ai-factory.agencyos-openclaw.workers.dev')).toBe(false);
       expect(isAgencySubdomain('customagency.com')).toBe(false);
     });
   });
@@ -274,12 +274,12 @@ describe('AGY Domain Router', () => {
     });
 
     it('parses platform canonical with proper flags', () => {
-      const parsed = parseHostnames('sophia.agencyos.network');
+      const parsed = parseHostnames('sophia-ai-factory.agencyos-openclaw.workers.dev');
       expect(parsed.isCanonical).toBe(true);
       expect(parsed.isAgencySubdomain).toBe(false);
       expect(parsed.agencySlug).toBeNull();
 
-      const meta = resolveTenantRoutingMetadata('sophia.agencyos.network');
+      const meta = resolveTenantRoutingMetadata('sophia-ai-factory.agencyos-openclaw.workers.dev');
       expect(meta.isInternal).toBe(true);
     });
 

@@ -50,7 +50,7 @@ export async function executeDubbingPipeline(input: DubbingJobInput): Promise<Du
       voice,
       targetDurationSec: durationSec,
     });
-    audioTrackUrls[locale] = `https://storage.sophia.agencyos.network/tenants/${tenantId}/videos/${videoId}/dubbing/${jobId}/${locale}.mp3`;
+    audioTrackUrls[locale] = `https://storage.sophia-ai-factory.agencyos-openclaw.workers.dev/tenants/${tenantId}/videos/${videoId}/dubbing/${jobId}/${locale}.mp3`;
 
     // 3. Format subtitles (SRT & VTT)
     const localizedWords = mapTranscriptToTarget(transcript, translated, locale);
@@ -58,8 +58,8 @@ export async function executeDubbingPipeline(input: DubbingJobInput): Promise<Du
     const vtt = wordsToVtt(localizedWords);
 
     subtitleUrls[locale] = {
-      srt: `https://storage.sophia.agencyos.network/tenants/${tenantId}/videos/${videoId}/dubbing/${jobId}/subtitles_${locale}.srt`,
-      vtt: `https://storage.sophia.agencyos.network/tenants/${tenantId}/videos/${videoId}/dubbing/${jobId}/subtitles_${locale}.vtt`,
+      srt: `https://storage.sophia-ai-factory.agencyos-openclaw.workers.dev/tenants/${tenantId}/videos/${videoId}/dubbing/${jobId}/subtitles_${locale}.srt`,
+      vtt: `https://storage.sophia-ai-factory.agencyos-openclaw.workers.dev/tenants/${tenantId}/videos/${videoId}/dubbing/${jobId}/subtitles_${locale}.vtt`,
     };
 
     if (!srt || !vtt) {
@@ -73,7 +73,7 @@ export async function executeDubbingPipeline(input: DubbingJobInput): Promise<Du
     status: 'completed',
     videoUrl:
       input.sourceVideoUrl ||
-      `https://storage.sophia.agencyos.network/tenants/${tenantId}/videos/${videoId}/final.mp4`,
+      `https://storage.sophia-ai-factory.agencyos-openclaw.workers.dev/tenants/${tenantId}/videos/${videoId}/final.mp4`,
     audioTrackUrls,
     subtitleUrls,
     transcription: transcript,

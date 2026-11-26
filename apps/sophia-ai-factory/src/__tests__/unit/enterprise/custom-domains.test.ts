@@ -96,8 +96,8 @@ describe('Custom Domains Engine — Unit Tests', () => {
 
     it('rejects reserved platform domains and suffixes', () => {
       const forbidden = [
-        'sophia.agencyos.network',
-        'sub.sophia.agencyos.network',
+        'sophia-ai-factory.agencyos-openclaw.workers.dev',
+        'sub.sophia-ai-factory.agencyos-openclaw.workers.dev',
         'agencyos.network',
         'portal.agencyos.network',
         'localhost',
@@ -326,7 +326,7 @@ describe('Custom Domains Engine — Unit Tests', () => {
           name: '_acme-challenge.portal.client.com',
           value: 'token2',
         }),
-        cname_target: 'cname.sophia.agencyos.network',
+        cname_target: 'cname.sophia-ai-factory.agencyos-openclaw.workers.dev',
         cname_verified: 1,
         active: 1,
         created_at: 1700000000,
@@ -344,7 +344,7 @@ describe('Custom Domains Engine — Unit Tests', () => {
       expect(record.ownership_verification?.value).toBe('token1');
       expect(record.ssl_verification?.value).toBe('token2');
       expect(record.verification_errors).toEqual(['warning note']);
-      expect(record.cname_target).toBe('cname.sophia.agencyos.network');
+      expect(record.cname_target).toBe('cname.sophia-ai-factory.agencyos-openclaw.workers.dev');
     });
 
     it('handles corrupted JSON in verification fields without throwing', () => {
@@ -384,7 +384,7 @@ describe('Custom Domains Engine — Unit Tests', () => {
     });
 
     it('detects platform internal / canonical domains', () => {
-      expect(isInternalOrCanonicalHostname('sophia.agencyos.network')).toBe(true);
+      expect(isInternalOrCanonicalHostname('sophia-ai-factory.agencyos-openclaw.workers.dev')).toBe(true);
       expect(isInternalOrCanonicalHostname('app.agencyos.network')).toBe(true);
       expect(isInternalOrCanonicalHostname('localhost')).toBe(true);
       expect(isInternalOrCanonicalHostname('sub.localhost')).toBe(true);

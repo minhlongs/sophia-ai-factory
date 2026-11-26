@@ -32,7 +32,7 @@ const TENANT_B = 'tenant-b';
 
 const BASE_INPUT = {
   network: 'partnerstack',
-  endpoint: 'https://sophia.agencyos.network/api/webhooks/saas-crypto/partnerstack',
+  endpoint: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/saas-crypto/partnerstack',
   sourceIp: '1.2.3.4',
   headersJson: JSON.stringify({ 'x-partnerstack-signature': 'abc' }),
   rawBody: JSON.stringify({ amount: 100 }),

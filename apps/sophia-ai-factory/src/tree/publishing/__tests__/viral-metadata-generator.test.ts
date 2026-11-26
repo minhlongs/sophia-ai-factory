@@ -160,7 +160,7 @@ describe('Unified Viral Metadata Generator', () => {
   describe('Tracking Links & Deep Links', () => {
     it('constructs tracked funnel URL with correct UTM parameters', () => {
       const url = buildTrackedFunnelUrl({
-        baseUrl: 'https://sophia.agencyos.network',
+        baseUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
         platform: 'youtube_shorts',
         niche: 'ai_automation',
         hookArchetype: 'curiosity_gap',
@@ -325,21 +325,21 @@ describe('Unified Viral Metadata Generator', () => {
         platform: 'tiktok',
         language: 'en',
         rawTitle: 'A'.repeat(3000),
-        trackedFunnelUrl: 'https://sophia.agencyos.network/funnel?utm_source=tiktok&vid=123',
+        trackedFunnelUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/funnel?utm_source=tiktok&vid=123',
         telegramDeepLink: 'https://t.me/Sophia_Bbot?start=v_123_tt',
         hashtags: ['#FYP', '#ViralVideo'],
         maxDescriptionLength: 1000,
       });
 
       expect(formatted.length).toBeLessThanOrEqual(1000);
-      expect(formatted).toContain('https://sophia.agencyos.network/funnel?utm_source=tiktok&vid=123');
+      expect(formatted).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev/funnel?utm_source=tiktok&vid=123');
       expect(formatted).toContain('https://t.me/Sophia_Bbot?start=v_123_tt');
       expect(formatted).toContain('...');
       expect(formatted).toContain('#FYP #ViralVideo');
     });
 
     it('preserves trackedFunnelUrl and telegramDeepLink even when maxDescriptionLength is extremely tight', () => {
-      const funnelUrl = 'https://sophia.agencyos.network/utm_test_url';
+      const funnelUrl = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/utm_test_url';
       const tgLink = 'https://t.me/Sophia_Bbot?start=mini';
       const formatted = formatSeoDescription({
         platform: 'tiktok',

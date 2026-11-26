@@ -114,7 +114,7 @@ describe('Wave 1: AEO/GEO Single Source of Ground Truth & Dual-Read Engine', () 
   });
 
   it('negotiates Accept: text/markdown on public routes while blocking dashboard routes', () => {
-    const pubReq = new NextRequest('https://sophia.agencyos.network/vi/pricing', {
+    const pubReq = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/pricing', {
       headers: { accept: 'text/markdown, text/html;q=0.8' },
     });
     expect(isAeoMarkdownNegotiatedRequest(pubReq)).toBe(true);
@@ -122,7 +122,7 @@ describe('Wave 1: AEO/GEO Single Source of Ground Truth & Dual-Read Engine', () 
     expect(res).not.toBeNull();
     expect(res?.headers.get('Vary')).toContain('Accept');
 
-    const dashReq = new NextRequest('https://sophia.agencyos.network/vi/dashboard', {
+    const dashReq = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/dashboard', {
       headers: { accept: 'text/markdown' },
     });
     expect(isAeoMarkdownNegotiatedRequest(dashReq)).toBe(false);

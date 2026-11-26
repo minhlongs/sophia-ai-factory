@@ -25,7 +25,7 @@ function makeRequest(pathname: string, acceptLanguage = 'en'): NextRequest {
   return {
     nextUrl: { pathname },
     headers: new Headers({ 'accept-language': acceptLanguage }),
-    url: `https://sophia.agencyos.network${pathname}`,
+    url: `https://sophia-ai-factory.agencyos-openclaw.workers.dev${pathname}`,
   } as unknown as NextRequest;
 }
 

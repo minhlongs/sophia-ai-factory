@@ -66,7 +66,7 @@ function inngestRequest(
   headers: Record<string, string> = {},
 ): NextRequest {
   const hasBody = method !== 'GET';
-  return new NextRequest(`https://sophia.agencyos.network${pathname}`, {
+  return new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev${pathname}`, {
     method,
     headers: {
       ...(hasBody ? { 'content-type': 'application/json' } : {}),
@@ -83,7 +83,7 @@ describe('middleware double-gate reachability for /api/inngest callbacks', () =>
     vi.unstubAllEnvs();
     vi.stubEnv('INTERNAL_API_SECRET', 'prod-internal-secret-configured');
     vi.stubEnv('REQUIRE_AGENCY_ID', 'true');
-    vi.stubEnv('ALLOWED_HOSTS', 'sophia.agencyos.network');
+    vi.stubEnv('ALLOWED_HOSTS', 'sophia-ai-factory.agencyos-openclaw.workers.dev');
   });
 
   it.each(['GET', 'POST', 'PUT'] as const)(

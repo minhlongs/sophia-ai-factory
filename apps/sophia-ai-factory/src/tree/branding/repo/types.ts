@@ -52,7 +52,7 @@ export const VALID_POSITIONS: WatermarkPosition[] = [
 export const VALID_POLICIES: WatermarkPolicy[] = ['always', 'master_plus', 'never'];
 
 export const CANONICAL_DOMAINS = new Set([
-  'sophia.agencyos.network',
+  'sophia-ai-factory.agencyos-openclaw.workers.dev',
   'sophia-ai-factory.agencyos-openclaw.workers.dev',
   'localhost',
   '127.0.0.1',

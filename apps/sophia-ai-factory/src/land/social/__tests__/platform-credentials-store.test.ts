@@ -52,7 +52,7 @@ describe('land/social Stores & OCC Locking', () => {
     userId: 'usr_sarah_101',
     channelId: 'UC_sarah_shorts',
     platform: 'YOUTUBE_SHORTS' as const,
-    videoUrl: 'https://r2.sophia.agencyos.network/videos/reel_01.mp4',
+    videoUrl: 'https://r2.sophia-ai-factory.agencyos-openclaw.workers.dev/videos/reel_01.mp4',
     title: 'Top 5 AI Tools in 2026 #Shorts',
     description: 'Discover AI gems saving hours of manual labor.',
     tags: ['AI', 'Tech', 'Productivity'],

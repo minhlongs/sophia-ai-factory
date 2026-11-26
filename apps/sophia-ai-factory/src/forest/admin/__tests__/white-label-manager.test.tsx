@@ -48,7 +48,7 @@ describe('WhiteLabelManager component', () => {
         value: 'cf-token-abc-123',
       },
       ssl_verification: null,
-      cname_target: 'cname.sophia.agencyos.network',
+      cname_target: 'cname.sophia-ai-factory.agencyos-openclaw.workers.dev',
       cname_verified: true,
       active: true,
       created_at: 1000,
@@ -97,7 +97,7 @@ describe('WhiteLabelManager component', () => {
     expect(screen.getAllByText('portal.myagency.com').length).toBeGreaterThan(0);
     expect(screen.getByText('domains.status.active')).toBeDefined();
     expect(screen.getByText('domains.status.verified')).toBeDefined();
-    expect(screen.getByText('cname.sophia.agencyos.network')).toBeDefined();
+    expect(screen.getByText('cname.sophia-ai-factory.agencyos-openclaw.workers.dev')).toBeDefined();
     expect(screen.getByText('cf-token-abc-123')).toBeDefined();
   });
 
@@ -112,7 +112,7 @@ describe('WhiteLabelManager component', () => {
       verification_errors: [],
       ownership_verification: null,
       ssl_verification: null,
-      cname_target: 'cname.sophia.agencyos.network',
+      cname_target: 'cname.sophia-ai-factory.agencyos-openclaw.workers.dev',
       cname_verified: false,
       active: false,
       created_at: 2000,

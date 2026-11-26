@@ -347,7 +347,7 @@ describe('Challenger 1 Empirical Stress Test Suite (R1 & R2)', () => {
 
         // Must parse as valid URL
         const parsed = new URL(urlStr);
-        expect(parsed.origin).toBe('https://sophia.agencyos.network');
+        expect(parsed.origin).toBe('https://sophia-ai-factory.agencyos-openclaw.workers.dev');
         expect(parsed.searchParams.get('utm_source')).toBe('tiktok');
         expect(parsed.searchParams.get('utm_campaign')).toBe('ecommerce');
         expect(parsed.searchParams.get('utm_medium')).toBe('short_video');

@@ -36,6 +36,6 @@ export async function handleTicket(chatId: string, userId: string, ticketText: s
 
   await sendMessage(
     chatId,
-    '✅ Đã ghi nhận yêu cầu hỗ trợ. Chúng tôi sẽ phản hồi trong vòng 24h.\n\nTrong lúc chờ, bạn có thể xem Câu Hỏi Thường Gặp tại: sophia.agencyos.network/vi/guide/faq'
+    '✅ Đã ghi nhận yêu cầu hỗ trợ. Chúng tôi sẽ phản hồi trong vòng 24h.\n\nTrong lúc chờ, bạn có thể xem Câu Hỏi Thường Gặp tại: sophia-ai-factory.agencyos-openclaw.workers.dev/vi/guide/faq'
   )
 }

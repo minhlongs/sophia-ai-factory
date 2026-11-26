@@ -48,7 +48,7 @@ describe('Growth Triad v6 UI Cockpits', () => {
       offerId: 'off-cb-1',
       offerName: 'Sophia Affiliate Master',
       expectedYieldUsd: 42.5,
-      geoRoutingUrl: 'https://sophia.agencyos.network/api/r/off-cb-1?geo=US',
+      geoRoutingUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/r/off-cb-1?geo=US',
       fallbackNetwork: 'AMAZON' as const,
     };
 

@@ -47,7 +47,7 @@ const STUB_OUTPUT_KEY = 'videos/mission-123.mp4';
 const STUB_VIDEO_URL = 'https://cdn.example.com/video.mp4';
 const STUB_AUDIO_URL = 'https://cdn.example.com/audio.mp3';
 const STUB_MUXED_URL = 'https://cloudconvert.com/download/muxed.mp4';
-const PUBLIC_BASE = 'https://videos.sophia.agencyos.network';
+const PUBLIC_BASE = 'https://videos.sophia-ai-factory.agencyos-openclaw.workers.dev';
 
 function buildBucketRef(overrides?: Partial<{ head: ReturnType<typeof vi.fn>; put: ReturnType<typeof vi.fn>; publicBaseUrl: string | null }>): R2BucketRef {
   const mockHead = overrides?.head ?? vi.fn().mockResolvedValue(null);
