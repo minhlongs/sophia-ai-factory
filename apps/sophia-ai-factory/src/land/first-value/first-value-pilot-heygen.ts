@@ -118,6 +118,8 @@ export interface PilotCommercialDeps {
     readonly mediaUrl?: string;
     readonly durationSec?: number;
     readonly errorMessage?: string;
+    readonly assetPending?: boolean;
+    readonly warningCode?: string;
   }>;
 }
 
@@ -323,7 +325,12 @@ function formatHeyGenFailureCode(rawMessage?: string): string {
   const cleaned = String(rawMessage ?? '')
     .replace(/[\u0000-\u001f\u007f]/g, ' ')
     .replace(/(?:Bearer\s+|X-Api-Key[:=\s]+|sk-[a-zA-Z0-9_-]{8,}|hg_[a-zA-Z0-9_-]{8,})[^\s,;]*/gi, '[redacted]')
+    .replace(
+      /(?:api[_-]?key|access[_-]?token|auth[_-]?token|token|secret|signature|x-amz-signature|x-amz-credential)\s*[:=]\s*[^\s,;&]+/gi,
+      '[redacted]',
+    )
     .replace(/https?:\/\/[^\s,;]*[?&][^\s,;]*/gi, '[redacted]')
+    .replace(/https?:\/\/[^\s,;]*(?:%3f|%26)[^\s,;]*/gi, '[redacted]')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 200);
@@ -404,29 +411,32 @@ export async function handlePollHeyGenMp4(
         200,
       );
     }
+    if (statusRes.assetPending) {
+      return jsonPrivate(
+        {
+          mp4Export: target,
+          checkedAtIso: nowIso,
+          assetPending: true,
+          warningCode: statusRes.warningCode ?? 'HEYGEN_COMPLETED_ASSET_PENDING',
+          publicPublished: false,
+          paidInferenceExecuted: false,
+        },
+        200,
+      );
+    }
     const createdMs = Date.parse(target.createdAtIso);
     const currentMs = deps.nowMs ? deps.nowMs() : Date.now();
     const HEYGEN_STALE_TIMEOUT_MS = 15 * 60 * 1000;
     if (Number.isFinite(createdMs) && currentMs - createdMs >= HEYGEN_STALE_TIMEOUT_MS) {
-      const errorCode = 'HEYGEN_POLL_TIMEOUT_15M_USE_BROWSER_MP4';
-      const updated = await updatePilotMp4ExportStatus(d1, {
-        id: target.id,
-        orgId: payload.orgId,
-        userId: user.id,
-        status: 'failed',
-        errorCode,
-        nowIso,
-      });
-      await safeRecordPilotEvent(d1, {
-        orgId: payload.orgId,
-        userId: user.id,
-        eventName: 'MP4_EXPORT_FAILED',
-        artifactId: target.artifactId,
-        metadata: { exportId: target.id, renderMode: 'heygen_byok_mp4', errorCode },
-        nowIso,
-      });
       return jsonPrivate(
-        { mp4Export: updated ?? target, checkedAtIso: nowIso, publicPublished: false, paidInferenceExecuted: false },
+        {
+          mp4Export: target,
+          checkedAtIso: nowIso,
+          localTimeoutExceeded: true,
+          warningCode: 'HEYGEN_LOCAL_POLL_TIMEOUT_15M',
+          publicPublished: false,
+          paidInferenceExecuted: false,
+        },
         200,
       );
     }

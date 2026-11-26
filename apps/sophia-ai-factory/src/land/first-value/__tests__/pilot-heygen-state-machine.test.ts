@@ -193,7 +193,7 @@ describe('HeyGen Provider Contract & State Machine', () => {
         fetchHeyGenVideoStatus: async () => ({
           status: 'failed',
           errorMessage:
-            'Render failed\nBearer secret_token_xyz X-Api-Key=mykey999 sk-live123456789 hg_live987654321 https://cdn.heygen.ai/video.mp4?Signature=abc123&Expires=999999&Key-Pair-Id=APK123',
+            'Render failed\nBearer secret_token_xyz X-Api-Key=mykey999 sk-live123456789 hg_live987654321 apikey=plainkey1 api_key=snakekey2 token=tok3 access_token=acc4 https://cdn.heygen.ai/video.mp4?Signature=abc123&Expires=999999 https://cdn.heygen.ai/v2.mp4%3FSignature%3Denc999%26Expires%3D888',
         }),
       },
     );
@@ -205,8 +205,127 @@ describe('HeyGen Provider Contract & State Machine', () => {
     expect(body.mp4Export.errorCode).not.toContain('mykey999');
     expect(body.mp4Export.errorCode).not.toContain('sk-live123456789');
     expect(body.mp4Export.errorCode).not.toContain('hg_live987654321');
+    expect(body.mp4Export.errorCode).not.toContain('plainkey1');
+    expect(body.mp4Export.errorCode).not.toContain('snakekey2');
+    expect(body.mp4Export.errorCode).not.toContain('tok3');
+    expect(body.mp4Export.errorCode).not.toContain('acc4');
     expect(body.mp4Export.errorCode).not.toContain('Signature=abc123');
+    expect(body.mp4Export.errorCode).not.toContain('enc999');
     expect(body.mp4Export.errorCode).toContain('[redacted]');
+  });
+
+  it('preserves recoverability across assetPending and 15m local timeout and completes when video_url arrives', async () => {
+    const createdAtIso = '2026-11-25T10:00:00.000Z';
+    const { d1, row } = createInMemoryD1({
+      id: 'pme_recover_1',
+      org_id: 'org_1',
+      user_id: USER.id,
+      artifact_id: 'art_1',
+      render_mode: 'heygen_byok_mp4',
+      heygen_job_id: 'hg_vid_recover',
+      status: 'processing',
+      provider_video_url: null,
+      duration_sec: null,
+      error_code: null,
+      cta_text: 'Try now',
+      short_code: 'abc123',
+      referral_url: 'https://sophia.example.com/api/r/abc123',
+      created_at_iso: createdAtIso,
+      updated_at_iso: createdAtIso,
+    });
+
+    const submitSpy = vi.fn();
+    const baseDeps: PilotCommercialDeps = {
+      lookupHeyGenByokKey: async () => 'hg_secret_key_1234567890',
+      submitHeyGenVideo: submitSpy,
+    };
+
+    // 1. Processing < 15m
+    const resEarly = await handlePollHeyGenMp4(
+      d1,
+      USER,
+      { action: 'poll_heygen_mp4', orgId: 'org_1', exportId: 'pme_recover_1' },
+      {
+        ...baseDeps,
+        nowMs: () => Date.parse(createdAtIso) + 5 * 60 * 1000,
+        fetchHeyGenVideoStatus: async () => ({ status: 'processing' }),
+      },
+    );
+    const bodyEarly = (await resEarly.json()) as { mp4Export: { status: string }; localTimeoutExceeded?: boolean };
+    expect(resEarly.status).toBe(200);
+    expect(bodyEarly.mp4Export.status).toBe('processing');
+    expect(bodyEarly.localTimeoutExceeded).toBeUndefined();
+    expect(row.status).toBe('processing');
+
+    // 2. Local timeout >= 15m (16m) stays recoverable in DB
+    const res16m = await handlePollHeyGenMp4(
+      d1,
+      USER,
+      { action: 'poll_heygen_mp4', orgId: 'org_1', exportId: 'pme_recover_1' },
+      {
+        ...baseDeps,
+        nowMs: () => Date.parse(createdAtIso) + 16 * 60 * 1000,
+        fetchHeyGenVideoStatus: async () => ({ status: 'processing' }),
+      },
+    );
+    const body16m = (await res16m.json()) as {
+      mp4Export: { status: string };
+      localTimeoutExceeded?: boolean;
+      warningCode?: string;
+    };
+    expect(res16m.status).toBe(200);
+    expect(body16m.mp4Export.status).toBe('processing');
+    expect(body16m.localTimeoutExceeded).toBe(true);
+    expect(body16m.warningCode).toBe('HEYGEN_LOCAL_POLL_TIMEOUT_15M');
+    expect(row.status).toBe('processing');
+
+    // 3. Provider completed without video_url (assetPending) stays processing in DB
+    const resPending = await handlePollHeyGenMp4(
+      d1,
+      USER,
+      { action: 'poll_heygen_mp4', orgId: 'org_1', exportId: 'pme_recover_1' },
+      {
+        ...baseDeps,
+        nowMs: () => Date.parse(createdAtIso) + 17 * 60 * 1000,
+        fetchHeyGenVideoStatus: async () => ({
+          status: 'processing',
+          assetPending: true,
+          warningCode: 'HEYGEN_COMPLETED_ASSET_PENDING',
+        }),
+      },
+    );
+    const bodyPending = (await resPending.json()) as {
+      mp4Export: { status: string };
+      assetPending?: boolean;
+      warningCode?: string;
+    };
+    expect(resPending.status).toBe(200);
+    expect(bodyPending.mp4Export.status).toBe('processing');
+    expect(bodyPending.assetPending).toBe(true);
+    expect(bodyPending.warningCode).toBe('HEYGEN_COMPLETED_ASSET_PENDING');
+    expect(row.status).toBe('processing');
+
+    // 4. Subsequent poll at 18m with valid video_url transitions cleanly to completed
+    const resDone = await handlePollHeyGenMp4(
+      d1,
+      USER,
+      { action: 'poll_heygen_mp4', orgId: 'org_1', exportId: 'pme_recover_1' },
+      {
+        ...baseDeps,
+        nowMs: () => Date.parse(createdAtIso) + 18 * 60 * 1000,
+        fetchHeyGenVideoStatus: async () => ({
+          status: 'completed',
+          mediaUrl: 'https://resource.heygen.ai/video/final_recovered.mp4',
+          durationSec: 28,
+        }),
+      },
+    );
+    const bodyDone = (await resDone.json()) as { mp4Export: { status: string; providerVideoUrl: string } };
+    expect(resDone.status).toBe(200);
+    expect(bodyDone.mp4Export.status).toBe('completed');
+    expect(bodyDone.mp4Export.providerVideoUrl).toBe('https://resource.heygen.ai/video/final_recovered.mp4');
+    expect(row.status).toBe('completed');
+    expect(submitSpy).not.toHaveBeenCalled();
   });
 
   it('classifies poll timeout (504), rate-limit (429), and auth rejection (422) without duplicate submit', async () => {

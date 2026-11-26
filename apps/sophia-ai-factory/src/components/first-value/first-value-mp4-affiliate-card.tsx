@@ -195,13 +195,15 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
 
   async function handlePollHeyGen(exportId: string) {
     setPollingExportId(exportId);
-    const checkedTime = new Date().toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
+    const formatCheckedTime = () =>
+      new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
     try {
       const result = await props.onPollHeyGenMp4(exportId);
+      const checkedTime = formatCheckedTime();
       let message = t('pilotPollHeyGenStillProcessing', { time: checkedTime });
       if (result === null) {
         message = t('pilotPollHeyGenError', { time: checkedTime });
@@ -212,6 +214,7 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
       }
       setPollFeedbackById((prev) => ({ ...prev, [exportId]: message }));
     } catch {
+      const checkedTime = formatCheckedTime();
       setPollFeedbackById((prev) => ({
         ...prev,
         [exportId]: t('pilotPollHeyGenError', { time: checkedTime }),

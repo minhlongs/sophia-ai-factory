@@ -21,10 +21,15 @@ vi.mock('../first-value-pilot-actions', () => ({
 
 import { handlePollHeyGenMp4 } from '../first-value-pilot-heygen';
 
-describe('handlePollHeyGenMp4 stale 15-minute timeout', () => {
-  it('auto-fails HeyGen job stuck in processing >= 15 minutes with HEYGEN_POLL_TIMEOUT_15M_USE_BROWSER_MP4', async () => {
+describe('handlePollHeyGenMp4 local 15-minute timeout recoverability', () => {
+  it('keeps processing row recoverable at 16 minutes with localTimeoutExceeded warning and completes cleanly at 18 minutes', async () => {
+    mockGetExport.mockReset();
+    mockUpdateStatus.mockReset();
+
     const createdAtIso = '2026-11-26T00:00:00.000Z';
-    const twentyMinutesLaterMs = Date.parse(createdAtIso) + 20 * 60 * 1000;
+    const sixteenMinutesLaterMs = Date.parse(createdAtIso) + 16 * 60 * 1000;
+    const eighteenMinutesLaterMs = Date.parse(createdAtIso) + 18 * 60 * 1000;
+    const submitSpy = vi.fn();
 
     mockGetExport.mockResolvedValue({
       id: 'pme_stuck_1',
@@ -35,33 +40,73 @@ describe('handlePollHeyGenMp4 stale 15-minute timeout', () => {
       status: 'processing',
       createdAtIso,
     });
-    mockUpdateStatus.mockResolvedValue({
-      id: 'pme_stuck_1',
-      status: 'failed',
-      errorCode: 'HEYGEN_POLL_TIMEOUT_15M_USE_BROWSER_MP4',
-    });
 
-    const res = await handlePollHeyGenMp4(
+    const resAt16m = await handlePollHeyGenMp4(
       {} as D1Database,
       { id: 'u_1', email: 'pilot@example.com' },
       { action: 'poll_heygen_mp4', orgId: 'org_1', exportId: 'pme_stuck_1' },
       {
-        nowMs: () => twentyMinutesLaterMs,
+        nowMs: () => sixteenMinutesLaterMs,
         lookupHeyGenByokKey: vi.fn().mockResolvedValue('hg-test-key'),
         fetchHeyGenVideoStatus: vi.fn().mockResolvedValue({ status: 'processing' }),
+        submitHeyGenVideo: submitSpy,
       },
     );
 
-    expect(res.status).toBe(200);
-    const json = (await res.json()) as { mp4Export: { status: string; errorCode: string } };
-    expect(json.mp4Export.status).toBe('failed');
-    expect(json.mp4Export.errorCode).toBe('HEYGEN_POLL_TIMEOUT_15M_USE_BROWSER_MP4');
+    expect(resAt16m.status).toBe(200);
+    const json16m = (await resAt16m.json()) as {
+      mp4Export: { status: string };
+      localTimeoutExceeded?: boolean;
+      warningCode?: string;
+      publicPublished: boolean;
+      paidInferenceExecuted: boolean;
+    };
+    expect(json16m.mp4Export.status).toBe('processing');
+    expect(json16m.localTimeoutExceeded).toBe(true);
+    expect(json16m.warningCode).toBe('HEYGEN_LOCAL_POLL_TIMEOUT_15M');
+    expect(json16m.publicPublished).toBe(false);
+    expect(json16m.paidInferenceExecuted).toBe(false);
+    expect(mockUpdateStatus).not.toHaveBeenCalled();
+    expect(submitSpy).not.toHaveBeenCalled();
+
+    mockUpdateStatus.mockResolvedValue({
+      id: 'pme_stuck_1',
+      status: 'completed',
+      providerVideoUrl: 'https://resource.heygen.ai/video/recovered_18m.mp4',
+      durationSec: 35,
+    });
+
+    const resAt18m = await handlePollHeyGenMp4(
+      {} as D1Database,
+      { id: 'u_1', email: 'pilot@example.com' },
+      { action: 'poll_heygen_mp4', orgId: 'org_1', exportId: 'pme_stuck_1' },
+      {
+        nowMs: () => eighteenMinutesLaterMs,
+        lookupHeyGenByokKey: vi.fn().mockResolvedValue('hg-test-key'),
+        fetchHeyGenVideoStatus: vi.fn().mockResolvedValue({
+          status: 'completed',
+          mediaUrl: 'https://resource.heygen.ai/video/recovered_18m.mp4',
+          durationSec: 35,
+        }),
+        submitHeyGenVideo: submitSpy,
+      },
+    );
+
+    expect(resAt18m.status).toBe(200);
+    const json18m = (await resAt18m.json()) as {
+      mp4Export: { status: string; providerVideoUrl: string };
+      paidInferenceExecuted: boolean;
+    };
+    expect(json18m.mp4Export.status).toBe('completed');
+    expect(json18m.mp4Export.providerVideoUrl).toBe('https://resource.heygen.ai/video/recovered_18m.mp4');
+    expect(json18m.paidInferenceExecuted).toBe(false);
     expect(mockUpdateStatus).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        status: 'failed',
-        errorCode: 'HEYGEN_POLL_TIMEOUT_15M_USE_BROWSER_MP4',
+        status: 'completed',
+        providerVideoUrl: 'https://resource.heygen.ai/video/recovered_18m.mp4',
       }),
     );
+    expect(submitSpy).not.toHaveBeenCalled();
   });
 });
