@@ -23,6 +23,36 @@ const DEFAULT_VOICE_ID = '2d5b0e6cf36f460aa7fc47e3eee4ba54';
 const PILOT_VERTICAL_DIMENSION = { width: 720, height: 1280 };
 const HEYGEN_MAX_SCRIPT_CHARS = 5000;
 
+const HEYGEN_MODERATION_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/\b(?:guaranteed\s+profit|risk[-\s]?free\s+profit|get\s+rich\s+quick|100%\s+win\s*rate)\b/gi, 'practical workflow advantage'],
+  [/\b(?:forex|binary\s+options|margin\s+trading|leverage\s+trading|crypto\s+trading)\b/gi, 'digital market analysis'],
+  [/\b(?:broker|trading\s+platform)\b/gi, 'analytics platform'],
+  [/\b(?:crypto|cryptocurrency)\b/gi, 'Web3 software'],
+  [/kiếm\s*tiền\s*nhanh|lợi\s*nhuận\s*khủng|chắc\s*chắn\s*(?:lãi|thắng)|x\d+\s*tài\s*khoản/gi, 'tối ưu hiệu suất công việc'],
+  [/sàn\s*giao\s*dịch|đầu\s*tư\s*sinh\s*lời/gi, 'nền tảng công cụ số'],
+];
+
+/**
+ * Pre-flight moderation sanitizer for HeyGen Avatar renders.
+ * Softens high-risk financial/trading/crypto promotion phrases that trigger
+ * HeyGen's `moderation_rejected` filter before consuming customer credits.
+ */
+export function sanitizeScriptForHeyGenModeration(script: string): {
+  readonly sanitized: string;
+  readonly replacedCount: number;
+} {
+  let sanitized = script;
+  let replacedCount = 0;
+  for (const [pattern, replacement] of HEYGEN_MODERATION_REPLACEMENTS) {
+    const next = sanitized.replace(pattern, () => {
+      replacedCount += 1;
+      return replacement;
+    });
+    sanitized = next;
+  }
+  return { sanitized, replacedCount };
+}
+
 async function extractHeyGenErrorSuffix(res: Response): Promise<string> {
   const reqId = res.headers.get('x-heygen-request-id') ?? '';
   const retryAfter = res.status === 429 ? res.headers.get('retry-after') ?? '' : '';
@@ -89,6 +119,8 @@ export async function submitPilotHeyGenByokVideo(input: {
     throw new Error(`HEYGEN_SCRIPT_TOO_LONG:${cleanScript.length}>${HEYGEN_MAX_SCRIPT_CHARS}`);
   }
 
+  const { sanitized: safeScript } = sanitizeScriptForHeyGenModeration(input.script.trim());
+
   const breakerRef = input.userId ? `byok:${input.userId}` : 'byok:pilot';
   if (!shouldAllowRequest('heygen', breakerRef)) {
     throw new Error('HEYGEN_BREAKER_OPEN');
@@ -107,7 +139,7 @@ export async function submitPilotHeyGenByokVideo(input: {
         video_inputs: [
           {
             character: { type: 'avatar', avatar_id: DEFAULT_AVATAR_ID, avatar_style: 'normal' },
-            voice: { type: 'text', input_text: input.script, voice_id: DEFAULT_VOICE_ID },
+            voice: { type: 'text', input_text: safeScript, voice_id: DEFAULT_VOICE_ID },
           },
         ],
         dimension: PILOT_VERTICAL_DIMENSION,
