@@ -48,7 +48,7 @@ gh run watch || gh run list --workflow=deploy.yml
 
 # Step 3: Verify edge deployment SHA parity
 LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
-LIVE_SHA=$(curl -s https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
+LIVE_SHA=$(curl -s https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
 echo "Local: $LOCAL_SHA Live: $LIVE_SHA"  # must match bit-for-bit
 ```
 
