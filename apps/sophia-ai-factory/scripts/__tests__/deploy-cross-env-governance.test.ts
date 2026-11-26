@@ -131,10 +131,16 @@ describe('deploy cross-environment governance: Production and Pilot isolation', 
         /verify-pilot-wrangler-isolation\.mjs\s+--require-resolved-ids/,
       );
 
-      expect(exec, `${jobId}: must validate pilot_expected_base_sha ancestry`).toContain('git merge-base --is-ancestor');
-      expect(exec, `${jobId}: must diff full range BASE_SHA..github.sha for migrations with repo-root pathspec`).toContain(
-        'git diff --name-only "${BASE_SHA}..${{ github.sha }}" -- \':(top)apps/sophia-ai-factory/migrations/\'',
+      expect(exec, `${jobId}: must run verify-pilot-release-guards.mjs`).toContain(
+        'scripts/verify-pilot-release-guards.mjs',
       );
+      expect(exec, `${jobId}: must run verify-pilot-post-deploy.mjs`).toContain(
+        'scripts/verify-pilot-post-deploy.mjs',
+      );
+      expect(exec, `${jobId}: must wire PROD_VERSION_BEFORE from pilot-release-guards`).toContain(
+        'steps.pilot-release-guards.outputs.prod_version_before',
+      );
+      expect(exec, `${jobId}: must not suppress errors with || true`).not.toMatch(/\|\|\s*true/);
       expect(exec, `${jobId}: must not use git diff-tree which misses merge commits`).not.toContain('git diff-tree');
     }
   });

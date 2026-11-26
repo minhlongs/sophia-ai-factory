@@ -393,42 +393,16 @@ jobs:
       - name: Preflight — Verify Pilot Wrangler Isolation
         run: node scripts/verify-pilot-wrangler-isolation.mjs --require-resolved-ids
 
-      - name: Preflight — Verify Exact Revision & Pilot Migration Inventory Guard
+      - name: Preflight — D1 Migration Duplicate Prefix Guard
+        run: bash scripts/check-duplicate-migration-prefixes.sh
+
+      - name: Preflight — Verify Live Pilot Baseline, Fail-Closed Migration Diff & Remote D1 Schema
+        id: pilot-release-guards
         env:
           PILOT_EXPECTED_BASE_SHA: ${{ inputs.pilot_expected_base_sha }}
-        run: |
-          set -euo pipefail
-          HEAD_SHA=$(git rev-parse HEAD)
-          if [ "$HEAD_SHA" != "${{ github.sha }}" ]; then
-            echo "❌ CRITICAL: Checkout HEAD ($HEAD_SHA) does not match github.sha (${{ github.sha }})." >&2
-            exit 1
-          fi
-          bash scripts/check-duplicate-migration-prefixes.sh
-          if [ "${{ inputs.allow_pilot_migrations }}" != "true" ]; then
-            BASE_SHA="$(printf '%s' "$PILOT_EXPECTED_BASE_SHA" | tr -d '[:space:]')"
-            if [ -z "$BASE_SHA" ]; then
-              echo "❌ CRITICAL: pilot_expected_base_sha is required when deploy_pilot_explicit=true and allow_pilot_migrations!=true." >&2
-              exit 1
-            fi
-            if ! printf '%s' "$BASE_SHA" | grep -Eq '^[0-9a-fA-F]{7,40}$'; then
-              echo "❌ CRITICAL: pilot_expected_base_sha '$BASE_SHA' is not a valid 7-40 hex commit SHA." >&2
-              exit 1
-            fi
-            if ! git rev-parse --verify "${BASE_SHA}^{commit}" >/dev/null 2>&1; then
-              echo "❌ CRITICAL: pilot_expected_base_sha '$BASE_SHA' does not resolve to a commit in this checkout." >&2
-              exit 1
-            fi
-            if ! git merge-base --is-ancestor "$BASE_SHA" "${{ github.sha }}"; then
-              echo "❌ CRITICAL: pilot_expected_base_sha '$BASE_SHA' is not an ancestor of ${{ github.sha }}." >&2
-              exit 1
-            fi
-            CHANGED_MIGRATIONS=$(git diff --name-only "${BASE_SHA}..${{ github.sha }}" -- ':(top)apps/sophia-ai-factory/migrations/' || true)
-            if [ -n "$CHANGED_MIGRATIONS" ]; then
-              echo "❌ CRITICAL: Range ${BASE_SHA}..${{ github.sha }} introduces/modifies migrations, but allow_pilot_migrations is not enabled:" >&2
-              echo "$CHANGED_MIGRATIONS" >&2
-              exit 1
-            fi
-          fi
+          ALLOW_PILOT_MIGRATIONS: ${{ inputs.allow_pilot_migrations }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: node scripts/verify-pilot-release-guards.mjs
 
       - name: Build Next.js & OpenNext for Pilot
         run: npm run pilot:build
@@ -439,3 +413,12 @@ jobs:
       - name: Deploy Pilot Worker to Cloudflare Edge
         run: |
           OPEN_NEXT_DEPLOY=true npx wrangler deploy --config wrangler.pilot.toml --upload-source-maps=false --var "COMMIT_SHA:${{ github.sha }}" --var "DEPLOYED_AT:$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      - name: Post-Deploy — Verify Pilot Worker Version, Access Seal, Zero Prod Mutation & D1 Schema
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          PROD_VERSION_BEFORE: ${{ steps.pilot-release-guards.outputs.prod_version_before }}
+          PILOT_VERIFY_URL: ${{ vars.PILOT_VERIFY_URL || 'https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev' }}
+          PILOT_CF_ACCESS_CLIENT_ID: ${{ secrets.PILOT_CF_ACCESS_CLIENT_ID }}
+          PILOT_CF_ACCESS_CLIENT_SECRET: ${{ secrets.PILOT_CF_ACCESS_CLIENT_SECRET }}
+        run: node scripts/verify-pilot-post-deploy.mjs
