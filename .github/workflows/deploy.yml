@@ -30,6 +30,11 @@ on:
         required: false
         type: boolean
         default: false
+      pilot_expected_base_sha:
+        description: 'Pinned live Pilot base commit SHA for migration range guard (required when deploy_pilot_explicit=true and allow_pilot_migrations=false)'
+        required: false
+        type: string
+        default: ''
 permissions:
   contents: read
 
@@ -91,6 +96,7 @@ jobs:
   stage-2-3-build-and-deploy:
     name: 'Stage 2 & 3: Cloudflare Build, D1 Migration & Edge Deploy'
     needs: stage-1-quality-gate
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.deploy_pilot_explicit != true }}
     environment: production
     runs-on: ubuntu-latest
     defaults:
@@ -354,6 +360,29 @@ jobs:
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps
 
+      - name: Preflight — Collect Live Release-Gate Evidence (pilot environment)
+        id: pilot-release-gate
+        env:
+          RELEASE_ENVIRONMENT: pilot
+          GATE_READ_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node scripts/collect-release-gate-evidence.mjs > /tmp/pilot-release-gate.json
+          cat /tmp/pilot-release-gate.json
+          {
+            echo "evidence<<GATE_EOF"
+            cat /tmp/pilot-release-gate.json
+            echo
+            echo "GATE_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Preflight — Verify Independent Environment Approval Authorizes This Pilot Revision
+        env:
+          RELEASE_ENVIRONMENT: pilot
+          DRY_RUN: ${{ inputs.dry_run }}
+          RELEASE_GATE_EVIDENCE: ${{ steps.pilot-release-gate.outputs.evidence }}
+        run: node scripts/verify-release-authorization.mjs
+
       - name: Preflight — Assert Cloudflare Credentials
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
@@ -365,6 +394,8 @@ jobs:
         run: node scripts/verify-pilot-wrangler-isolation.mjs --require-resolved-ids
 
       - name: Preflight — Verify Exact Revision & Pilot Migration Inventory Guard
+        env:
+          PILOT_EXPECTED_BASE_SHA: ${{ inputs.pilot_expected_base_sha }}
         run: |
           set -euo pipefail
           HEAD_SHA=$(git rev-parse HEAD)
@@ -374,9 +405,26 @@ jobs:
           fi
           bash scripts/check-duplicate-migration-prefixes.sh
           if [ "${{ inputs.allow_pilot_migrations }}" != "true" ]; then
-            CHANGED_MIGRATIONS=$(git diff-tree --no-commit-id --name-only -r "${{ github.sha }}" -- apps/sophia-ai-factory/migrations/ || true)
+            BASE_SHA="$(printf '%s' "$PILOT_EXPECTED_BASE_SHA" | tr -d '[:space:]')"
+            if [ -z "$BASE_SHA" ]; then
+              echo "❌ CRITICAL: pilot_expected_base_sha is required when deploy_pilot_explicit=true and allow_pilot_migrations!=true." >&2
+              exit 1
+            fi
+            if ! printf '%s' "$BASE_SHA" | grep -Eq '^[0-9a-fA-F]{7,40}$'; then
+              echo "❌ CRITICAL: pilot_expected_base_sha '$BASE_SHA' is not a valid 7-40 hex commit SHA." >&2
+              exit 1
+            fi
+            if ! git rev-parse --verify "${BASE_SHA}^{commit}" >/dev/null 2>&1; then
+              echo "❌ CRITICAL: pilot_expected_base_sha '$BASE_SHA' does not resolve to a commit in this checkout." >&2
+              exit 1
+            fi
+            if ! git merge-base --is-ancestor "$BASE_SHA" "${{ github.sha }}"; then
+              echo "❌ CRITICAL: pilot_expected_base_sha '$BASE_SHA' is not an ancestor of ${{ github.sha }}." >&2
+              exit 1
+            fi
+            CHANGED_MIGRATIONS=$(git diff --name-only "${BASE_SHA}..${{ github.sha }}" -- apps/sophia-ai-factory/migrations/ || true)
             if [ -n "$CHANGED_MIGRATIONS" ]; then
-              echo "❌ CRITICAL: Revision ${{ github.sha }} introduces/modifies migrations, but allow_pilot_migrations is not enabled:" >&2
+              echo "❌ CRITICAL: Range ${BASE_SHA}..${{ github.sha }} introduces/modifies migrations, but allow_pilot_migrations is not enabled:" >&2
               echo "$CHANGED_MIGRATIONS" >&2
               exit 1
             fi

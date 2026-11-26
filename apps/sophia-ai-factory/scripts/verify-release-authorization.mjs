@@ -105,6 +105,8 @@ export function evaluateReleaseAuthorization(env = process.env, gate = null) {
     };
   }
 
+  const targetEnvironment = read(env.RELEASE_ENVIRONMENT) || RELEASE_ENVIRONMENT;
+
   if (!gate || !gate.checked) {
     return blocked(
       'BLOCKED_RELEASE_GATE_UNVERIFIED',
@@ -112,10 +114,10 @@ export function evaluateReleaseAuthorization(env = process.env, gate = null) {
     );
   }
 
-  if (gate.environment !== RELEASE_ENVIRONMENT) {
+  if (gate.environment !== targetEnvironment) {
     return blocked(
       'BLOCKED_RELEASE_GATE_ENVIRONMENT_MISMATCH',
-      `Release gate must be verified for the '${RELEASE_ENVIRONMENT}' environment, not '${gate.environment || '(none)'}'.`
+      `Release gate must be verified for the '${targetEnvironment}' environment, not '${gate.environment || '(none)'}'.`
     );
   }
 
@@ -166,28 +168,28 @@ export function evaluateReleaseAuthorization(env = process.env, gate = null) {
   if (!gate.requiresIndependentReview || gate.reviewerCount < 1) {
     return blocked(
       'BLOCKED_RELEASE_GATE_NO_INDEPENDENT_REVIEWER',
-      `Environment '${RELEASE_ENVIRONMENT}' has no required-reviewer protection rule; GitHub will not pause this deploy for a human approval.`
+      `Environment '${targetEnvironment}' has no required-reviewer protection rule; GitHub will not pause this deploy for a human approval.`
     );
   }
 
   if (gate.reviewerCount > 1 && !gate.preventSelfReview) {
     return blocked(
       'BLOCKED_RELEASE_GATE_SELF_REVIEW_ALLOWED',
-      `Environment '${RELEASE_ENVIRONMENT}' has ${gate.reviewerCount} reviewers but permits a run actor to approve their own deployment; multi-reviewer gates must enforce prevent_self_review.`
+      `Environment '${targetEnvironment}' has ${gate.reviewerCount} reviewers but permits a run actor to approve their own deployment; multi-reviewer gates must enforce prevent_self_review.`
     );
   }
 
   if (gate.adminBypass) {
     return blocked(
       'BLOCKED_RELEASE_GATE_ADMIN_BYPASS',
-      `Environment '${RELEASE_ENVIRONMENT}' allows repository admins to bypass the approval gate; the approval is not enforced.`
+      `Environment '${targetEnvironment}' allows repository admins to bypass the approval gate; the approval is not enforced.`
     );
   }
 
   return {
     authorized: true,
     mode: 'ENVIRONMENT_APPROVAL_BOUND',
-    reason: `Production mutation authorized by GitHub Environment approval on '${RELEASE_ENVIRONMENT}', bound to run ${gate.runId || '(unknown)'} attempt ${gate.runAttempt || '(unknown)'} at commit ${gate.sha || '(unknown)'}.`,
+    reason: `Release mutation authorized by GitHub Environment approval on '${targetEnvironment}', bound to run ${gate.runId || '(unknown)'} attempt ${gate.runAttempt || '(unknown)'} at commit ${gate.sha || '(unknown)'}.`,
     operatorIntent: operatorIntent(env),
   };
 }
