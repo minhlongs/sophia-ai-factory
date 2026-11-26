@@ -105,7 +105,7 @@ describe('DashboardSidebarNav — Obsidian Cyber-Glass Navigation', () => {
   });
 
   it('highlights the active route with primary glow styling', () => {
-    render(<DashboardSidebarNav currentPath="/dashboard/missions" />);
+    render(<DashboardSidebarNav isAdmin currentPath="/dashboard/missions" />);
 
     const missionsLink = document.querySelector('a[href="/dashboard/missions"]');
     expect(missionsLink).not.toBeNull();
