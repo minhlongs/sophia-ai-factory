@@ -59,7 +59,7 @@ vi.mock('next/navigation', () => ({
 
 describe('DashboardSidebarNav — Obsidian Cyber-Glass Navigation', () => {
   it('renders all 18 canonical Sophia AI modules with valid hrefs', () => {
-    render(<DashboardSidebarNav />);
+    render(<DashboardSidebarNav isAdmin />);
 
     expect(SOPHIA_NAV_MODULES).toHaveLength(18);
 

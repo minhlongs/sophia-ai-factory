@@ -40,11 +40,11 @@ describe('OPC primary navigation', () => {
     }
   });
 
-  it('renders primary groups, keeps all 16 deep links, and separates Refer Sophia', () => {
-    const { container } = render(<DashboardSidebarNav />);
+  it('renders focused core primary groups for users, keeps all 18 deep links for admins, and separates Refer Sophia', () => {
+    const { container } = render(<DashboardSidebarNav isAdmin />);
 
     const primaryNav = screen.getByRole('navigation', { name: 'Platform Navigation' });
-    expect(within(primaryNav).getAllByRole('link')).toHaveLength(6);
+    expect(within(primaryNav).getAllByRole('link')).toHaveLength(3);
 
     for (const item of SOPHIA_NAV_MODULES) {
       expect(
@@ -61,8 +61,7 @@ describe('OPC primary navigation', () => {
   it('renders Vietnamese primary labels when isVi is true', () => {
     render(<DashboardSidebarNav isVi={true} />);
     const primaryNav = screen.getByRole('navigation', { name: 'Nền Tảng AI' });
-    expect(within(primaryNav).getAllByRole('link').length).toBe(6);
-    expect(screen.getByText('Cần duyệt')).toBeDefined();
+    expect(within(primaryNav).getAllByRole('link').length).toBe(3);
     expect(screen.getByText('Kết quả')).toBeDefined();
     expect(screen.getByText('Kết nối')).toBeDefined();
   });

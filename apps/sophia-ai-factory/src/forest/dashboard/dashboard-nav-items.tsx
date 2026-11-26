@@ -28,6 +28,7 @@ export function DashboardNavItems({
   currentPath = "/dashboard",
   isAdmin = false,
   isVi = false,
+  userTier = "PRO",
   onCloseMobile,
 }: DashboardNavItemsProps) {
   let t: (key: string) => string;
@@ -97,11 +98,21 @@ export function DashboardNavItems({
     }
     return isVi ? group.fallbackLabelVi : group.fallbackLabel;
   };
-  const primaryHrefs = new Set<string>(OPC_PRIMARY_NAV_GROUPS.map((g) => g.href));
+  const isFreeRdMode = userTier.toUpperCase() === "R&D $0";
+  const CORE_PRIMARY_IDS = new Set(["opc_today", "opc_results", "opc_connections"]);
+  const ADVANCED_USER_IDS = new Set([
+    "youtube_automation",
+    "publish_queue",
+    "missions",
+    "approvals",
+    "image_studio",
+    "niche_studio",
+  ]);
+  const primaryItems = OPC_PRIMARY_NAV_GROUPS.filter((g) => CORE_PRIMARY_IDS.has(g.id));
   const groupedModules = groupNavModules(SOPHIA_NAV_MODULES)
     .map(({ group, items }) => ({
       group,
-      items: items.filter((item) => !primaryHrefs.has(item.href)),
+      items: items.filter((item) => isAdmin || ADVANCED_USER_IDS.has(item.id)),
     }))
     .filter(({ items }) => items.length > 0);
 
@@ -113,7 +124,7 @@ export function DashboardNavItems({
           {primaryHeading}
         </h2>
         <ul className="space-y-1">
-          {OPC_PRIMARY_NAV_GROUPS.map((item) => (
+          {primaryItems.map((item) => (
             <li key={item.id}>
               <DashboardNavLinkItem
                 href={item.href}
@@ -127,24 +138,25 @@ export function DashboardNavItems({
         </ul>
       </nav>
 
-      {/* The referral programme is a separate business from affiliate earnings,
-          so it gets its own labelled section rather than a nav item among them. */}
-      <nav aria-label={labelFor("referralProgramme")} className="pt-3">
-        <h2 className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-          {labelFor("referralProgramme")}
-        </h2>
-        <ul className="space-y-1">
-          <li>
-            <DashboardNavLinkItem
-              href={OPC_REFERRAL_NAV_ITEM.href}
-              active={isActive(OPC_REFERRAL_NAV_ITEM.href)}
-              icon={OPC_REFERRAL_NAV_ITEM.icon}
-              label={labelFor("referSophia")}
-              onClick={onCloseMobile}
-            />
-          </li>
-        </ul>
-      </nav>
+      {/* The referral programme is hidden in $0 RaaS Internal R&D mode. */}
+      {!isFreeRdMode && (
+        <nav aria-label={labelFor("referralProgramme")} className="pt-3">
+          <h2 className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            {labelFor("referralProgramme")}
+          </h2>
+          <ul className="space-y-1">
+            <li>
+              <DashboardNavLinkItem
+                href={OPC_REFERRAL_NAV_ITEM.href}
+                active={isActive(OPC_REFERRAL_NAV_ITEM.href)}
+                icon={OPC_REFERRAL_NAV_ITEM.icon}
+                label={labelFor("referSophia")}
+                onClick={onCloseMobile}
+              />
+            </li>
+          </ul>
+        </nav>
+      )}
 
       {/* Every canonical module stays reachable as a grouped deep link inside
           the collapsible drawer, so no route becomes unreachable. */}
