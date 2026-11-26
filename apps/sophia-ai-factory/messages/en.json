@@ -9823,6 +9823,7 @@
     "pilotPollHeyGenStillProcessing": "HeyGen is still rendering (checked at {time}). Check again in 30-60s or use 1-Key Browser MP4.",
     "pilotPollHeyGenCompleted": "HeyGen video is ready to download.",
     "pilotPollHeyGenFailed": "HeyGen reported a render failure. See the error details above.",
+    "pilotPollHeyGenError": "Unable to check HeyGen status right now (checked at {time}). Retry shortly or use 1-Key Browser MP4.",
     "pilotHeyGenFailureReasonLabel": "Failure reason",
     "pilotPublishTitle": "6. Manual Publish & Real Affiliate Ledger",
     "pilotPublishSubtitle": "Copy your ready-to-post caption pack to publish manually on TikTok / Shorts / Reels (zero auto-publishing), paste your live post URL, and record real affiliate dashboard numbers (zero fabricated conversions or commissions).",

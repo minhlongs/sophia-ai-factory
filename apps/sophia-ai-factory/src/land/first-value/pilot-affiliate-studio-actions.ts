@@ -18,6 +18,7 @@ import {
   buildSimulatedAffiliateCampaignPack,
   normalizeAndValidateCampaignPack,
   renderAffiliateCampaignMarkdown,
+  resolveEffectiveContentLanguage,
   type AffiliateCampaignPack,
   type AffiliateOfferBrief,
 } from '@/seed/ai/affiliate-campaign-prompt';
@@ -190,12 +191,18 @@ export async function handleGenerateAffiliateCampaign(
   const env = deps.env ?? process.env;
   const nowMs = deps.nowMs ? deps.nowMs() : Date.now();
   const nowIso = new Date(nowMs).toISOString();
+  const effectiveContentLanguage = resolveEffectiveContentLanguage({
+    contentLanguage: payload.contentLanguage,
+    locale: payload.locale,
+    targetMarket: offer.targetMarket,
+  });
   const payloadHash = await sha256Hex(
     JSON.stringify({
       offerId: offer.id,
       referralUrl: offer.referralUrl,
       durationSec: payload.durationSec,
-      locale: payload.locale,
+      locale: effectiveContentLanguage,
+      contentLanguage: effectiveContentLanguage,
       provenance: payload.provenance,
     }),
   );
@@ -215,7 +222,7 @@ export async function handleGenerateAffiliateCampaign(
     const pack = buildSimulatedAffiliateCampaignPack(
       toOfferBrief(offer),
       payload.durationSec,
-      payload.locale,
+      effectiveContentLanguage,
     );
     const saved = await insertPilotAffiliateCampaign(d1, {
       id: `pcmp_${crypto.randomUUID()}`,
@@ -362,7 +369,7 @@ export async function handleGenerateAffiliateCampaign(
     pack = await deps.generateLiveAffiliateCampaign({
       offer: toOfferBrief(offer),
       durationSec: payload.durationSec,
-      locale: payload.locale,
+      locale: effectiveContentLanguage,
       userId: user.id,
       apiKey: byokKey.trim(),
       model: costControls.config.modelId,
@@ -502,6 +509,13 @@ export async function handleEditAffiliateCampaign(
     userId: user.id,
   });
 
+  const effectiveContentLanguage = resolveEffectiveContentLanguage({
+    contentLanguage: payload.contentLanguage ?? payload.pack.contentLanguage,
+    packContentLanguage: existing.pack.contentLanguage,
+    locale: payload.locale,
+    targetMarket: existing.targetMarket,
+  });
+
   let validatedPack: AffiliateCampaignPack;
   try {
     validatedPack = normalizeAndValidateCampaignPack(payload.pack, {
@@ -509,7 +523,7 @@ export async function handleEditAffiliateCampaign(
       officialWebsiteUrl: existingOffer?.officialWebsiteUrl,
       vertical: existing.vertical,
       targetMarket: existing.targetMarket,
-      locale: payload.locale,
+      locale: effectiveContentLanguage,
     });
   } catch (err) {
     return jsonPrivate(

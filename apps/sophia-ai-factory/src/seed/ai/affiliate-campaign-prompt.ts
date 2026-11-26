@@ -21,6 +21,19 @@ import {
 import type { ScriptOutput } from './script-prompt-builders';
 
 export type AffiliateStudioVertical = 'crypto' | 'saas';
+export type CampaignContentLanguage = 'en' | 'vi';
+
+export function resolveEffectiveContentLanguage(opts: {
+  readonly contentLanguage?: CampaignContentLanguage | null;
+  readonly packContentLanguage?: CampaignContentLanguage | null;
+  readonly locale?: CampaignContentLanguage | null;
+  readonly targetMarket?: string | null;
+}): CampaignContentLanguage {
+  if (opts.contentLanguage) return opts.contentLanguage;
+  if (opts.packContentLanguage) return opts.packContentLanguage;
+  if (opts.locale) return opts.locale;
+  return (opts.targetMarket ?? '').trim().toUpperCase() === 'VN' ? 'vi' : 'en';
+}
 
 export interface AffiliateOfferBrief {
   readonly vertical: AffiliateStudioVertical;
@@ -44,6 +57,7 @@ export interface AffiliateCampaignPack {
   readonly socialPost: string;
   readonly affiliateDisclosure: string;
   readonly referralUrl: string;
+  readonly contentLanguage?: CampaignContentLanguage;
 }
 
 const PROHIBITED_CRYPTO_CLAIMS: readonly RegExp[] = [
@@ -305,13 +319,14 @@ export function normalizeAndValidateCampaignPack(
     socialPost,
     affiliateDisclosure,
     referralUrl,
+    contentLanguage: locale,
   };
 }
 
 export function buildSimulatedAffiliateCampaignPack(
   offer: AffiliateOfferBrief,
   durationSec: number,
-  locale: 'vi' | 'en' = 'vi',
+  locale: CampaignContentLanguage = 'vi',
 ): AffiliateCampaignPack {
   const safeDuration = Math.max(15, Math.min(480, Math.round(durationSec || 30)));
   const s1 = Math.max(5, Math.round(safeDuration * 0.25));
@@ -360,6 +375,7 @@ export function buildSimulatedAffiliateCampaignPack(
     socialPost: `[SIMULATED STUB] Practical breakdown of ${offer.productName} for ${offer.targetAudience} (${offer.targetMarket}).\n\n👉 ${offer.referralUrl}\n\n${disclosure}`,
     affiliateDisclosure: disclosure,
     referralUrl: offer.referralUrl,
+    contentLanguage: locale,
   };
 }
 
