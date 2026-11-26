@@ -16,7 +16,7 @@ export function HelpPageView({ locale, data, pageTitle, pageSubtitle, type }: He
       {/* Header */}
       <div className="space-y-2">
         <Link
-          href="/dashboard/help"
+          href="/guide"
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           ← {isVi ? 'Trung Tâm Trợ Giúp' : 'Help Center'}

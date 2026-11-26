@@ -52,7 +52,7 @@ export function FaqView({ data, isVi }: FaqViewProps) {
           {isVi
             ? 'Không thấy câu trả lời? Vào Khắc phục sự cố hoặc email '
             : "Don't see your question? Visit Troubleshooting or email "}
-          <Link href="/dashboard/help/troubleshooting" className="text-primary-400 hover:underline">
+          <Link href="/guide" className="text-primary-400 hover:underline">
             {isVi ? 'Khắc phục sự cố' : 'Troubleshooting'}
           </Link>
           {isVi ? ' hoặc email ' : ' or email '}

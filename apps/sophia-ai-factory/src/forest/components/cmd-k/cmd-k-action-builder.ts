@@ -14,11 +14,11 @@ export const STATIC_PAGES: Array<{ label: string; href: string }> = [
   { label: 'Missions', href: '/dashboard/missions' },
   { label: 'SOP Marketplace', href: '/dashboard/sop-marketplace' },
   { label: 'My SOPs', href: '/dashboard/sops' },
-  { label: 'Credits', href: '/dashboard/credits' },
-  { label: 'API Keys', href: '/dashboard/api-keys' },
+  { label: 'Credits', href: '/dashboard/monetization' },
+  { label: 'API Keys', href: '/dashboard/settings' },
   { label: 'Settings', href: '/dashboard/settings' },
-  { label: 'Support', href: '/dashboard/support' },
-  { label: 'API Docs', href: '/dashboard/api-docs' },
+  { label: 'Support', href: '/guide' },
+  { label: 'API Docs', href: '/guide' },
 ];
 
 export interface SopInstallation {

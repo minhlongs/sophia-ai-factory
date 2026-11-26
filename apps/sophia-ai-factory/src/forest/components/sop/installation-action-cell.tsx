@@ -45,7 +45,7 @@ export function InstallationActionCell({
 
     try {
       const res = await fetch(
-        `/${locale}/api/sop/installations/${installationId}/run`,
+        `/api/sop/installations/${installationId}/run`,
         { method: 'POST' },
       );
       if (!res.ok) {
@@ -66,7 +66,7 @@ export function InstallationActionCell({
 
     const poll = async () => {
       try {
-        const res = await fetch(`/${locale}/api/sop/runs/${runId}`);
+        const res = await fetch(`/api/sop/runs/${runId}`);
         if (!res.ok) return;
         const data = (await res.json()) as { run: { status: string } };
         const status = data.run?.status ?? 'pending';

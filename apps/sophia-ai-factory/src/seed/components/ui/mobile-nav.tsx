@@ -16,8 +16,8 @@ export function MobileNav() {
   const links = [
     { href: "/dashboard", label: "Home", icon: LayoutDashboard },
     { href: "/dashboard/campaigns", label: "Campaigns", icon: Megaphone },
-    { href: "/dashboard/analytics", label: "Analytics", icon: BarChart2 },
-    { href: "/dashboard/support", label: "Support", icon: HelpCircle },
+    { href: "/dashboard/affiliates", label: "Analytics", icon: BarChart2 },
+    { href: "/guide", label: "Support", icon: HelpCircle },
     { href: "/dashboard/settings", label: "Settings", icon: Settings },
   ];
 

@@ -87,7 +87,7 @@ export function RemixCostBanner({
               ⚠️ {t('insufficientMcu', { missing: missingMcu })}
             </span>
             <Link
-              href="/dashboard/billing/topup"
+              href="/dashboard/monetization"
               className="rounded-lg bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:opacity-90 transition"
             >
               {t('topupMcu')}

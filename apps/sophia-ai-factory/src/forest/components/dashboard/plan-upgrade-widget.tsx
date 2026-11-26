@@ -107,7 +107,7 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 
 			{showHistoryLink && (
 				<p className="text-xs text-muted-foreground">
-					<Link href="/dashboard/orders" className="text-primary hover:text-primary/80 underline">
+					<Link href="/dashboard/monetization" className="text-primary hover:text-primary/80 underline">
 						View past orders
 					</Link>
 				</p>

@@ -41,7 +41,7 @@ export function QueueTable({
         }
         cta={{
           label: t('empty.cta') || 'Open Creator Studio',
-          href: '/dashboard/creator-studio',
+          href: '/dashboard/first-value',
         }}
         className="border-0 rounded-none bg-transparent py-12"
       />

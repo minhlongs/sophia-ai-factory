@@ -114,7 +114,7 @@ export function NicheGate1ReadinessCard({
             <div className="flex items-center gap-1.5 shrink-0">
               {!item.ok && (item.key === 'voice' || item.key === 'video') && (
                 <Link
-                  href="/dashboard/setup-wizard"
+                  href="/dashboard/settings"
                   className="text-[10px] text-amber-800 dark:text-amber-300 hover:underline font-medium"
                 >
                   {t('readinessSetupByokCta')}

@@ -3,7 +3,7 @@
 /**
  * BYOK status, inline pilot OpenRouter key configuration, & honest validation receipt card.
  *
- * In non-pilot mode, links to `/dashboard/setup` when unconfigured.
+ * In non-pilot mode, links to `/dashboard/settings` when unconfigured.
  * In live Customer BYOK pilot mode, allows the invited customer to enter, verify,
  * replace, or remove their own OpenRouter API key directly in the First-Value flow.
  *
@@ -180,7 +180,7 @@ export function FirstValueByokCard({
           <div className="font-semibold text-foreground">{t('byokUnavailable')}</div>
           <p className="text-muted-foreground">{t('byokUnavailableDesc')}</p>
           <Link
-            href="/dashboard/setup"
+            href="/dashboard/settings"
             className="w-fit rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground"
           >
             {t('openSetupWizard')}

@@ -5273,8 +5273,8 @@
       "loading": "Đang tải hàng đợi...",
       "empty": {
         "title": "Chưa có Công việc Xuất bản",
-        "message": "Lên lịch xuất bản WhatsApp đầu tiên từ trình soạn thảo video hoặc thuật sắp xếp.",
-        "cta": "Tạo Mẫu WhatsApp"
+        "message": "Lên lịch đăng video đầu tiên từ Affiliate Studio hoặc AI Missions.",
+        "cta": "Mở Affiliate Studio"
       },
       "table": {
         "video": "Video",
@@ -5298,8 +5298,8 @@
       },
       "approvalBanner": {
         "title": "Xuất bản Đầu tiên Cần Phê Duyệt",
-        "message": "Xuất bản WhatsApp đầu tiên của bạn cần phê duyệt rõ ràng. Nhấn \"Phê duyệt\" trên công việc chờ để tiếp tục.",
-        "note": "Đây là biện pháp bảo mật một lần để ngăn gửi nhầm."
+        "message": "Lần xuất bản đầu tiên của bạn cần phê duyệt rõ ràng. Nhấn \"Phê duyệt\" trên công việc chờ để tiếp tục.",
+        "note": "Đây là biện pháp bảo mật một lần để ngăn đăng nhầm."
       },
       "legend": {
         "title": "Chú thích Trạng thái"
