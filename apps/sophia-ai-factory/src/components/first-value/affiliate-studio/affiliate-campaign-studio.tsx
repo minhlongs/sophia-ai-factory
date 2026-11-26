@@ -50,12 +50,10 @@ import {
 import { AffiliateContentWorkspaceCard } from './affiliate-content-workspace-card';
 import { AffiliateOffersCard, type NewAffiliateOfferInput } from './affiliate-offers-card';
 import { AffiliateOverviewCard } from './affiliate-overview-card';
-import { AffiliatePilotStepper } from './affiliate-pilot-stepper';
 import {
   RdStudioWorkspaceBar,
   type RdStudioTabId,
 } from './rd-studio-workspace-bar';
-import { RdStudioPipelineCanvas } from './rd-studio-pipeline-canvas';
 import {
   AffiliateRevenueDashboardCard,
   type RecordPerformanceFormInput,
@@ -442,7 +440,7 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      {props.pilot && (
+      {props.pilot && !props.pilot.consentAccepted && (
         <FirstValuePilotBanner
           pilot={props.pilot}
           busy={props.busy}
@@ -467,26 +465,6 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
         activeCampaignTitle={activeCampaign?.campaignName ?? null}
         offersCount={offers.length}
         campaignsCount={campaigns.length}
-      />
-
-      <RdStudioPipelineCanvas
-        activeTab={activeTab}
-        onSelectTab={setActiveTab}
-        byokConfigured={props.byokConfigured}
-        offersCount={offers.length}
-        campaignsCount={campaigns.length}
-        hasApprovedCampaign={campaigns.some((c) => c.reviewState === 'approved')}
-        mp4Count={props.pilot?.mp4Exports?.length ?? 0}
-        linksCount={props.pilot?.affiliateLinks?.length ?? 0}
-        verifiedClicks={(props.pilot?.affiliateLinks ?? []).reduce(
-          (sum, item) => sum + item.verifiedClicks,
-          0,
-        )}
-        manualPublishesCount={props.pilot?.manualPublishes?.length ?? 0}
-      />
-
-      <AffiliatePilotStepper
-        hasOffer={offers.length > 0}
         hasApprovedCampaign={campaigns.some((c) => c.reviewState === 'approved')}
         hasMp4OrLink={
           (props.pilot?.mp4Exports?.length ?? 0) > 0 ||

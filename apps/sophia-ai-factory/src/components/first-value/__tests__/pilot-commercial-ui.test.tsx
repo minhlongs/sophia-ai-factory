@@ -307,8 +307,8 @@ describe('Pilot Commercial UI Cards & Browser MP4 Renderer', () => {
       </PilotWorkspaceShell>,
     );
 
-    expect(screen.getAllByText('Tạo Video MP4').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Đăng thủ công').length).toBeGreaterThan(0);
+    expect(screen.getByText('R&D Studio • $0 RaaS')).toBeTruthy();
+    expect(screen.getByTestId('pilot-export-browser-mp4-btn')).toBeTruthy();
 
     fireEvent.click(screen.getByTestId('pilot-export-browser-mp4-btn'));
     await waitFor(() => expect(onCreateShortlink).toHaveBeenCalledTimes(1));

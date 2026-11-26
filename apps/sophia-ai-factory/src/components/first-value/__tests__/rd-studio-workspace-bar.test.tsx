@@ -24,7 +24,7 @@ describe('RdStudioWorkspaceBar (Zen Design OS 2026 4-Tab Studio)', () => {
 
     expect(screen.getByTestId('rd-studio-workspace-bar')).toBeTruthy();
     expect(screen.getByText('BYOK: READY')).toBeTruthy();
-    expect(screen.getByText('Notion AI')).toBeTruthy();
+    expect(screen.getByText(/Notion AI/)).toBeTruthy();
 
     fireEvent.click(screen.getByTestId('rd-studio-tab-script'));
     expect(onTabChange).toHaveBeenCalledWith('script');

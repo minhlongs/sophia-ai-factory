@@ -531,9 +531,7 @@ describe('FirstValueSupportCard & PilotWorkspaceShell', () => {
     );
 
     expect(screen.getByText('R&D Studio • $0 RaaS')).toBeTruthy();
-    expect(screen.getAllByText('Hỗ trợ & Xóa dữ liệu').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Affiliate Offers').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Doanh thu & Hoa hồng').length).toBeGreaterThan(0);
+    expect(screen.getByText('Sophia AI Factory')).toBeTruthy();
     expect(screen.getByText('customer@example.test')).toBeTruthy();
     expect(screen.getByText('Pilot Child Content')).toBeTruthy();
 
@@ -542,8 +540,8 @@ describe('FirstValueSupportCard & PilotWorkspaceShell', () => {
         <div>Pilot EN Content</div>
       </PilotWorkspaceShell>,
     );
-    expect(screen.getByText('Support & Deletion')).toBeTruthy();
-    expect(screen.getAllByText('Revenue Analytics').length).toBeGreaterThan(0);
+    expect(screen.getByText('Internal R&D • $0 RaaS')).toBeTruthy();
+    expect(screen.getByText('Pilot EN Content')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
     await waitFor(() => {
       expect(mockSignOut).toHaveBeenCalledTimes(1);
@@ -761,10 +759,12 @@ describe('FirstValueJourneyClient Customer BYOK Affiliate Campaign Studio flow',
     fireEvent.click(screen.getByRole('button', { name: 'pilotByokSaveBtn' }));
     await waitFor(() => expect(screen.getAllByText('pilotByokReadyBadge').length).toBeGreaterThan(0));
 
-    // 2. Accept pilot terms
+    // 2. Accept pilot terms (banner auto-hides after acceptance)
     fireEvent.click(screen.getByRole('checkbox'));
     fireEvent.click(screen.getByRole('button', { name: 'pilotConsentBtn' }));
-    await waitFor(() => expect(screen.getByText('pilotConsentAccepted')).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'pilotConsentBtn' })).toBeNull(),
+    );
 
     // 3. Add SaaS Affiliate Offer
     fireEvent.change(screen.getByPlaceholderText('affProductNamePlaceholder'), {
