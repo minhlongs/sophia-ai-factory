@@ -24,7 +24,7 @@ export type {
   OpenCoreFeatureSpec,
 };
 
-const PRICING_URL = 'https://sophia.agencyos.network/pricing';
+const PRICING_URL = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/pricing';
 const APACHE = 'Apache-2.0' as const;
 const COMMERCIAL = 'LicenseRef-Sophia-Commercial-FSL-1.1' as const;
 

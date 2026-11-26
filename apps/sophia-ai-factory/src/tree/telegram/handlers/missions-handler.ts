@@ -55,7 +55,7 @@ if (!db) {
   if (!missions || missions.length === 0) {
     await sendMessage(
       chatId,
-      '📭 No missions yet. Run your first mission at https://sophia.agencyos.network/dashboard/missions',
+      '📭 No missions yet. Run your first mission at https://sophia-ai-factory.agencyos-openclaw.workers.dev/dashboard/missions',
     );
     return;
   }
@@ -76,7 +76,7 @@ if (!db) {
     message += `   ID: ${shortId}...\n\n`;
   }
 
-  message += `View all: https://sophia.agencyos.network/dashboard/missions`;
+  message += `View all: https://sophia-ai-factory.agencyos-openclaw.workers.dev/dashboard/missions`;
 
   await sendMessage(chatId, message);
 }

@@ -3,7 +3,7 @@
  *
  * Empirical verification of:
  * 1. Hostname normalization boundary cases (ports, protocols, trailing dots, path traversal, unicode/punycode, uppercase, subdomains)
- * 2. Canonical platform domain bypass defense (sophia.agencyos.network, localhost, *.workers.dev, *.pages.dev)
+ * 2. Canonical platform domain bypass defense (sophia-ai-factory.agencyos-openclaw.workers.dev, localhost, *.workers.dev, *.pages.dev)
  * 3. Lookalike / spoof domain rejection (ensuring attackers cannot masquerade as canonical)
  * 4. Malicious/malformed Host header injection (CRLF, null bytes, non-ByteString Unicode, ByteString limit)
  * 5. Edge routing exception resilience (Headers.set safety, DB outages, SQLi resilience)
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS custom_domains (
   verification_errors TEXT NOT NULL DEFAULT '[]',
   ownership_verification TEXT NOT NULL DEFAULT '{}',
   ssl_verification TEXT NOT NULL DEFAULT '{}',
-  cname_target TEXT NOT NULL DEFAULT 'cname.sophia.agencyos.network',
+  cname_target TEXT NOT NULL DEFAULT 'cname.sophia-ai-factory.agencyos-openclaw.workers.dev',
   cname_verified INTEGER NOT NULL DEFAULT 0,
   active INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL DEFAULT 0,
@@ -97,13 +97,13 @@ describe('Challenger 1: Hostname Resolution, Normalization & Edge Routing Advers
       it('strips single trailing DNS dot', () => {
         expect(normalizeHostname('portal.agency.com.')).toBe('portal.agency.com');
         expect(normalizeHostname('localhost.')).toBe('localhost');
-        expect(normalizeHostname('sophia.agencyos.network.')).toBe('sophia.agencyos.network');
+        expect(normalizeHostname('sophia-ai-factory.agencyos-openclaw.workers.dev.')).toBe('sophia-ai-factory.agencyos-openclaw.workers.dev');
       });
 
       it('remediated defense: multiple trailing dots are stripped completely and recognized as canonical', () => {
         // Multiple trailing dots are stripped cleanly:
-        const doubleDot = normalizeHostname('sophia.agencyos.network..');
-        expect(doubleDot).toBe('sophia.agencyos.network');
+        const doubleDot = normalizeHostname('sophia-ai-factory.agencyos-openclaw.workers.dev..');
+        expect(doubleDot).toBe('sophia-ai-factory.agencyos-openclaw.workers.dev');
 
         // And canonical check correctly recognizes it:
         const isCanonical = isInternalOrCanonicalHostname(doubleDot);
@@ -149,7 +149,7 @@ describe('Challenger 1: Hostname Resolution, Normalization & Edge Routing Advers
   // ── Dimension 2: Canonical Platform Domain Bypass Probing ───────────────────
   describe('Dimension 2: Canonical Platform Domain Bypass Defense', () => {
     it('identifies exact canonical domains as internal', () => {
-      expect(isInternalOrCanonicalHostname('sophia.agencyos.network')).toBe(true);
+      expect(isInternalOrCanonicalHostname('sophia-ai-factory.agencyos-openclaw.workers.dev')).toBe(true);
       expect(isInternalOrCanonicalHostname('localhost')).toBe(true);
       expect(isInternalOrCanonicalHostname('127.0.0.1')).toBe(true);
       expect(isInternalOrCanonicalHostname('0.0.0.0')).toBe(true);
@@ -181,9 +181,9 @@ describe('Challenger 1: Hostname Resolution, Normalization & Edge Routing Advers
       } as unknown as D1Database;
 
       const canonicalList = [
-        'sophia.agencyos.network',
-        'sophia.agencyos.network:3000',
-        'https://sophia.agencyos.network',
+        'sophia-ai-factory.agencyos-openclaw.workers.dev',
+        'sophia-ai-factory.agencyos-openclaw.workers.dev:3000',
+        'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
         'localhost',
         'localhost:8787',
         'sub.localhost',
@@ -213,7 +213,7 @@ describe('Challenger 1: Hostname Resolution, Normalization & Edge Routing Advers
       'evilagencyos.network',           // Missing dot prefix
       'not-agencyos.network',           // Hyphenated variant
       'agencyos.network.evil.com',      // Suffix hijacking
-      'sophia.agencyos.network.attacker.com',
+      'sophia-ai-factory.agencyos-openclaw.workers.dev.attacker.com',
       'evil-workers.dev',               // Prefix masquerade
       'evilworkers.dev',
       'workers.dev.attacker.com',
@@ -242,7 +242,7 @@ describe('Challenger 1: Hostname Resolution, Normalization & Edge Routing Advers
       const mockPrepare = vi.fn().mockReturnValue({ bind: mockBind });
       const mockDb = { prepare: mockPrepare } as unknown as D1Database;
 
-      const result = await resolveTenantFromHostname(mockDb, 'sophia.agencyos.network.attacker.com');
+      const result = await resolveTenantFromHostname(mockDb, 'sophia-ai-factory.agencyos-openclaw.workers.dev.attacker.com');
       expect(mockPrepare).toHaveBeenCalled();
       expect(result.isInternal).toBe(false);
       expect(result.whitelabelActive).toBe(false);
@@ -349,7 +349,7 @@ describe('Challenger 1: Hostname Resolution, Normalization & Edge Routing Advers
           `INSERT INTO custom_domains (
             id, org_id, hostname, cf_custom_hostname_id, ssl_status,
             verification_status, cname_target, cname_verified, active, created_at, updated_at
-          ) VALUES (?1, ?2, ?3, ?4, 'active', 'active', 'cname.sophia.agencyos.network', 1, 1, 100, 100)`
+          ) VALUES (?1, ?2, ?3, ?4, 'active', 'active', 'cname.sophia-ai-factory.agencyos-openclaw.workers.dev', 1, 1, 100, 100)`
         )
         .bind('dom_punycode_1', 'org_vietnam_agency', 'xn--ti-vi-4ta2275b.com', 'cf_puny_1')
         .run();
@@ -376,8 +376,8 @@ describe('Challenger 1: Hostname Resolution, Normalization & Edge Routing Advers
             id, org_id, hostname, cf_custom_hostname_id, ssl_status,
             verification_status, cname_target, cname_verified, active, created_at, updated_at
           ) VALUES 
-          ('dom_1', 'org_alpha', 'portal.alpha-agency.com', 'cf_1', 'active', 'active', 'cname.sophia.agencyos.network', 1, 1, 100, 100),
-          ('dom_2', 'org_beta', 'portal.beta-agency.com', 'cf_2', 'pending_validation', 'pending', 'cname.sophia.agencyos.network', 0, 0, 100, 100)`
+          ('dom_1', 'org_alpha', 'portal.alpha-agency.com', 'cf_1', 'active', 'active', 'cname.sophia-ai-factory.agencyos-openclaw.workers.dev', 1, 1, 100, 100),
+          ('dom_2', 'org_beta', 'portal.beta-agency.com', 'cf_2', 'pending_validation', 'pending', 'cname.sophia-ai-factory.agencyos-openclaw.workers.dev', 0, 0, 100, 100)`
         )
         .run();
     });
@@ -398,7 +398,7 @@ describe('Challenger 1: Hostname Resolution, Normalization & Edge Routing Advers
         'portal.alpha-agency.com:9999', // normalized to portal.alpha-agency.com -> matches
         'alpha-agency.com',              // apex not registered
         'unknown.random-site.com',
-        'sophia.agencyos.network',
+        'sophia-ai-factory.agencyos-openclaw.workers.dev',
       ];
 
       for (const domain of probeDomains) {
@@ -416,8 +416,8 @@ describe('Challenger 1: Hostname Resolution, Normalization & Edge Routing Advers
 
     it('guarantees canonical domains never receive tenant context even if requested with extra parameters', async () => {
       const canonicalProbes = [
-        'sophia.agencyos.network',
-        'sophia.agencyos.network:443',
+        'sophia-ai-factory.agencyos-openclaw.workers.dev',
+        'sophia-ai-factory.agencyos-openclaw.workers.dev:443',
         'localhost:3000',
         'app.workers.dev',
         'sub.pages.dev',

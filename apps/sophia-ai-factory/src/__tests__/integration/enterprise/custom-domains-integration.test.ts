@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS custom_domains (
   verification_errors TEXT NOT NULL DEFAULT '[]',
   ownership_verification TEXT NOT NULL DEFAULT '{}',
   ssl_verification TEXT NOT NULL DEFAULT '{}',
-  cname_target TEXT NOT NULL DEFAULT 'cname.sophia.agencyos.network',
+  cname_target TEXT NOT NULL DEFAULT 'cname.sophia-ai-factory.agencyos-openclaw.workers.dev',
   cname_verified INTEGER NOT NULL DEFAULT 0,
   active INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL DEFAULT 0,
@@ -170,7 +170,7 @@ describe('Enterprise Custom Domains & White-Label — Integration Tests', () => 
       expect(domain.cf_custom_hostname_id).toContain('mock_cf_');
       expect(domain.ownership_verification?.name).toBe('_cf-custom-hostname.portal.apexagency.com');
       expect(domain.ssl_verification?.name).toBe('_acme-challenge.portal.apexagency.com');
-      expect(domain.cname_target).toBe('cname.sophia.agencyos.network');
+      expect(domain.cname_target).toBe('cname.sophia-ai-factory.agencyos-openclaw.workers.dev');
       expect(domain.cname_verified).toBe(false);
       expect(domain.active).toBe(false);
 
@@ -274,7 +274,7 @@ describe('Enterprise Custom Domains & White-Label — Integration Tests', () => 
     it('short-circuits canonical hostnames without querying D1', async () => {
       const spyPrepare = vi.spyOn(d1, 'prepare');
 
-      const result1 = await getTenantBrandingByHostname(d1 as unknown as D1Database, 'sophia.agencyos.network');
+      const result1 = await getTenantBrandingByHostname(d1 as unknown as D1Database, 'sophia-ai-factory.agencyos-openclaw.workers.dev');
       const result2 = await getTenantBrandingByHostname(d1 as unknown as D1Database, 'localhost');
 
       expect(result1).toBeNull();

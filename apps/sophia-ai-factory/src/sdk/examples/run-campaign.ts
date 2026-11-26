@@ -11,7 +11,7 @@ import { SophiaClient } from '../index';
 async function main() {
   const sophia = new SophiaClient({
     apiKey: process.env.SOPHIA_API_KEY ?? '',
-    baseUrl: process.env.SOPHIA_BASE_URL ?? 'https://sophia.agencyos.network',
+    baseUrl: process.env.SOPHIA_BASE_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
   });
 
   // Check credits first — all output to stderr so stdout stays clean
@@ -19,7 +19,7 @@ async function main() {
   console.error(`MCU Balance: ${balance.credits_remaining} credits remaining`);
 
   if (balance.credits_remaining < 5) {
-    console.error('Insufficient credits. Visit https://sophia.agencyos.network/dashboard/credits to top up.');
+    console.error('Insufficient credits. Visit https://sophia-ai-factory.agencyos-openclaw.workers.dev/dashboard/credits to top up.');
     process.exit(1);
    }
 

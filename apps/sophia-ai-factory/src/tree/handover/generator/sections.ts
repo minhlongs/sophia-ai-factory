@@ -31,7 +31,7 @@ export function buildAccountSection(input: HandoverDocInput): string {
   return `\n---\n\n## Account Access\n
 | Field | Value |
 |---|---|
-| Login URL | https://sophia.agencyos.network/login |
+| Login URL | https://sophia-ai-factory.agencyos-openclaw.workers.dev/login |
 | Your Email | ${input.ownerEmail} |
 | First Access | Use magic link below (valid 24h) |
 
@@ -61,7 +61,7 @@ export function buildSupportAndFaq(tier: Tier): string {
 | Email | support@mekongmind.com |
 | Response SLA | ${TIER_SUPPORT_SLA[tier]} |
 | Telegram Bot | @Sophia_Bbot |
-| Help Center | https://sophia.agencyos.network/guide |
+| Help Center | https://sophia-ai-factory.agencyos-openclaw.workers.dev/guide |
 
 ---\n\n## Quick Start Cheat Sheet\n
 \`\`\`

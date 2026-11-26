@@ -42,7 +42,7 @@ export async function loadAffiliateOfferStep(step: Step, campaignId: string): Pr
         .single();
       const row = data as AffiliateOfferSelectedRow | null;
       if (!row) return null;
-      const shortUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'}/r/${row.short_code}`;
+      const shortUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev'}/r/${row.short_code}`;
       const explicitCategory =
         typeof row.category === 'string' && row.category.trim().length > 0
           ? row.category.trim()

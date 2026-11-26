@@ -80,7 +80,7 @@ export async function sendBundleOutageApologyEmail(
       })
     } else {
       const { data, error } = await resend.emails.send({
-        from: 'Sophia AI <billing@sophia.agencyos.network>',
+        from: 'Sophia AI <billing@sophia-ai-factory.agencyos-openclaw.workers.dev>',
         to: toEmail,
         subject,
         text,

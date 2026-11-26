@@ -28,7 +28,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 import { DELETE } from './route';
 
 function makeDelete(id: string): NextRequest {
-  return new NextRequest(`https://sophia.agencyos.network/api/campaigns?id=${id}`, {
+  return new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/campaigns?id=${id}`, {
     method: 'DELETE',
     headers: csrfHeaders,
   });

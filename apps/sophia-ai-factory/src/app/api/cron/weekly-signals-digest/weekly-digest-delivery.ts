@@ -27,7 +27,7 @@ export async function sendEmail(summary: string): Promise<void> {
       method: 'POST',
       headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'Sophia Digest <digest@sophia.agencyos.network>',
+        from: 'Sophia Digest <digest@sophia-ai-factory.agencyos-openclaw.workers.dev>',
         to: [founderEmail],
         subject: `[Sophia] Weekly Signals Digest — ${weekStr} / Báo Cáo Tín Hiệu Tuần`,
         text: summary,

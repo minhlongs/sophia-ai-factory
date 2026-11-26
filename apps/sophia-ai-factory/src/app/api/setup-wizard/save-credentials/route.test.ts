@@ -105,7 +105,7 @@ describe('POST /api/setup-wizard/save-credentials', () => {
     expect(mockSetUserCredential).toHaveBeenCalledWith('user-1', 'heygen', 'hg_live_user_key');
     expect(mockRegisterHeyGenWebhook).toHaveBeenCalledWith(
       'hg_live_user_key',
-      'https://sophia.agencyos.network/api/webhooks/heygen',
+      'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/heygen',
     );
   });
 

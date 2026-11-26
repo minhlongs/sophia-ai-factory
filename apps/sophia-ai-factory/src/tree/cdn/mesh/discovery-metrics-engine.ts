@@ -60,7 +60,7 @@ export function discoverEdgeEndpoint(
     const dims = ASPECT_RATIO_PRESETS[preferredRatio].high;
     const ratioSlug = preferredRatio.replace(':', 'x');
     const tenant = query.tenantId ?? 'default';
-    cdnUrl = `https://cdn.sophia.agencyos.network/assets/${tenant}/${query.assetId}/thumb_${ratioSlug}_${dims.width}x${dims.height}.${preferredFormat}`;
+    cdnUrl = `https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev/assets/${tenant}/${query.assetId}/thumb_${ratioSlug}_${dims.width}x${dims.height}.${preferredFormat}`;
   }
 
   const cacheStatus: 'HIT' | 'MISS' = variants.length > 0 ? 'HIT' : 'MISS';

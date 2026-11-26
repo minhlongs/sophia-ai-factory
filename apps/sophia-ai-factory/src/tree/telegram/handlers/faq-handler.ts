@@ -5,7 +5,7 @@
  */
 
 const FAQ_RESPONSES: Record<string, string> = {
-  'api key|khoá api|key api': '🔑 Để thiết lập API Keys, vào Dashboard → Cài Đặt → API Keys. Bạn cần 3 keys: OpenRouter, ElevenLabs, D-ID. Hướng dẫn chi tiết: sophia.agencyos.network/vi/guide/integrations',
+  'api key|khoá api|key api': '🔑 Để thiết lập API Keys, vào Dashboard → Cài Đặt → API Keys. Bạn cần 3 keys: OpenRouter, ElevenLabs, D-ID. Hướng dẫn chi tiết: sophia-ai-factory.agencyos-openclaw.workers.dev/vi/guide/integrations',
   'thanh toán|payment|trả phí|nâng cấp|upgrade': '💳 Sophia chấp nhận thanh toán USDT qua NOWPayments. Vào Dashboard → Bảng Giá để chọn gói. Gói Starter từ $199/tháng.',
   'video bị lỗi|video fail|lỗi video|error': '⚠️ Nếu video bị lỗi, thử: 1) Kiểm tra API keys còn hạn 2) Nhấn "Chạy Lại" trên Dashboard 3) Đợi 15 phút rồi thử lại. Vẫn lỗi? Gõ /ticket để gửi yêu cầu hỗ trợ.',
   'kết nối youtube|youtube channel|liên kết youtube': '📺 Vào Dashboard → Cài Đặt → Kết Nối YouTube → Nhấn "Kết Nối". Bạn cần đăng nhập Google và cấp quyền cho Sophia.',

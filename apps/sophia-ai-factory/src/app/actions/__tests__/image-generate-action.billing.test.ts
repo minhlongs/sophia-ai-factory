@@ -50,7 +50,7 @@ vi.mock('@/seed/ai/providers/fal-image-provider', () => ({
 vi.mock('@/land/image/fal-image-r2-service', () => ({
   storeFalImageInR2: vi.fn(() =>
     Promise.resolve({
-      permanentUrl: 'https://cdn.sophia.agencyos.network/media/fal/job123/image.png',
+      permanentUrl: 'https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev/media/fal/job123/image.png',
       storageKey: 'media/fal/job123/image.png',
       bucket: 'VIDEO_BUCKET',
       sizeBytes: 1024,

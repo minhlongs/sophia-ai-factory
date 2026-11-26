@@ -29,7 +29,7 @@ async function computeHmacHex(body: string, secret: string): Promise<string> {
 function makeRequest(body: string, sig?: string): NextRequest {
   const headers: Record<string, string> = { 'content-type': 'application/json' };
   if (sig !== undefined) headers['x-grab-signature'] = sig;
-  return new NextRequest('https://sophia.agencyos.network/api/webhooks/grabpay', {
+  return new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/grabpay', {
     method: 'POST',
     headers,
     body,

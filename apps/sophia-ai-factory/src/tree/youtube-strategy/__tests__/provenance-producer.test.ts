@@ -101,7 +101,7 @@ describe('producePublishProvenance deterministic claim/source scanner', () => {
     const provenance = producePublishProvenance({
       title: 'Top 5 Productivity Workflows in 2026 (1080p 24/7)',
       description:
-        'Follow these 3 simple steps in 15 seconds. #ad | This content contains affiliate links and I may earn a commission at no cost to you. https://sophia.agencyos.network/r/99',
+        'Follow these 3 simple steps in 15 seconds. #ad | This content contains affiliate links and I may earn a commission at no cost to you. https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/99',
       script: mockScript,
     });
 

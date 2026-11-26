@@ -78,7 +78,7 @@ export async function handlePayout(chatId: string): Promise<void> {
       `💳 *Settlement Rails:*\n` +
       `• Domestic: *VietQR Instant 24/7* (0% fee)\n` +
       `• Global: *USDT TRC20 / ERC20* (Instant On-Chain)\n\n` +
-      `_To request a withdrawal, visit your Creator Portal at sophia.agencyos.network or use the Web App._\n\n` +
+      `_To request a withdrawal, visit your Creator Portal at sophia-ai-factory.agencyos-openclaw.workers.dev or use the Web App._\n\n` +
       `🇻🇳 *TỔNG QUAN THU NHẬP CREATOR*\n` +
       `• Số dư khả dụng: \`${availableFormatted}\`\n` +
       `• Đang xử lý: \`${pendingFormatted}\`\n` +

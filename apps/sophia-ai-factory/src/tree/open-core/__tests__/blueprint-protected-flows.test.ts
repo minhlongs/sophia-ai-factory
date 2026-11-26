@@ -61,7 +61,7 @@ describe('Open-Core Blueprint & Protected Flows Suite (Lane 1)', () => {
       expect(resolveSophiaEdition({ sophiaEdition: 'community' })).toBe('community');
       expect(resolveSophiaEdition({ sophiaEdition: 'cloud' })).toBe('cloud');
       expect(resolveSophiaEdition({ hasValidRaasLicense: true })).toBe('enterprise');
-      expect(resolveSophiaEdition({ appUrl: 'https://sophia.agencyos.network' })).toBe('cloud');
+      expect(resolveSophiaEdition({ appUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev' })).toBe('cloud');
 
       const communityByok = evaluateFeatureGate('byok_setup_wizard', { sophiaEdition: 'community' });
       expect(communityByok.allowed).toBe(true);

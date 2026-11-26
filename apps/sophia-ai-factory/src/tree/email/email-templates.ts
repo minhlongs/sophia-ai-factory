@@ -8,7 +8,7 @@
 const BRAND_COLOR = '#6750A4';
 
 function getBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
+  return process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 }
 
 function footer(): string {

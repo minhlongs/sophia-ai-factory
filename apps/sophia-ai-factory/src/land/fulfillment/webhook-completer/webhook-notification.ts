@@ -39,7 +39,7 @@ export async function sendBundleReadyNotification(
     if (!userInfo) return;
 
     const { creditsRemaining } = await getUserCredits(row.user_id);
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
     const videoPageUrl = r2Key ? `${appUrl}/dashboard/orders` : videoUrl;
 
     await sendOneTimeBundleReadyEmail({

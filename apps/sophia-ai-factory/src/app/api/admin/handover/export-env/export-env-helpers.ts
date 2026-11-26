@@ -37,14 +37,14 @@ SENTRY_PROJECT=sophia-ai-factory
 SENTRY_RELEASE=
 
 # ─── Core App ────────────────────────────────────────────────────────────────
-NEXT_PUBLIC_APP_URL=https://sophia.agencyos.network
+NEXT_PUBLIC_APP_URL=https://sophia-ai-factory.agencyos-openclaw.workers.dev
 NEXT_PUBLIC_DISTRIBUTE_ENABLED=1
 NEXT_PUBLIC_CRISP_WEBSITE_ID=
 COMMIT_SHA=
 
 # ─── Better Auth ─────────────────────────────────────────────────────────────
 BETTER_AUTH_SECRET=
-BETTER_AUTH_URL=https://sophia.agencyos.network
+BETTER_AUTH_URL=https://sophia-ai-factory.agencyos-openclaw.workers.dev
 
 # ─── Inngest ─────────────────────────────────────────────────────────────────
 INNGEST_EVENT_KEY=
@@ -83,8 +83,8 @@ AUDIT_HASH_SALT=
 
 # ─── Email / Notifications ───────────────────────────────────────────────────
 RESEND_API_KEY=
-RESEND_FROM_EMAIL=noreply@sophia.agencyos.network
-SUPPORT_EMAIL=support@sophia.agencyos.network
+RESEND_FROM_EMAIL=noreply@sophia-ai-factory.agencyos-openclaw.workers.dev
+SUPPORT_EMAIL=support@sophia-ai-factory.agencyos-openclaw.workers.dev
 FOUNDER_EMAIL=
 
 # ─── Cron / Background Jobs ──────────────────────────────────────────────────

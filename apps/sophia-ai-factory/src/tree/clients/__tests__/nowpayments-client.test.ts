@@ -90,11 +90,11 @@ describe('createInvoiceUrl', () => {
     expect(successRaw).toContain('https://staging.example.com/payment-success')
   })
 
-  it('falls back to sophia.agencyos.network when env missing', () => {
+  it('falls back to sophia-ai-factory.agencyos-openclaw.workers.dev when env missing', () => {
     vi.stubEnv('NEXT_PUBLIC_APP_URL', '')
     const url = createInvoiceUrl('BASIC', 'user-1')
     const successRaw = new URL(url).searchParams.get('success_url')!
-    expect(successRaw).toContain('https://sophia.agencyos.network/payment-success')
+    expect(successRaw).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev/payment-success')
   })
 
   it('embeds customerEmail in success_url when provided', () => {
@@ -209,10 +209,10 @@ describe('createOneTimeInvoiceUrl', () => {
     expect(successRaw).not.toContain('email=')
   })
 
-  it('falls back to sophia.agencyos.network when env missing', () => {
+  it('falls back to sophia-ai-factory.agencyos-openclaw.workers.dev when env missing', () => {
     vi.stubEnv('NEXT_PUBLIC_APP_URL', '')
     const url = createOneTimeInvoiceUrl(sku, 'user-1')
     const successRaw = new URL(url).searchParams.get('success_url')!
-    expect(successRaw).toContain('https://sophia.agencyos.network/payment-success')
+    expect(successRaw).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev/payment-success')
   })
 })

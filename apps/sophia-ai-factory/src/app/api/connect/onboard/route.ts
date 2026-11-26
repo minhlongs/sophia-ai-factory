@@ -23,7 +23,7 @@ const BodySchema = z.object({
   country: z.string().length(2).optional(),
 });
 
-const PROD_URL = process.env.PROD_URL ?? 'https://sophia.agencyos.network';
+const PROD_URL = process.env.PROD_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 const DEFAULT_RETURN = `${PROD_URL}/dashboard/affiliate?connect=success`;
 const DEFAULT_REFRESH = `${PROD_URL}/dashboard/affiliate?connect=refresh`;
 

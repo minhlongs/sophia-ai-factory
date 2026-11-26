@@ -325,7 +325,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
   async function deliver(endpoint: 'legacy' | 'canonical', payload = buildIpnPayload()) {
     const body = await signPayOsBody(payload);
     const route = endpoint === 'legacy' ? (await import('@/app/api/payos/ipn/route')).POST : postWebhook;
-    return route(new NextRequest('https://sophia.agencyos.network/api/payos/ipn', { method: 'POST', body }));
+    return route(new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/payos/ipn', { method: 'POST', body }));
   }
 
   function seedMember() {
@@ -456,7 +456,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
   it.each(['prepare', 'bind'] as const)('fails closed on the first MCU %s failure and grants exactly once on retry', async (stage) => {
     seedSubscriptionOrder();
     const signed = await signPayOsBody(buildIpnPayload());
-    const deliver = () => postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: signed }));
+    const deliver = () => postWebhook(new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/payos', { method: 'POST', body: signed }));
     harness.hooks.failMcu = stage;
     const failed = await deliver();
     expect(failed.status).toBe(500);
@@ -480,7 +480,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
     `);
     seedSubscriptionOrder();
     const signed = await signPayOsBody(buildIpnPayload());
-    const deliver = () => postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: signed }));
+    const deliver = () => postWebhook(new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/payos', { method: 'POST', body: signed }));
     const snapshot = () => Object.fromEntries(['organizations', 'org_members', 'subscriptions', 'pending_orders', 'mcu_transactions', 'user_mcu_balance'].map((table) => [table, harness.rows(table)]));
     let concurrentState: ReturnType<typeof snapshot> | undefined;
     harness.hooks.beforeBatch = async () => {
@@ -489,7 +489,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
         harness.sqlite.exec("UPDATE subscriptions SET tier = 'PREMIUM', plan = 'premium', current_period_end = '2026-12-05T00:00:00.000Z' WHERE id = 'sub_race'; UPDATE organizations SET plan = 'premium' WHERE id = 'org_race';");
       } else {
         seedSubscriptionOrder({ orderId: 'pilot_second', paymentLinkId: 'plink_second', orderCode: 880012 });
-        const second = await postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', {
+        const second = await postWebhook(new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/payos', {
           method: 'POST', body: await signPayOsBody(buildIpnPayload({ paymentLinkId: 'plink_second', orderCode: 880012 })),
         }));
         expect(second.status).toBe(200);
@@ -513,7 +513,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
   it('Scenario 1 & 8: Valid payment grants BASIC for exact monthly window, and expires cleanly at +14d + 1s', async () => {
     seedSubscriptionOrder();
     const signed = await signPayOsBody(buildIpnPayload());
-    const res = await postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: signed }));
+    const res = await postWebhook(new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/payos', { method: 'POST', body: signed }));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ received: true });
 
@@ -563,7 +563,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
   it('Scenario 2: Invalid payment signature fails closed (400) with zero DB mutations', async () => {
     seedSubscriptionOrder();
     const forged = await signPayOsBody(buildIpnPayload(), 'wrong-attacker-key');
-    const res = await postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: forged }));
+    const res = await postWebhook(new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/payos', { method: 'POST', body: forged }));
     expect(res.status).toBe(400);
     expect(harness.rows('subscriptions')).toHaveLength(0);
     expect(harness.rows('payment_events')).toHaveLength(0);
@@ -578,7 +578,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
 
     // Scenario 4: Cancelled / failed payment event (data.code !== '00')
     const cancelledBody = await signPayOsBody(buildIpnPayload({ dataCode: '01', success: false }));
-    const res = await postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: cancelledBody }));
+    const res = await postWebhook(new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/payos', { method: 'POST', body: cancelledBody }));
     expect(res.status).toBe(200);
     expect(harness.rows('subscriptions')).toHaveLength(0);
     expect(harness.rows('pending_orders')[0]).toMatchObject({ status: 'failed' });
@@ -595,7 +595,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
       .run(BASE_ISO);
 
     const concurrentRes = await postWebhook(
-      new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: signed }),
+      new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/payos', { method: 'POST', body: signed }),
     );
     expect(concurrentRes.status).toBe(409);
     expect(await concurrentRes.json()).toMatchObject({ status: 'processing' });
@@ -603,11 +603,11 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
 
     // Clear simulated in-flight lock and run real first delivery + repeated delivery (Scenario 5)
     harness.sqlite.exec('DELETE FROM payment_events;');
-    const first = await postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: signed }));
+    const first = await postWebhook(new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/payos', { method: 'POST', body: signed }));
     expect(first.status).toBe(200);
 
     vi.setSystemTime(new Date('2026-11-16T00:00:00.000Z'));
-    const duplicate = await postWebhook(new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: signed }));
+    const duplicate = await postWebhook(new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/payos', { method: 'POST', body: signed }));
     expect(duplicate.status).toBe(200);
     expect(await duplicate.json()).toEqual({ received: true, duplicate: true });
 
@@ -631,7 +631,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
     seedSubscriptionOrder({ orderId: 'sophia_u_basic_1', userId: 'u_basic', paymentLinkId: 'plink_b', orderCode: 880022 });
 
     const resBasic = await postWebhook(
-      new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', {
+      new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/payos', {
         method: 'POST',
         body: await signPayOsBody(buildIpnPayload({ paymentLinkId: 'plink_b', orderCode: 880022 })),
       }),
@@ -653,7 +653,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
     seedSubscriptionOrder({ orderId: 'sophia_u_prem_1', userId: 'u_prem', paymentLinkId: 'plink_p', orderCode: 880033 });
 
     const resPrem = await postWebhook(
-      new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', {
+      new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/payos', {
         method: 'POST',
         body: await signPayOsBody(buildIpnPayload({ paymentLinkId: 'plink_p', orderCode: 880033 })),
       }),
@@ -682,7 +682,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
     // Scenario 10a: Force D1 batch failure on first delivery -> 1000, lock released, order stays pending
     harness.setFailNextBatch(true);
     const failedAttempt = await postWebhook(
-      new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: signedAtk }),
+      new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/payos', { method: 'POST', body: signedAtk }),
     );
     expect(failedAttempt.status).toBe(500);
     expect(harness.rows('payment_events')).toHaveLength(0); // lock released!
@@ -690,7 +690,7 @@ describe('Gate G4 — Deterministic 10-Scenario Pilot Entitlement Lifecycle', ()
 
     // Scenario 10b & 9: Retry succeeds cleanly in attacker's isolated org, leaving org_victim untouched
     const retryAttempt = await postWebhook(
-      new NextRequest('https://sophia.agencyos.network/api/webhooks/payos', { method: 'POST', body: signedAtk }),
+      new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/payos', { method: 'POST', body: signedAtk }),
     );
     expect(retryAttempt.status).toBe(200);
 

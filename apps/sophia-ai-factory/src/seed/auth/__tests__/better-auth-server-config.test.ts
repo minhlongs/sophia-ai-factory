@@ -93,7 +93,7 @@ describe('Better Auth Server Configuration & Hardening', () => {
     });
 
     it('resolveTrustedOrigins merges and deduplicates dynamic origins from environment variables', () => {
-      vi.stubEnv('TRUSTED_ORIGINS', 'https://preview.agencyos.network, https://sophia.agencyos.network');
+      vi.stubEnv('TRUSTED_ORIGINS', 'https://preview.agencyos.network, https://sophia-ai-factory.agencyos-openclaw.workers.dev');
       vi.stubEnv('BETTER_AUTH_TRUSTED_ORIGINS', 'https://custom-partner.com/');
       const origins = resolveTrustedOrigins();
 

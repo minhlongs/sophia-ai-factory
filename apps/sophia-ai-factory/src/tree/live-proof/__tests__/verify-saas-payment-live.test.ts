@@ -90,7 +90,7 @@ describe('verify-saas-payment-live', () => {
       ...process.env,
       SOPHIA_PAYMENT_LIVE_CONFIRM: 'run-test-payment',
       SOPHIA_VERSION_INTROSPECT_TOKEN: 'full-sha-token',
-      SOPHIA_PAYMENT_LIVE_BASE_URL: 'https://sophia.agencyos.network.',
+      SOPHIA_PAYMENT_LIVE_BASE_URL: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev.',
       SOPHIA_PAYMENT_LIVE_EMAIL: 'test@example.com',
       SOPHIA_PAYMENT_LIVE_PASSWORD: 'test-password',
       SOPHIA_PAYMENT_LIVE_TIER: 'BASIC',

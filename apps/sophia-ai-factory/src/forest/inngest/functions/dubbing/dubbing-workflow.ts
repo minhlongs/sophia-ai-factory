@@ -100,7 +100,7 @@ export const videoVoiceDubbingFunction = inngest.createFunction(
       status: 'completed',
       videoUrl:
         input.sourceVideoUrl ||
-        `https://storage.sophia.agencyos.network/tenants/${tenantId}/videos/${videoId}/final.mp4`,
+        `https://storage.sophia-ai-factory.agencyos-openclaw.workers.dev/tenants/${tenantId}/videos/${videoId}/final.mp4`,
       audioTrackUrls: synthesizedAudioUrls,
       subtitleUrls,
       transcription: transcript,

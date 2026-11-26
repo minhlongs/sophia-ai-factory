@@ -29,7 +29,7 @@ const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
 const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
 
 function makeRequest(path = '/api/r/abc123def', headers: Record<string, string> = {}): NextRequest {
-  const req = new NextRequest(`https://sophia.agencyos.network${path}`, { headers });
+  const req = new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev${path}`, { headers });
   return req;
 }
 

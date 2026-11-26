@@ -30,7 +30,7 @@ export default function AffiliateDashboardPage({
   kpiMetrics,
   offers,
   conversions,
-  referralLink = 'https://sophia.agencyos.network/r/jane-8472',
+  referralLink = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/jane-8472',
   walletAddress = 'TJ9w8D7s...mK2n9R1v',
   walletBalance = '$247.00',
 }: AffiliateDashboardPageProps) {

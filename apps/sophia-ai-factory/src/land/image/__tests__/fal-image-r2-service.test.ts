@@ -53,7 +53,7 @@ describe('storeFalImageInR2', () => {
   it('downloads CDN image and stores in R2 with public URL', async () => {
     mockedGetBucket.mockResolvedValue({
       bucket: mockBucket,
-      publicBaseUrl: 'https://cdn.sophia.agencyos.network',
+      publicBaseUrl: 'https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev',
     });
     mockPut.mockResolvedValueOnce(undefined);
     fetchMock.mockResolvedValueOnce(new Response(PNG_BYTES, { status: 200 }));
@@ -64,7 +64,7 @@ describe('storeFalImageInR2', () => {
     expect(result.storageKey).toBe(`media/fal/${JOB_ID}/image.png`);
     expect(result.bucket).toBe('VIDEO_BUCKET');
     expect(result.sizeBytes).toBe(8);
-    expect(result.permanentUrl).toBe(`https://cdn.sophia.agencyos.network/media/fal/${JOB_ID}/image.png`);
+    expect(result.permanentUrl).toBe(`https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev/media/fal/${JOB_ID}/image.png`);
     expect(mockPut).toHaveBeenCalledWith(
       `media/fal/${JOB_ID}/image.png`,
       expect.anything(),
@@ -100,7 +100,7 @@ describe('storeFalImageInR2', () => {
   it('throws when R2 circuit breaker is open', async () => {
     mockedGetBucket.mockResolvedValue({
       bucket: mockBucket,
-      publicBaseUrl: 'https://cdn.sophia.agencyos.network',
+      publicBaseUrl: 'https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev',
     });
     __testSetEntry('r2', 'platform', {
       state: CircuitState.OPEN,
@@ -115,7 +115,7 @@ describe('storeFalImageInR2', () => {
   it('throws when download returns non-200', async () => {
     mockedGetBucket.mockResolvedValue({
       bucket: mockBucket,
-      publicBaseUrl: 'https://cdn.sophia.agencyos.network',
+      publicBaseUrl: 'https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev',
     });
     fetchMock.mockResolvedValueOnce(new Response('Not Found', { status: 404 }));
 
@@ -126,7 +126,7 @@ describe('storeFalImageInR2', () => {
   it('throws when R2 PUT fails', async () => {
     mockedGetBucket.mockResolvedValue({
       bucket: mockBucket,
-      publicBaseUrl: 'https://cdn.sophia.agencyos.network',
+      publicBaseUrl: 'https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev',
     });
     fetchMock.mockResolvedValueOnce(new Response(PNG_BYTES, { status: 200 }));
     mockPut.mockRejectedValueOnce(new Error('R2 internal error'));

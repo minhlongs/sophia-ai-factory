@@ -23,7 +23,7 @@ interface Snippet {
   ts: string;
 }
 
-const BASE = 'https://sophia.agencyos.network';
+const BASE = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 
 const SNIPPETS: Snippet[] = [
   {

@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
           code: 'INSUFFICIENT_BALANCE',
           required: cost,
           available: balance.credits_remaining,
-          upgrade_url: 'https://sophia.agencyos.network/dashboard/credits',
+          upgrade_url: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/dashboard/credits',
         },
         { status: 402 },
       );

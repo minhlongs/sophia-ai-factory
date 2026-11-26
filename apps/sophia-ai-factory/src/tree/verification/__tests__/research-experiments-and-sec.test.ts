@@ -165,7 +165,7 @@ describe('BP-02 / BP-03 Production Callers & REPORT 09 Sandbox Experiments 1, 2,
       niche: bp.niche,
       blueprintId: bp.id,
       productName: 'Sophia Algo Signal Pro',
-      productUrl: 'https://sophia.agencyos.network/ref/algo',
+      productUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/ref/algo',
       targetAudience: 'SaaS Founders',
       locale: 'en',
     });

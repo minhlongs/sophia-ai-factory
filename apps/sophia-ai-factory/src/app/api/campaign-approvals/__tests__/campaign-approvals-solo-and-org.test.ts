@@ -115,7 +115,7 @@ describe('W1 & S3 Route Handler Integration: Solo/Org Approvals & Fail-Closed Ch
     ]);
 
     const getRes = await listApprovalsGET(
-      new NextRequest(`https://sophia.agencyos.network/api/campaign-approvals?workspaceId=${soloUserId}`),
+      new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/campaign-approvals?workspaceId=${soloUserId}`),
     );
     expect(getRes.status).toBe(200);
     const getBody = (await getRes.json()) as { count: number; approvals: Array<{ id: string }> };
@@ -133,7 +133,7 @@ describe('W1 & S3 Route Handler Integration: Solo/Org Approvals & Fail-Closed Ch
     });
 
     const patchRes = await resolveApprovalPATCH(
-      new NextRequest('https://sophia.agencyos.network/api/campaign-approvals/apr_solo_01', {
+      new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/campaign-approvals/apr_solo_01', {
         method: 'PATCH',
         body: JSON.stringify({ action: 'reject', reason: '$0.00 dry-run' }),
       }),
@@ -149,7 +149,7 @@ describe('W1 & S3 Route Handler Integration: Solo/Org Approvals & Fail-Closed Ch
       value: { id: 'apr_solo_01', status: 'revoked' },
     });
     const revokeRes = await resolveApprovalPATCH(
-      new NextRequest('https://sophia.agencyos.network/api/campaign-approvals/apr_solo_01', {
+      new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/campaign-approvals/apr_solo_01', {
         method: 'PATCH',
         body: JSON.stringify({ action: 'revoke', reason: '$0.00 revoke from pending_ceo' }),
       }),
@@ -169,7 +169,7 @@ describe('W1 & S3 Route Handler Integration: Solo/Org Approvals & Fail-Closed Ch
     mockHasWorkspaceRole.mockResolvedValueOnce(false);
 
     const patchRes = await resolveApprovalPATCH(
-      new NextRequest('https://sophia.agencyos.network/api/campaign-approvals/apr_org_01', {
+      new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/campaign-approvals/apr_org_01', {
         method: 'PATCH',
         body: JSON.stringify({ action: 'reject', reason: 'Non-admin attempt' }),
       }),
@@ -180,7 +180,7 @@ describe('W1 & S3 Route Handler Integration: Solo/Org Approvals & Fail-Closed Ch
 
     mockHasWorkspaceRole.mockRejectedValueOnce(new Error('D1 connection timeout'));
     const patchDbErrRes = await resolveApprovalPATCH(
-      new NextRequest('https://sophia.agencyos.network/api/campaign-approvals/apr_org_01', {
+      new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/campaign-approvals/apr_org_01', {
         method: 'PATCH',
         body: JSON.stringify({ action: 'reject', reason: 'DB down' }),
       }),
@@ -191,7 +191,7 @@ describe('W1 & S3 Route Handler Integration: Solo/Org Approvals & Fail-Closed Ch
 
     mockGetUserWorkspaceIds.mockRejectedValueOnce(new Error('D1 unavailable'));
     const getDbErrRes = await listApprovalsGET(
-      new NextRequest(`https://sophia.agencyos.network/api/campaign-approvals?workspaceId=${orgId}`),
+      new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/campaign-approvals?workspaceId=${orgId}`),
     );
     expect(getDbErrRes.status).toBe(503);
     expect(((await getDbErrRes.json()) as { error: string }).error).toBe('DATABASE_UNAVAILABLE');
@@ -200,7 +200,7 @@ describe('W1 & S3 Route Handler Integration: Solo/Org Approvals & Fail-Closed Ch
   it('fails closed on POST /api/publish/channels and GET /api/oauth/youtube/callback (S3 + D2)', async () => {
     mockResolveOrgId.mockRejectedValueOnce(new Error('D1_CONNECTION_LOST'));
     const postRes = await registerChannelPOST(
-      new NextRequest('https://sophia.agencyos.network/api/publish/channels', {
+      new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/publish/channels', {
         method: 'POST',
         body: JSON.stringify({
           provider: 'youtube',
@@ -215,7 +215,7 @@ describe('W1 & S3 Route Handler Integration: Solo/Org Approvals & Fail-Closed Ch
     mockResolveOrgId.mockResolvedValueOnce(orgId);
     mockHasWorkspaceRole.mockRejectedValueOnce(new Error('D1_ROLE_QUERY_TIMEOUT'));
     const roleDbErrRes = await registerChannelPOST(
-      new NextRequest('https://sophia.agencyos.network/api/publish/channels', {
+      new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/publish/channels', {
         method: 'POST',
         body: JSON.stringify({
           provider: 'youtube',
@@ -230,7 +230,7 @@ describe('W1 & S3 Route Handler Integration: Solo/Org Approvals & Fail-Closed Ch
     mockGetD1.mockResolvedValueOnce(null);
     mockResolveOrgId.mockResolvedValueOnce(orgId);
     const noD1Res = await registerChannelPOST(
-      new NextRequest('https://sophia.agencyos.network/api/publish/channels', {
+      new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/publish/channels', {
         method: 'POST',
         body: JSON.stringify({
           provider: 'youtube',
@@ -245,14 +245,14 @@ describe('W1 & S3 Route Handler Integration: Solo/Org Approvals & Fail-Closed Ch
     mockResolveOrgId.mockResolvedValueOnce(orgId);
     mockHasWorkspaceRole.mockResolvedValueOnce(false);
     const cbForbiddenRes = await youtubeCallbackGET(
-      new NextRequest(`https://sophia.agencyos.network/api/oauth/youtube/callback?code=c1&state=${state}`),
+      new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/oauth/youtube/callback?code=c1&state=${state}`),
     );
     expect(cbForbiddenRes.headers.get('location')).toContain('error=workspace_forbidden');
     expect(mockExchangeCodeForTokens).not.toHaveBeenCalled();
 
     mockResolveOrgId.mockRejectedValueOnce(new Error('D1_DOWN'));
     const cbErrRes = await youtubeCallbackGET(
-      new NextRequest(`https://sophia.agencyos.network/api/oauth/youtube/callback?code=c1&state=${state}`),
+      new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/oauth/youtube/callback?code=c1&state=${state}`),
     );
     expect(cbErrRes.headers.get('location')).toContain('error=workspace_resolution_failed');
   });

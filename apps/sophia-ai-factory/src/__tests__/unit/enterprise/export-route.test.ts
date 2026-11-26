@@ -78,7 +78,7 @@ describe('Analytics Export Route (/api/v1/analytics/export)', () => {
     it('returns 401 UNAUTHORIZED when session is missing', async () => {
       mockGetCurrentUser.mockResolvedValue(null);
 
-      const req = new NextRequest('https://sophia.agencyos.network/api/v1/analytics/export');
+      const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/analytics/export');
       const res = await GET(req);
 
       expect(res.status).toBe(401);
@@ -89,7 +89,7 @@ describe('Analytics Export Route (/api/v1/analytics/export)', () => {
     it('returns 503 DB_UNAVAILABLE when database connection fails', async () => {
       mockGetD1.mockResolvedValue(null);
 
-      const req = new NextRequest('https://sophia.agencyos.network/api/v1/analytics/export');
+      const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/analytics/export');
       const res = await GET(req);
 
       expect(res.status).toBe(503);
@@ -100,7 +100,7 @@ describe('Analytics Export Route (/api/v1/analytics/export)', () => {
     it('returns 403 FORBIDDEN when user has no active organization context', async () => {
       mockResolveOrgId.mockResolvedValue(null);
 
-      const req = new NextRequest('https://sophia.agencyos.network/api/v1/analytics/export');
+      const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/analytics/export');
       const res = await GET(req);
 
       expect(res.status).toBe(403);
@@ -110,7 +110,7 @@ describe('Analytics Export Route (/api/v1/analytics/export)', () => {
 
     it('returns 403 CROSS_TENANT_VIOLATION when attempting to export another org data', async () => {
       const req = new NextRequest(
-        'https://sophia.agencyos.network/api/v1/analytics/export?org_id=org_competitor',
+        'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/analytics/export?org_id=org_competitor',
       );
       const res = await GET(req);
 
@@ -123,7 +123,7 @@ describe('Analytics Export Route (/api/v1/analytics/export)', () => {
   describe('2. Input Validation', () => {
     it('returns 400 on unsupported format', async () => {
       const req = new NextRequest(
-        'https://sophia.agencyos.network/api/v1/analytics/export?format=xml',
+        'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/analytics/export?format=xml',
       );
       const res = await GET(req);
 
@@ -134,7 +134,7 @@ describe('Analytics Export Route (/api/v1/analytics/export)', () => {
 
     it('returns 400 when start timestamp is greater than end timestamp', async () => {
       const req = new NextRequest(
-        'https://sophia.agencyos.network/api/v1/analytics/export?start=20000&end=10000',
+        'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/analytics/export?start=20000&end=10000',
       );
       const res = await GET(req);
 
@@ -147,7 +147,7 @@ describe('Analytics Export Route (/api/v1/analytics/export)', () => {
   describe('3. Successful Streaming Export', () => {
     it('handles GET request and streams CSV response', async () => {
       const req = new NextRequest(
-        `https://sophia.agencyos.network/api/v1/analytics/export?format=csv&org_id=${userOrgId}`,
+        `https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/analytics/export?format=csv&org_id=${userOrgId}`,
       );
       const res = await GET(req);
 
@@ -158,7 +158,7 @@ describe('Analytics Export Route (/api/v1/analytics/export)', () => {
     });
 
     it('handles POST request with body parameters and streams JSON response', async () => {
-      const req = new NextRequest('https://sophia.agencyos.network/api/v1/analytics/export', {
+      const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/analytics/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

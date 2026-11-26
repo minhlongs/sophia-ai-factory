@@ -8,7 +8,7 @@ export interface SophiaClientOptions {
   /** Your Sophia API key (from /dashboard/api-keys) or bearer token */
   apiKey?: string;
   token?: string;
-  /** Override API base URL. Defaults to https://sophia.agencyos.network */
+  /** Override API base URL. Defaults to https://sophia-ai-factory.agencyos-openclaw.workers.dev */
   baseUrl?: string;
   /** Request timeout in milliseconds (default: 30000) */
   timeoutMs?: number;

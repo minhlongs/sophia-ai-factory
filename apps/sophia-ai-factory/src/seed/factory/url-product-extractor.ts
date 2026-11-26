@@ -64,7 +64,7 @@ function extractPrice(html: string): string {
 export async function extractProductInfo(url: string): Promise<ProductInfo> {
   const response = await fetch(url, {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; SophiaBot/1.0; +https://sophia.agencyos.network)',
+      'User-Agent': 'Mozilla/5.0 (compatible; SophiaBot/1.0; +https://sophia-ai-factory.agencyos-openclaw.workers.dev)',
       Accept: 'text/html',
     },
     signal: AbortSignal.timeout(10_000),

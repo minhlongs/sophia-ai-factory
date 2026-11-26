@@ -31,7 +31,7 @@ describe('Viral Video Distributor (Forest Layer)', () => {
       });
 
       const url = new URL(urlString);
-      expect(url.origin).toBe('https://sophia.agencyos.network');
+      expect(url.origin).toBe('https://sophia-ai-factory.agencyos-openclaw.workers.dev');
       expect(url.searchParams.get('utm_source')).toBe('tiktok');
       expect(url.searchParams.get('utm_medium')).toBe('short_video');
       expect(url.searchParams.get('utm_campaign')).toBe('ai_automation');

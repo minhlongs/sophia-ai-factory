@@ -12,7 +12,7 @@ const shortSha = deploymentSha.slice(0, 8);
 function makeEvidence(overrides: Record<string, unknown> = {}) {
   const context = {
     runId: 'run-1',
-    baseUrl: 'https://sophia.agencyos.network',
+    baseUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
     accountRefHash: 'd'.repeat(64),
     deployment: { sha: deploymentSha, shortSha, version: '1.19.9' },
     expectedTier: 'BASIC',
@@ -247,7 +247,7 @@ describe('verify-user-video-flow-live-evidence', () => {
       status: 'preflight-passed',
       context: {
         runId: 'run-preflight',
-        baseUrl: 'https://sophia.agencyos.network',
+        baseUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
         accountRefHash: 'd'.repeat(64),
         deployment: { sha: deploymentSha, shortSha, version: '1.19.9' },
         channelProviders: ['youtube'],
@@ -340,7 +340,7 @@ describe('verify-user-video-flow-live-evidence', () => {
       status: 'preflight-passed',
       context: {
         runId: 'run-preflight',
-        baseUrl: 'https://sophia.agencyos.network',
+        baseUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
         accountRefHash: 'd'.repeat(64),
         deployment: { sha: deploymentSha, shortSha, version: '1.19.9' },
         channelProviders: ['telegram', 'youtube'],

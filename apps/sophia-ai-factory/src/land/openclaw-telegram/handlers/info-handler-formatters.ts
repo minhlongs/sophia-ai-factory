@@ -4,7 +4,7 @@
  */
 
 export const NOT_PAIRED_MSG =
-  '⚠️ Bạn chưa liên kết tài khoản. Mở https://sophia.agencyos.network/dashboard/settings → "Connect Telegram" để pair.\n\n' +
+  '⚠️ Bạn chưa liên kết tài khoản. Mở https://sophia-ai-factory.agencyos-openclaw.workers.dev/dashboard/settings → "Connect Telegram" để pair.\n\n' +
   '⚠️ Your account is not linked yet. Visit the dashboard → "Connect Telegram" to pair.';
 
 export function formatQuotaReply(q: {

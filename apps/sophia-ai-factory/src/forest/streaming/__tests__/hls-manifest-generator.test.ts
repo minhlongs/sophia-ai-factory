@@ -12,7 +12,7 @@ import {
 import type { HlsAudioTrack, HlsSubtitleTrack } from '@/seed/types/streaming';
 
 describe('hls-manifest-generator (RFC 8216 Adaptive Bitrate HLS Generator)', () => {
-  const baseUrl = 'https://cdn.sophia.agencyos.network/videos/vid_001';
+  const baseUrl = 'https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev/videos/vid_001';
 
   it('generates standard RFC 8216 master playlist with 3-tier quality ladder', () => {
     const manifest = generateMasterManifest({ basePlaybackUrl: baseUrl });
@@ -130,9 +130,9 @@ describe('hls-manifest-generator (RFC 8216 Adaptive Bitrate HLS Generator)', () 
   });
 
   it('createHlsMasterManifestData returns contract conforming object', () => {
-    const data = createHlsMasterManifestData('vid_test_123', 'https://sophia.agencyos.network');
+    const data = createHlsMasterManifestData('vid_test_123', 'https://sophia-ai-factory.agencyos-openclaw.workers.dev');
 
-    expect(data.masterPlaylistUrl).toBe('https://sophia.agencyos.network/api/videos/vid_test_123/hls');
+    expect(data.masterPlaylistUrl).toBe('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/videos/vid_test_123/hls');
     expect(data.variants).toHaveLength(3);
     expect(data.variants[0].quality).toBe('1080p');
     expect(data.variants[0].bandwidth).toBe(5000000);

@@ -4,7 +4,7 @@
  * Allows developers testing the Apache-2.0 Community Edition locally to export
  * their non-sensitive workspace configuration (providers enabled, routing
  * strategy, channel presets, and locale) and import it into a paid
- * `https://sophia.agencyos.network` Cloud workspace in under 60 seconds.
+ * `https://sophia-ai-factory.agencyos-openclaw.workers.dev` Cloud workspace in under 60 seconds.
  *
  * Security invariant: Raw BYOK API keys are NEVER exported in plaintext.
  *

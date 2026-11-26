@@ -41,7 +41,7 @@ const stmt = {
 const prepare = vi.fn(() => stmt);
 
 function makeRequest(headers: Record<string, string> = {}): NextRequest {
-  return new NextRequest('https://sophia.agencyos.network/api/cron/clearance-promote', { headers });
+  return new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cron/clearance-promote', { headers });
 }
 
 function setDb(runResult: { changes: number } | Error) {

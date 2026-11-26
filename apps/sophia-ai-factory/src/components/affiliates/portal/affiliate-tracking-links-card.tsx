@@ -30,7 +30,7 @@ export interface AffiliateTrackingLinksCardProps {
 
 export function AffiliateTrackingLinksCard({
   partnerCode,
-  baseUrl = 'https://sophia.agencyos.network',
+  baseUrl = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
 }: AffiliateTrackingLinksCardProps) {
   const [subId, setSubId] = useState('');
   const [copied, setCopied] = useState(false);

@@ -83,7 +83,7 @@ describe('Setup Wizard Resend & HeyGen circuit-breaker isolation', () => {
     for (let i = 0; i < 6; i += 1) {
       const res = await registerHeyGenWebhook(
         'hg_key_a',
-        'https://sophia.agencyos.network/api/webhooks/heygen',
+        'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/heygen',
         'user:tenant_a',
       );
       expect(res.success).toBe(false);

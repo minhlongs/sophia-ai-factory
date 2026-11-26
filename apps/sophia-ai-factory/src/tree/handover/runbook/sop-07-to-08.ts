@@ -78,7 +78,7 @@ npx wrangler r2 object get sophia-backups/d1-2026-09-20.sql --file=./restore.sql
 \`\`\`bash
 npx wrangler d1 execute sophia-raas-db --file=./restore.sql --remote
 \`\`\`
-4. Run health check verification: \`curl https://sophia.agencyos.network/api/health\`.
+4. Run health check verification: \`curl https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/health\`.
 `,
     contentVi: `# 08. Dự Phòng Sự Cố & Phục Hồi Đám Mây
 
@@ -99,7 +99,7 @@ npx wrangler r2 object get sophia-backups/d1-2026-09-20.sql --file=./restore.sql
 \`\`\`bash
 npx wrangler d1 execute sophia-raas-db --file=./restore.sql --remote
 \`\`\`
-4. Kiểm tra sức khỏe hệ thống: \`curl https://sophia.agencyos.network/api/health\`.
+4. Kiểm tra sức khỏe hệ thống: \`curl https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/health\`.
 `,
   },
 ];

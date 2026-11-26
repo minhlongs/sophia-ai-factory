@@ -45,7 +45,7 @@ describe('AEO / GEO Edge Endpoints & Content Negotiation', () => {
   });
 
   it('GET /api/aeo/markdown serves YAML-frontmatter Markdown for public and niche routes', async () => {
-    const reqPricing = new NextRequest('https://sophia.agencyos.network/api/aeo/markdown?path=/vi/pricing&locale=vi');
+    const reqPricing = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/aeo/markdown?path=/vi/pricing&locale=vi');
     const resPricing = await getAeoMarkdown(reqPricing);
     expect(resPricing.status).toBe(200);
     expect(resPricing.headers.get('Vary')).toContain('Accept');
@@ -53,7 +53,7 @@ describe('AEO / GEO Edge Endpoints & Content Negotiation', () => {
     expect(mdPricing).toContain('surface: "pricing"');
     expect(mdPricing).toContain('USDT (NOWPayments)');
 
-    const reqNiche = new NextRequest('https://sophia.agencyos.network/api/aeo/markdown?path=/en/ai-video/crypto&locale=en');
+    const reqNiche = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/aeo/markdown?path=/en/ai-video/crypto&locale=en');
     const resNiche = await getAeoMarkdown(reqNiche);
     const mdNiche = await resNiche.text();
     expect(mdNiche).toContain('surface: "ai-video-niche"');
@@ -61,7 +61,7 @@ describe('AEO / GEO Edge Endpoints & Content Negotiation', () => {
   });
 
   it('Middleware handleAeoMarkdownNegotiation negotiates Accept: text/markdown on public routes only', () => {
-    const publicMdReq = new NextRequest('https://sophia.agencyos.network/vi/pricing', {
+    const publicMdReq = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/pricing', {
       headers: { Accept: 'text/markdown, text/html;q=0.8' },
     });
     expect(isAeoMarkdownNegotiatedRequest(publicMdReq)).toBe(true);
@@ -69,7 +69,7 @@ describe('AEO / GEO Edge Endpoints & Content Negotiation', () => {
     expect(publicRes).not.toBeNull();
     expect(publicRes?.headers.get('Vary')).toContain('Accept');
 
-    const dashboardReq = new NextRequest('https://sophia.agencyos.network/vi/dashboard/settings', {
+    const dashboardReq = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/dashboard/settings', {
       headers: { Accept: 'text/markdown' },
     });
     expect(isAeoMarkdownNegotiatedRequest(dashboardReq)).toBe(false);
@@ -77,12 +77,12 @@ describe('AEO / GEO Edge Endpoints & Content Negotiation', () => {
   });
 
   it('GET /api/aeo/markdown returns 404 for non-negotiable paths like /dashboard or /setup', async () => {
-    const reqDash = new NextRequest('https://sophia.agencyos.network/api/aeo/markdown?path=/vi/dashboard/settings&locale=vi');
+    const reqDash = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/aeo/markdown?path=/vi/dashboard/settings&locale=vi');
     const resDash = await getAeoMarkdown(reqDash);
     expect(resDash.status).toBe(404);
     expect(resDash.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
 
-    const reqSetup = new NextRequest('https://sophia.agencyos.network/api/aeo/markdown?path=/setup.md');
+    const reqSetup = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/aeo/markdown?path=/setup.md');
     const resSetup = await getAeoMarkdown(reqSetup);
     expect(resSetup.status).toBe(404);
     expect(isPublicApiRoute('/api/aeo/markdown')).toBe(true);

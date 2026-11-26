@@ -13,7 +13,7 @@ import type { PilotAffiliateLinkSummary } from '@/seed/pilot/pilot-access-policy
 const SHORT_CODE_ALPHABET = 'abcdefghijklmnopqrstuvwxyz234567';
 const SELF_REDIRECT_HOSTS = new Set([
   'sophia-ai-factory-pilot.agencyos-openclaw.workers.dev',
-  'sophia.agencyos.network',
+  'sophia-ai-factory.agencyos-openclaw.workers.dev',
 ]);
 
 export function generatePilotShortCode(length = 10): string {

@@ -77,7 +77,7 @@ describe('Privacy-Safe Version Beacon', () => {
     const report = await checkUpstreamReleaseBeacon({
       localShortSha: 'eaf9ed69',
       disableBeacon: false,
-      versionEndpointUrl: 'https://sophia.agencyos.network/api/version',
+      versionEndpointUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/version',
     });
 
     expect(report.checked).toBe(true);

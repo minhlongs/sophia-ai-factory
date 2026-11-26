@@ -60,7 +60,7 @@ export function formatOpsAlert(alert: OpsAlert): string {
     `Event / Sự kiện: ${alert.eventType}`,
     `Incident / Mã sự cố: ${incident}`,
     'Dashboard / Bảng điều khiển (đăng nhập / sign in):',
-    'https://sophia.agencyos.network/vi/dashboard/admin',
+    'https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/dashboard/admin',
   ].join('\n').slice(0, 1000);
 }
 

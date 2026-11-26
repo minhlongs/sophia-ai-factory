@@ -12,7 +12,7 @@ import type { TrackingUrlOptions, TelegramDeepLinkOptions } from './types';
  */
 export function buildFunnelTrackingUrl(options: TrackingUrlOptions): string {
   const {
-    baseUrl = 'https://sophia.agencyos.network',
+    baseUrl = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
     platform,
     niche,
     hookArchetype,

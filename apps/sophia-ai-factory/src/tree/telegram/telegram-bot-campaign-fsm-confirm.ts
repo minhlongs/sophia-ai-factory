@@ -62,7 +62,7 @@ export async function insertCampaignWithOffer(
     if (attempt === 2) logger.warn('affiliate_offer_insert_failed_all_attempts', { campaignId });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
   const shortUrl = shortCode ? `${appUrl}/r/${shortCode}` : '';
 
   try {

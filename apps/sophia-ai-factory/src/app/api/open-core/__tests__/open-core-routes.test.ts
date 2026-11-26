@@ -127,7 +127,7 @@ describe('/api/open-core/status & /portability routes', () => {
       userTier: 'BASIC',
       hasValidRaasLicense: false,
       licensedTier: null,
-      pricingUrl: 'https://sophia.agencyos.network/pricing',
+      pricingUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/pricing',
       beacon: null,
     });
     expect(json.features.filter((f) => f.allowed).length).toBe(5);

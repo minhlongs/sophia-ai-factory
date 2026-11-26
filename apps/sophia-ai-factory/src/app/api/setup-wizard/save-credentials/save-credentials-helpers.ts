@@ -11,7 +11,7 @@ import { enqueueWelcomeEmail } from '@/tree/email/outbox'
 import type { ProviderType } from '@/tree/credentials/user-credentials-repo'
 import { sanitizeCredential } from '@/tree/byok/key-format-validators'
 
-const SOPHIA_HEYGEN_WEBHOOK_URL = 'https://sophia.agencyos.network/api/webhooks/heygen'
+const SOPHIA_HEYGEN_WEBHOOK_URL = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/webhooks/heygen'
 
 export const saveCredentialsSchema = z.object({
   heygen_api_key: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),

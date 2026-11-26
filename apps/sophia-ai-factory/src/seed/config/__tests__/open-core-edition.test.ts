@@ -30,7 +30,7 @@ describe('Open-Core Manifest & Edition Resolver', () => {
     expect(
       resolveSophiaEdition({
         sophiaEdition: '',
-        appUrl: 'http://localhost:3000?ref=sophia.agencyos.network',
+        appUrl: 'http://localhost:3000?ref=sophia-ai-factory.agencyos-openclaw.workers.dev',
         hasValidRaasLicense: false,
       }),
     ).toBe('community');
@@ -38,7 +38,7 @@ describe('Open-Core Manifest & Edition Resolver', () => {
     expect(
       resolveSophiaEdition({
         sophiaEdition: '',
-        appUrl: 'https://evil-sophia.agencyos.network.attacker.com',
+        appUrl: 'https://evil-sophia-ai-factory.agencyos-openclaw.workers.dev.attacker.com',
         hasValidRaasLicense: false,
       }),
     ).toBe('community');
@@ -54,11 +54,11 @@ describe('Open-Core Manifest & Edition Resolver', () => {
     ).toBe('community');
   });
 
-  it('resolves cloud edition automatically on official sophia.agencyos.network domain', () => {
+  it('resolves cloud edition automatically on official sophia-ai-factory.agencyos-openclaw.workers.dev domain', () => {
     expect(
       resolveSophiaEdition({
         sophiaEdition: '',
-        appUrl: 'https://sophia.agencyos.network/vi/dashboard',
+        appUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/dashboard',
       }),
     ).toBe('cloud');
   });
@@ -88,7 +88,7 @@ describe('Open-Core Manifest & Edition Resolver', () => {
   it('fails closed when licensedTier is missing even on cloud or enterprise', () => {
     const cloudNoTier = evaluateFeatureGate('managed_social_oauth_relay', {
       sophiaEdition: 'cloud',
-      appUrl: 'https://sophia.agencyos.network',
+      appUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
     });
     expect(cloudNoTier.allowed).toBe(false);
 

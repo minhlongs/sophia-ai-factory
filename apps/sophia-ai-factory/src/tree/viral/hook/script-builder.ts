@@ -33,7 +33,7 @@ export function buildFunnelCta(
   deepLink: string;
 } {
   const ref = referralCode ? `ref=${referralCode}` : 'ref=viral_funnel';
-  const actionUrl = `https://sophia.agencyos.network/?${ref}&utm_source=short_video&utm_campaign=${niche}&utm_medium=video_cta`;
+  const actionUrl = `https://sophia-ai-factory.agencyos-openclaw.workers.dev/?${ref}&utm_source=short_video&utm_campaign=${niche}&utm_medium=video_cta`;
   const deepLink = `https://t.me/Sophia_Bbot?start=${telegramStartParam || `vid_${niche}_ref_${referralCode || 'direct'}`}`;
 
   const ctaMap: Record<ViralNiche, { en: string; vi: string }> = {

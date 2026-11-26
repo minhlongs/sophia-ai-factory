@@ -51,7 +51,7 @@ describe('runDistribution dual-market compliance gate (US + VN)', () => {
       tier: 'PREMIUM',
       affiliateOffer: {
         productName: 'Binance Futures',
-        shortUrl: 'https://sophia.agencyos.network/r/bn123456',
+        shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/bn123456',
         category: 'crypto',
       },
     });
@@ -74,7 +74,7 @@ describe('runDistribution dual-market compliance gate (US + VN)', () => {
       tier: 'PREMIUM',
       affiliateOffer: {
         productName: 'Notion AI',
-        shortUrl: 'https://sophia.agencyos.network/r/nt123456',
+        shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/nt123456',
         category: 'saas',
       },
     });
@@ -85,7 +85,7 @@ describe('runDistribution dual-market compliance gate (US + VN)', () => {
     const payload = mockDistribute.mock.calls[0][0];
     expect(payload.description).toContain('#QuảngCáo');
     expect(payload.description).toContain('liên kết affiliate');
-    expect(payload.description).toContain('https://sophia.agencyos.network/r/nt123456');
+    expect(payload.description).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/nt123456');
   });
 
   it('publishes US offers with US FTC disclosure (#ad)', async () => {
@@ -101,7 +101,7 @@ describe('runDistribution dual-market compliance gate (US + VN)', () => {
       tier: 'PREMIUM',
       affiliateOffer: {
         productName: 'Notion AI',
-        shortUrl: 'https://sophia.agencyos.network/r/us123456',
+        shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/us123456',
         category: 'saas',
       },
     });

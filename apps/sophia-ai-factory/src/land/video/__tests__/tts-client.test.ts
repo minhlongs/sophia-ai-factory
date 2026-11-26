@@ -70,13 +70,13 @@ describe('synthesize()', () => {
       language: 'vi',
       tenantId: 'tenant-abc',
       jobId: 'job-xyz',
-      baseUrl: 'https://sophia.agencyos.network',
+      baseUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
       internalToken: 'secret-token',
     });
 
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('https://sophia.agencyos.network/api/internal/tts');
+    expect(url).toBe('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/internal/tts');
     expect((options.headers as Record<string, string>)['x-internal-token']).toBe('secret-token');
     const body = JSON.parse(options.body as string) as Record<string, unknown>;
     expect(body.language).toBe('vi');

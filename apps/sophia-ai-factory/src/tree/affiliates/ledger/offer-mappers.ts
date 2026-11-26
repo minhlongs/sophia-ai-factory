@@ -74,7 +74,7 @@ export function mapRowToOffer(row: AffiliateOfferRow): AffiliateOffer {
     epc: row.epc ?? 0.0,
     conversionRatePct: row.conversion_rate_pct ?? 0.0,
     qualityScore: row.quality_score ?? 9.0,
-    destinationUrl: row.destination_url || row.product_url || 'https://sophia.agencyos.network',
+    destinationUrl: row.destination_url || row.product_url || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
     logoUrl: row.logo_url || row.image_url || undefined,
     cookieWindowDays: row.cookie_window_days ?? 30,
     minPayoutUsd: row.min_payout_usd ?? 50.0,

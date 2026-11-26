@@ -48,7 +48,7 @@ export const videoTTS = inngest.createFunction(
       }
 
       const text = row.script_text ?? row.prompt;
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
       const internalToken = process.env.COQUI_INTERNAL_TOKEN ?? '';
 
       const result = await synthesize({

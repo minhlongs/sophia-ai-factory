@@ -78,7 +78,7 @@ export async function dispatchHandoverWelcomeNotification(
     locale: string
   },
 ): Promise<{ magicLink: string | null; magicLinkError?: string }> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev'
   let magicLink: string | null = null
   let magicLinkError: string | undefined
 

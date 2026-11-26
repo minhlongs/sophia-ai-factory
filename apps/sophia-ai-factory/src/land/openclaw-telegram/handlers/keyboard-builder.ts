@@ -14,7 +14,7 @@ export function buildDashboardSettingsKeyboard(): TelegramInlineKeyboard {
       [
         {
           text: '🔗 Connect Telegram',
-          url: 'https://sophia.agencyos.network/dashboard/settings',
+          url: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/dashboard/settings',
         },
       ],
     ],
@@ -27,7 +27,7 @@ export function buildAffiliateKeyboard(): TelegramInlineKeyboard {
       [
         {
           text: '💼 Go to Affiliate Dashboard',
-          url: 'https://sophia.agencyos.network/dashboard/affiliate',
+          url: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/dashboard/affiliate',
         },
       ],
     ],

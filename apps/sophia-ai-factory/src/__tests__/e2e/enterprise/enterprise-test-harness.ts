@@ -269,7 +269,7 @@ export async function registerCustomDomain(
   const now = Date.now();
   const id = `dom_${Math.random().toString(36).substring(2, 11)}`;
   const verificationToken = `cf-custom-domain-${Math.random().toString(36).substring(2, 14)}`;
-  const cnameTarget = 'cname.sophia.agencyos.network';
+  const cnameTarget = 'cname.sophia-ai-factory.agencyos-openclaw.workers.dev';
 
   await db
     .prepare(
@@ -621,7 +621,7 @@ export async function createOrgInvitation(
     .bind(invitationId, orgId, email.toLowerCase().trim(), role, tokenHash, invitedByUserId, expiresAt, now)
     .run();
 
-  const inviteUrl = `https://sophia.agencyos.network/invitations/accept?token=${token}`;
+  const inviteUrl = `https://sophia-ai-factory.agencyos-openclaw.workers.dev/invitations/accept?token=${token}`;
   return {
     invitationId,
     inviteUrl,

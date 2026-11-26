@@ -43,7 +43,7 @@ export const AFFILIATE_PARTNER_PROGRAM_STEPS: SopStepDef[] = [
     description_vi:
       'Tạo link affiliate được theo dõi với UTM parameters và mã đối tác độc nhất cho mỗi affiliate.',
     tool: 'link-generator',
-    tool_config: { domain: 'sophia.agencyos.network', add_utm: true, expiration_days: 90 },
+    tool_config: { domain: 'sophia-ai-factory.agencyos-openclaw.workers.dev', add_utm: true, expiration_days: 90 },
     estimated_minutes: 15,
     is_automated: true,
   },

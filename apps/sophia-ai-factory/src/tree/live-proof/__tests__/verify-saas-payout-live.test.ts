@@ -88,7 +88,7 @@ describe('verify-saas-payout-live', () => {
   it('recognizes a trailing-dot production hostname and refuses the check without opt-in', () => {
     const dir = mkdtempSync(join(tmpdir(), 'sophia-payout-production-guard-'));
     tempDirs.push(dir);
-    const { result } = runProof(dir, { baseUrl: 'https://sophia.agencyos.network.' });
+    const { result } = runProof(dir, { baseUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev.' });
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain('production target requires SOPHIA_PAYOUT_ALLOW_PRODUCTION=1');
   });

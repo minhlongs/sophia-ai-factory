@@ -70,13 +70,13 @@ describe('8/8 Commercial Feature Gates — Server Enforcement Contract', () => {
     ];
     for (const { id, allowTier } of cloudMatrix) {
       expect((await enforceCommercialFeatureForUser('usr_1', id, { resolvedTier: allowTier, envOverrides: { sophiaEdition: 'community', appUrl: 'http://localhost:3000' } })).ok).toBe(false);
-      expect((await enforceCommercialFeatureForUser('usr_1', id, { resolvedTier: allowTier, envOverrides: { sophiaEdition: 'cloud', appUrl: 'https://sophia.agencyos.network' } })).ok).toBe(true);
+      expect((await enforceCommercialFeatureForUser('usr_1', id, { resolvedTier: allowTier, envOverrides: { sophiaEdition: 'cloud', appUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev' } })).ok).toBe(true);
     }
 
     const enterpriseIds: SophiaModuleFeatureId[] = ['white_label_agency_portal', 'custom_domain_provisioning', 'merkle_ipo_audit_vault'];
     for (const id of enterpriseIds) {
       expect((await enforceCommercialFeatureForUser('usr_1', id, { resolvedTier: 'ENTERPRISE', envOverrides: { sophiaEdition: 'enterprise', appUrl: 'http://localhost:3000', raasLicenseKey: '', raasLicenseSecret: LICENSE_SECRET } })).ok).toBe(false);
-      expect((await enforceCommercialFeatureForUser('usr_1', id, { resolvedTier: 'PREMIUM', envOverrides: { sophiaEdition: 'cloud', appUrl: 'https://sophia.agencyos.network' } })).ok).toBe(false);
+      expect((await enforceCommercialFeatureForUser('usr_1', id, { resolvedTier: 'PREMIUM', envOverrides: { sophiaEdition: 'cloud', appUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev' } })).ok).toBe(false);
       expect((await enforceCommercialFeatureForUser('usr_1', id, { resolvedTier: 'ENTERPRISE', envOverrides: { sophiaEdition: 'enterprise', appUrl: 'http://localhost:3000', raasLicenseKey: entToken, raasLicenseSecret: LICENSE_SECRET } })).ok).toBe(true);
     }
 

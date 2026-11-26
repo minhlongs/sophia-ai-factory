@@ -8,7 +8,7 @@
  * - 7 Core algorithm endpoints
  *
  * Usage:
- *   curl https://sophia.agencyos.network/api/sdk/typescript > sophia.ts
+ *   curl https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/sdk/typescript > sophia.ts
  *   import { SophiaClient } from "./sophia";
  *   const sophia = new SophiaClient(token);
  *   const balance = await sophia.credits.balance();

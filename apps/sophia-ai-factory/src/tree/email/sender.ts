@@ -54,7 +54,7 @@ export async function sendEmail(params: EmailParams): Promise<EmailResult> {
     if (params.branding?.emailFromName && params.branding?.customDomain) {
       from = `${params.branding.emailFromName} <noreply@${params.branding.customDomain}>`;
     } else if (params.branding?.emailFromName) {
-      from = `${params.branding.emailFromName} <noreply@sophia.agencyos.network>`;
+      from = `${params.branding.emailFromName} <noreply@sophia-ai-factory.agencyos-openclaw.workers.dev>`;
     } else {
       from = process.env.EMAIL_FROM ?? 'Sophia AI <noreply@mekongmind.com>';
     }

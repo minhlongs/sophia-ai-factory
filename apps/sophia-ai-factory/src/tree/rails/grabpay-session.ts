@@ -32,7 +32,7 @@ export function createGrabPaySession(input: CreateGrabPaySessionInput): GrabPayS
 
   const sessionId = `grab_sess_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
   const expiresAt = Date.now() + DEFAULT_EXPIRY_MS;
-  const redirectBase = input.redirectUrl ?? 'https://sophia.agencyos.network/checkout/complete';
+  const redirectBase = input.redirectUrl ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/checkout/complete';
   const checkoutUrl = `https://pay.grab.com/v2/checkout?session=${sessionId}&redirect=${encodeURIComponent(redirectBase)}`;
 
   return {

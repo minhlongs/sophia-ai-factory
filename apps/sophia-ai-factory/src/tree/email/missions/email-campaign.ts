@@ -19,7 +19,7 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
   const subject = (params?.subject as string) ?? 'Message from Sophia AI Factory';
   const body = (params?.body as string) ?? '';
   const fromName = (params?.from_name as string) ?? 'Sophia AI';
-  const fromEmail = (params?.from_email as string) ?? 'noreply@sophia.agencyos.network';
+  const fromEmail = (params?.from_email as string) ?? 'noreply@sophia-ai-factory.agencyos-openclaw.workers.dev';
 
   if (!recipients.length) {
     return { ok: false, error: 'params.recipients (array of emails) is required' };

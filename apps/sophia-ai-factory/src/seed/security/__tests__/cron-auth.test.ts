@@ -6,7 +6,7 @@ function makeRequest(opts: {
   headers?: Record<string, string>;
   queryParams?: Record<string, string>;
 } = {}): NextRequest {
-  const url = new URL('https://sophia.agencyos.network/api/cron/test');
+  const url = new URL('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cron/test');
   if (opts.queryParams) {
     for (const [k, v] of Object.entries(opts.queryParams)) {
       url.searchParams.set(k, v);

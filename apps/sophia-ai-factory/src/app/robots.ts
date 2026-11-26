@@ -1,5 +1,5 @@
 /**
- * Robots.txt for SEO, AEO & GEO — sophia.agencyos.network
+ * Robots.txt for SEO, AEO & GEO — sophia-ai-factory.agencyos-openclaw.workers.dev
  * Explicitly grants AI Answer Engines access to public surfaces and Dual-Read endpoints
  * while strictly blocking authenticated tenant/dashboard routes.
  */

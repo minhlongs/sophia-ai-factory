@@ -57,7 +57,7 @@ vi.mock('@/forest/theme/white-label-context', () => ({
 }));
 
 vi.mock('@/tree/custom-domains/hostname-resolver', () => ({
-  extractHostname: vi.fn(() => 'pilot.sophia.agencyos.network'),
+  extractHostname: vi.fn(() => 'pilot.sophia-ai-factory.agencyos-openclaw.workers.dev'),
   isInternalOrCanonicalHostname: vi.fn(() => true),
 }));
 

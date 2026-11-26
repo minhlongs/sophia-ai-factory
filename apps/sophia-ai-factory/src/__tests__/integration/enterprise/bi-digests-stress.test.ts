@@ -658,7 +658,7 @@ describe('Adversarial Stress Suite: BI Digests & Cross-Tenant Isolation', () => 
 
       it('blocks GET cross-tenant export attack via query parameter with HTTP 403', async () => {
         const req = new NextRequest(
-          `https://sophia.agencyos.network/api/v1/analytics/export?org_id=${competitorOrgId}&format=csv`,
+          `https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/analytics/export?org_id=${competitorOrgId}&format=csv`,
         );
         const res = await GET(req);
 
@@ -669,7 +669,7 @@ describe('Adversarial Stress Suite: BI Digests & Cross-Tenant Isolation', () => 
       });
 
       it('blocks POST cross-tenant export attack via request body with HTTP 403', async () => {
-        const req = new NextRequest('https://sophia.agencyos.network/api/v1/analytics/export', {
+        const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/analytics/export', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -686,7 +686,7 @@ describe('Adversarial Stress Suite: BI Digests & Cross-Tenant Isolation', () => 
 
       it('blocks directory traversal attempt in orgId query parameter with HTTP 403', async () => {
         const req = new NextRequest(
-          `https://sophia.agencyos.network/api/v1/analytics/export?org_id=${userCallerOrgId}/../${competitorOrgId}`,
+          `https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/analytics/export?org_id=${userCallerOrgId}/../${competitorOrgId}`,
         );
         const res = await GET(req);
 
@@ -698,7 +698,7 @@ describe('Adversarial Stress Suite: BI Digests & Cross-Tenant Isolation', () => 
       it('blocks unauthenticated export requests with HTTP 401 UNAUTHORIZED', async () => {
         mockGetCurrentUser.mockResolvedValue(null);
 
-        const req = new NextRequest('https://sophia.agencyos.network/api/v1/analytics/export');
+        const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/analytics/export');
         const res = await GET(req);
 
         expect(res.status).toBe(401);
@@ -709,7 +709,7 @@ describe('Adversarial Stress Suite: BI Digests & Cross-Tenant Isolation', () => 
       it('blocks users without active organization with HTTP 403 FORBIDDEN', async () => {
         mockResolveOrgId.mockResolvedValue(null);
 
-        const req = new NextRequest('https://sophia.agencyos.network/api/v1/analytics/export');
+        const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/analytics/export');
         const res = await GET(req);
 
         expect(res.status).toBe(403);
@@ -720,7 +720,7 @@ describe('Adversarial Stress Suite: BI Digests & Cross-Tenant Isolation', () => 
       it('guarantees ZERO competitor data leakage in legitimate export streaming response', async () => {
         // Caller requests export of their own organization's data
         const req = new NextRequest(
-          `https://sophia.agencyos.network/api/v1/analytics/export?format=csv&start=1690000000000&end=1710000000000`,
+          `https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/analytics/export?format=csv&start=1690000000000&end=1710000000000`,
         );
         const res = await GET(req);
 

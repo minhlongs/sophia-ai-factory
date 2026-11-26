@@ -11,7 +11,7 @@ import {
 export default function AffiliatePortalPage() {
   const [copiedLink, setCopiedLink] = React.useState(false);
 
-  const affiliateLink = 'https://sophia.agencyos.network/ref/abc123';
+  const affiliateLink = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/ref/abc123';
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(affiliateLink);

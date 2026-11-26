@@ -15,7 +15,7 @@ export function buildTrackedFunnelUrl(params: {
   referralCode?: string;
 }): string {
   const {
-    baseUrl = 'https://sophia.agencyos.network',
+    baseUrl = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
     platform,
     niche,
     hookArchetype,

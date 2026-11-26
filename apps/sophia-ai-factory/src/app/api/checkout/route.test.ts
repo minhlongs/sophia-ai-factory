@@ -69,7 +69,7 @@ const mockGetUser = vi.mocked(getCurrentUserFromHeaders);
 const mockCreateInvoiceUrl = vi.mocked(createInvoiceUrl);
 const mockFindActivePendingOrder = vi.mocked(findActivePendingOrder);
 
-const APP_URL = 'https://sophia.agencyos.network';
+const APP_URL = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 
 function makeGetRequest(tier?: string): NextRequest {
   const url = tier

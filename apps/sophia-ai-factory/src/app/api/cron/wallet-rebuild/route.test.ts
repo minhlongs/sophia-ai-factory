@@ -23,7 +23,7 @@ import { NextRequest } from 'next/server';
 const mockRebuildAllWallets = vi.mocked(rebuildAllWallets);
 
 function makeRequest(headers: Record<string, string> = {}, params = ''): NextRequest {
-  return new NextRequest(`https://sophia.agencyos.network/api/cron/wallet-rebuild${params}`, {
+  return new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cron/wallet-rebuild${params}`, {
     headers,
   });
 }

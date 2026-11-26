@@ -204,7 +204,7 @@ describe('key-rotation integration — full pipeline', { timeout: 15_000 }, () =
     // 3. Call the rotation POST route
     const { POST } = await import('@/app/api/admin/keys/rotate/route');
 
-    const mockRequest = new Request('https://sophia.agencyos.network/api/admin/keys/rotate', {
+    const mockRequest = new Request('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/admin/keys/rotate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reason: 'Integration test rotation' }),

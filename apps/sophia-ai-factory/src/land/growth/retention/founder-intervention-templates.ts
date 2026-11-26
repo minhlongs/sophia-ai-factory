@@ -27,7 +27,7 @@ export function buildFounderCareEmailHtml(params: {
       </p>
       ${noteContent}
       <p style="text-align: center; margin: 30px 0;">
-        <a href="https://sophia.agencyos.network/dashboard" style="background-color: #059669; color: #ffffff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;">
+        <a href="https://sophia-ai-factory.agencyos-openclaw.workers.dev/dashboard" style="background-color: #059669; color: #ffffff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;">
           Trải nghiệm ngay / Launch Sophia Factory
         </a>
       </p>

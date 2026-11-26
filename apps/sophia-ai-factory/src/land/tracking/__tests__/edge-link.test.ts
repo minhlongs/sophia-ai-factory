@@ -42,7 +42,7 @@ function makeRequest(overrides: Record<string, string> = {}): Request {
     referer: 'https://referring.example.com',
     ...overrides,
   });
-  return new Request('https://track.sophia.agencyos.network/r/abc12345', { headers });
+  return new Request('https://track.sophia-ai-factory.agencyos-openclaw.workers.dev/r/abc12345', { headers });
 }
 
 // ---------------------------------------------------------------------------
@@ -74,7 +74,7 @@ describe('Edge Tracking — createTrackingLink', () => {
     });
 
     expect(result.id).toHaveLength(8);
-    expect(result.shortUrl).toBe(`https://track.sophia.agencyos.network/r/${result.id}`);
+    expect(result.shortUrl).toBe(`https://track.sophia-ai-factory.agencyos-openclaw.workers.dev/r/${result.id}`);
 
     const insertCall = mockInsert.mock.calls[0][0] as Record<string, unknown>;
     expect(insertCall.tenant_id).toBe('tenant-1');
@@ -172,7 +172,7 @@ describe('Edge Tracking — createTrackingLink', () => {
     });
 
     // Request without IP headers
-    const req = new Request('https://track.sophia.agencyos.network/r/abc12345');
+    const req = new Request('https://track.sophia-ai-factory.agencyos-openclaw.workers.dev/r/abc12345');
     await recordClick('abc12345', req);
 
     const insertCall = mockInsert.mock.calls[0][0] as Record<string, unknown>;

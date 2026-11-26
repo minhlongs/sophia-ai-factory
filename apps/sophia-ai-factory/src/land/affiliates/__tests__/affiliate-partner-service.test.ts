@@ -33,22 +33,22 @@ describe('AffiliatePartnerService — Unit & Calculation Tests', () => {
   describe('generateShareLink', () => {
     it('generates primary link with ref parameter', () => {
       const link = generateShareLink('SOPHIA88', {
-        baseUrl: 'https://sophia.agencyos.network',
+        baseUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
       });
-      expect(link).toBe('https://sophia.agencyos.network/?ref=SOPHIA88');
+      expect(link).toBe('https://sophia-ai-factory.agencyos-openclaw.workers.dev/?ref=SOPHIA88');
     });
 
     it('appends sub_id when provided', () => {
       const link = generateShareLink('SOPHIA88', {
-        baseUrl: 'https://sophia.agencyos.network',
+        baseUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
         subId: 'tiktok_hook_1',
       });
-      expect(link).toBe('https://sophia.agencyos.network/?ref=SOPHIA88&sub_id=tiktok_hook_1');
+      expect(link).toBe('https://sophia-ai-factory.agencyos-openclaw.workers.dev/?ref=SOPHIA88&sub_id=tiktok_hook_1');
     });
 
     it('appends UTM tracking parameters correctly', () => {
       const link = generateShareLink('SOPHIA88', {
-        baseUrl: 'https://sophia.agencyos.network',
+        baseUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
         utmSource: 'youtube',
         utmCampaign: 'ai_automation',
         utmMedium: 'shorts_bio',
@@ -61,9 +61,9 @@ describe('AffiliatePartnerService — Unit & Calculation Tests', () => {
 
     it('strips trailing slash from baseUrl', () => {
       const link = generateShareLink('SOPHIA88', {
-        baseUrl: 'https://sophia.agencyos.network/',
+        baseUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/',
       });
-      expect(link).toBe('https://sophia.agencyos.network/?ref=SOPHIA88');
+      expect(link).toBe('https://sophia-ai-factory.agencyos-openclaw.workers.dev/?ref=SOPHIA88');
     });
   });
 

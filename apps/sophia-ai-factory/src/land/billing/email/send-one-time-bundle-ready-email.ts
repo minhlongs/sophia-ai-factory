@@ -66,7 +66,7 @@ export async function sendOneTimeBundleReadyEmail(
       })
     } else {
       const { data, error } = await resend.emails.send({
-        from: 'Sophia AI <billing@sophia.agencyos.network>',
+        from: 'Sophia AI <billing@sophia-ai-factory.agencyos-openclaw.workers.dev>',
         to: ctx.userEmail,
         subject,
         text,

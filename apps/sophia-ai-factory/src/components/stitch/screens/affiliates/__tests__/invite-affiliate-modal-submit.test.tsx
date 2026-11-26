@@ -70,7 +70,7 @@ describe('InviteAffiliateModal Validation & Submission Flow', () => {
       success: true,
       inviteId: 'aff_inv_123',
       emailDispatched: true,
-      inviteLink: 'https://sophia.agencyos.network/affiliate/join?token=mock_tok_456',
+      inviteLink: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/affiliate/join?token=mock_tok_456',
     };
 
     vi.mocked(affiliateActions.inviteAffiliateAction).mockResolvedValueOnce(mockResult);

@@ -71,7 +71,7 @@ describe('buildOneTimeBundleReadyEmail — one-time bundle ready notification', 
         creditsRemaining: 10,
         locale: 'vi',
       }
-      const expectedPricingUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'}/pricing`
+      const expectedPricingUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev'}/pricing`
 
       const email = buildOneTimeBundleReadyEmail(ctx)
 

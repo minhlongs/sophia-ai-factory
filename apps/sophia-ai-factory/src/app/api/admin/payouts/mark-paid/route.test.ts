@@ -52,7 +52,7 @@ const validBody = {
 };
 
 function makeRequest(body: unknown = validBody): NextRequest {
-  return new NextRequest('https://sophia.agencyos.network/api/admin/payouts/mark-paid', {
+  return new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/admin/payouts/mark-paid', {
     method: 'POST',
     body: JSON.stringify(body),
     headers: {

@@ -86,7 +86,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // Generate magic link + handover doc
   const token = await createMagicLinkToken(handoverId);
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
   const magicLinkUrl = `${baseUrl}/${body.locale}/welcome/${token}`;
 
   const docMarkdown = generateHandoverDoc({

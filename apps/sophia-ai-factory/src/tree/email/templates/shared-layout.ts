@@ -5,7 +5,7 @@
  */
 
 export const BRAND_COLOR = '#7c3aed';
-export const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
+export const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 export const SUPPORT_EMAIL = 'support@mekongmind.com';
 export const SENDER_FROM = process.env.EMAIL_FROM ?? 'Sophia AI <noreply@mekongmind.com>';
 

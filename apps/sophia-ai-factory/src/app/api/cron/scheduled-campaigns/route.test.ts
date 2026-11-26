@@ -64,7 +64,7 @@ interface ScheduleRow {
 }
 
 function makeRequest(): NextRequest {
-  return new NextRequest('https://sophia.agencyos.network/api/cron/scheduled-campaigns', {
+  return new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cron/scheduled-campaigns', {
     headers: { authorization: 'Bearer test-secret' },
   })
 }
@@ -434,7 +434,7 @@ describe('GET /api/cron/scheduled-campaigns', () => {
       failures: [],
     })
 
-    const req = new NextRequest('https://sophia.agencyos.network/api/cron/scheduled-campaigns?engine=playbook', {
+    const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cron/scheduled-campaigns?engine=playbook', {
       headers: { authorization: 'Bearer test-secret' },
     })
 
@@ -451,7 +451,7 @@ describe('GET /api/cron/scheduled-campaigns', () => {
   it('rejects unauthorized cron requests with error from verifyCronAuth', async () => {
     mocks.verifyCronAuth.mockReturnValue(new Response('Unauthorized', { status: 401 }))
 
-    const req = new NextRequest('https://sophia.agencyos.network/api/cron/scheduled-campaigns')
+    const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cron/scheduled-campaigns')
     const res = await GET(req)
 
     expect(res.status).toBe(401)

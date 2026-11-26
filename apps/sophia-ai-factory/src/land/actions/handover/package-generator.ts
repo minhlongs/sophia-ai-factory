@@ -7,8 +7,8 @@ import { generateSanitizedEnvProduction } from '@/tree/handover/env-export-gener
 
 const DEFAULT_EXAMPLE_TEMPLATE = `
 # ─── Core Platform ────────────────────────────────────────────────────────────
-NEXT_PUBLIC_APP_URL=https://sophia.agencyos.network
-BETTER_AUTH_URL=https://sophia.agencyos.network
+NEXT_PUBLIC_APP_URL=https://sophia-ai-factory.agencyos-openclaw.workers.dev
+BETTER_AUTH_URL=https://sophia-ai-factory.agencyos-openclaw.workers.dev
 NEXT_PUBLIC_DISTRIBUTE_ENABLED=1
 IS_CONFIGURED=true
 
@@ -22,8 +22,8 @@ FEATURE_PAYOS=0
 
 # ─── Email & Notifications ───────────────────────────────────────────────────
 RESEND_API_KEY=
-RESEND_FROM_EMAIL=noreply@sophia.agencyos.network
-SUPPORT_EMAIL=support@sophia.agencyos.network
+RESEND_FROM_EMAIL=noreply@sophia-ai-factory.agencyos-openclaw.workers.dev
+SUPPORT_EMAIL=support@sophia-ai-factory.agencyos-openclaw.workers.dev
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_WEBHOOK_SECRET=
 

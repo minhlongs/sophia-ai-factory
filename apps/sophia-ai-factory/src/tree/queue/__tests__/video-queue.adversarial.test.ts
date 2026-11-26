@@ -287,7 +287,7 @@ describe('Milestone 4 Adversarial Stress Testing & Empirical Challenge Suite', (
       expect(blockedLease.reason).toBe('TENANT_CONCURRENCY_LIMIT');
 
       // Now complete 1 active job
-      const completed = await completeJob(db, 'ent_job_1', 'https://cdn.sophia.agencyos.network/videos/ent_job_1.mp4');
+      const completed = await completeJob(db, 'ent_job_1', 'https://cdn.sophia-ai-factory.agencyos-openclaw.workers.dev/videos/ent_job_1.mp4');
       expect(completed).toBe(true);
 
       const activeAfterCompletion = await getTenantActiveRenderCount(db, orgEnterprise);

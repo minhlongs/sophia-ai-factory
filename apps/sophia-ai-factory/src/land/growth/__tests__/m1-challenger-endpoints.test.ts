@@ -90,7 +90,7 @@ function createCronRequest(options?: {
   xCronSecret?: string;
   queryParams?: Record<string, string>;
 }): NextRequest {
-  const url = new URL('https://sophia.agencyos.network/api/cron/anti-churn-guardian');
+  const url = new URL('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cron/anti-churn-guardian');
   if (options?.queryParams) {
     for (const [k, v] of Object.entries(options.queryParams)) {
       url.searchParams.set(k, v);
@@ -117,7 +117,7 @@ function createAdminRequest(options: {
   body?: unknown;
   headers?: Record<string, string>;
 }): NextRequest {
-  const url = new URL('https://sophia.agencyos.network/api/admin/customer-intervention');
+  const url = new URL('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/admin/customer-intervention');
   if (options.queryParams) {
     for (const [k, v] of Object.entries(options.queryParams)) {
       url.searchParams.set(k, v);
@@ -141,7 +141,7 @@ function createAdminRequest(options: {
 const TEST_CRON_SECRET = 'correct-cron-super-secret-key-2026';
 const ADMIN_USER = {
   id: 'usr-admin-1',
-  email: 'founder@sophia.agencyos.network',
+  email: 'founder@sophia-ai-factory.agencyos-openclaw.workers.dev',
   name: 'Sophia Founder',
   role: 'admin',
 };

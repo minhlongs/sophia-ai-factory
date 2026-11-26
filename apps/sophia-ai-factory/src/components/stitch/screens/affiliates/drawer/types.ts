@@ -25,7 +25,7 @@ export function buildTrackingUrl(
   const sanitized = subId.trim().replace(/[^a-zA-Z0-9_-]/g, '');
   if (!destinationUrl) {
     const query = sanitized ? `?sub_id=${encodeURIComponent(sanitized)}` : '';
-    return `https://sophia.agencyos.network/r/${offerId}${query}`;
+    return `https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/${offerId}${query}`;
   }
   const sep = destinationUrl.includes('?') ? '&' : '?';
   const query = sanitized ? `&sub_id=${encodeURIComponent(sanitized)}` : '';

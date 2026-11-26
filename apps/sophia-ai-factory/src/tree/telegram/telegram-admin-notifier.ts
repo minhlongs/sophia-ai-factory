@@ -48,7 +48,7 @@ export async function notifyFounderLeadQualified(lead: LeadAlertPayload): Promis
 
   try {
     const text = formatLeadQualifiedAlert(lead);
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 
     const keyboard: InlineKeyboardMarkup = {
       inline_keyboard: [

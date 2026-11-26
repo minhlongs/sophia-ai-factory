@@ -13,7 +13,7 @@ export async function handleBundleSuccessNotification(
 
   try {
     const videoUrl = r2Key
-      ? `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'}/dashboard/videos`
+      ? `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev'}/dashboard/videos`
       : (videoStatusUrl ?? undefined);
     const clientDb = createServerClient();
     const { data: purchaseData } = await clientDb

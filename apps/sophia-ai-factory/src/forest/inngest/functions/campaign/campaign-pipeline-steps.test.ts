@@ -70,7 +70,7 @@ describe('campaign pipeline steps', () => {
     vi.stubEnv('NEXT_PUBLIC_APP_URL', '');
     mocks.queryData = { data: { short_code: 'fallback', offer_name: 'Offer', affiliate_link: 'https://merchant.test' } };
     await expect(loadCampaignAffiliateOffer('campaign-1')).resolves.toEqual({
-      productName: 'Offer', shortUrl: 'https://sophia.agencyos.network/r/fallback',
+      productName: 'Offer', shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/fallback',
     });
 
     mocks.queryError = new Error('database unavailable');

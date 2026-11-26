@@ -34,7 +34,7 @@ export function generateAttributionToken(params: VideoAttributionParams): string
 export function buildAttributedReferralUrl(
   partnerCode: string,
   campaignSubId?: string,
-  baseUrl = 'https://sophia.agencyos.network'
+  baseUrl = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev'
 ): string {
   const cleanBase = baseUrl.replace(/\/+$/, '');
   const sub = campaignSubId ? `?sub_id=${encodeURIComponent(campaignSubId)}` : '';

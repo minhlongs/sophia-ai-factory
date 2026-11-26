@@ -85,7 +85,7 @@ describe('seed/domain — technical identity & fail-closed host security', () =>
       'evil.example.com',
       `fake.${PRODUCTION_TECHNICAL_HOSTNAME}`,
       'phish.agencyos.network',
-      '*.sophia.agencyos.network',
+      '*.sophia-ai-factory.agencyos-openclaw.workers.dev',
     ]) {
       const req = new Request(`https://${PRODUCTION_TECHNICAL_HOSTNAME}/login`, {
         headers: { host: badHost },

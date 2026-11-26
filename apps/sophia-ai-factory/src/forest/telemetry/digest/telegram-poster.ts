@@ -40,7 +40,7 @@ export function buildTelegramMessage(params: TelegramPostParams): string {
 
   const header = `📊 *Sophia AI Factory — ${weekLabel}*\n\n`
   const link = issueUrl ? `\n\n🔗 [Full report on GitHub](${issueUrl})` : ''
-  const footer = `\n\n_sophia.agencyos.network_`
+  const footer = `\n\n_sophia-ai-factory.agencyos-openclaw.workers.dev_`
 
   // Reserve space for header + link + footer, truncate tldr if needed
   const reserved = header.length + link.length + footer.length

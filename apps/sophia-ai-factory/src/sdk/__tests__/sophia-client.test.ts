@@ -54,7 +54,7 @@ describe('SophiaClient SDK', () => {
 
       await client.credits.balance();
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://sophia.agencyos.network/api/v1/credits',
+        'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/v1/credits',
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: 'Bearer token_xyz',

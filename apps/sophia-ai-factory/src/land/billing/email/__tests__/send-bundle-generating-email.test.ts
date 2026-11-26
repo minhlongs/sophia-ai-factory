@@ -20,7 +20,7 @@ const baseCtx: BundleGeneratingContext = {
   skuLabel: 'Starter Bundle',
   creditsTotal: 10,
   etaMinutes: 10,
-  statusPageUrl: 'https://sophia.agencyos.network/vi/dashboard/orders',
+  statusPageUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/dashboard/orders',
   locale: 'vi',
 }
 
@@ -110,7 +110,7 @@ describe('sendBundleGeneratingEmail', () => {
   beforeEach(() => {
     vi.mocked(createServerClient).mockReset()
     process.env.RESEND_API_KEY = 're_test'
-    process.env.NEXT_PUBLIC_APP_URL = 'https://sophia.agencyos.network'
+    process.env.NEXT_PUBLIC_APP_URL = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev'
   })
 
   it('returns { success: true, alreadySent: true } when billing_events record exists', async () => {

@@ -70,7 +70,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
       used: quota.used,
       limit: quota.limit,
       resets_at: quota.resetsAt,
-      upgrade_url: 'https://sophia.agencyos.network/pricing',
+      upgrade_url: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/pricing',
     }, { status: 429 });
   }
 
@@ -81,7 +81,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
         error: 'Insufficient MCU credits',
         required: commandDef.credits,
         available: balance.credits_remaining,
-        upgrade_url: 'https://sophia.agencyos.network/dashboard/credits',
+        upgrade_url: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/dashboard/credits',
       }, { status: 402 });
     }
   }

@@ -42,7 +42,7 @@ export async function summarizeWithLLM(
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
-      'HTTP-Referer': 'https://sophia.agencyos.network',
+      'HTTP-Referer': 'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
       'X-Title': 'Sophia AI Factory',
     },
     body: JSON.stringify(requestBody),

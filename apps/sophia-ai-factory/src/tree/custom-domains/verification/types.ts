@@ -4,12 +4,12 @@
  * @layer tree
  */
 
-export const DEFAULT_CNAME_TARGET = 'cname.sophia.agencyos.network';
+export const DEFAULT_CNAME_TARGET = 'cname.sophia-ai-factory.agencyos-openclaw.workers.dev';
 
 export const HOSTNAME_REGEX = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
 
 export const FORBIDDEN_DOMAINS = new Set([
-  'sophia.agencyos.network',
+  'sophia-ai-factory.agencyos-openclaw.workers.dev',
   'agencyos.network',
   'localhost',
   'workers.dev',

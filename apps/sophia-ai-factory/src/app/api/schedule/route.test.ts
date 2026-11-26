@@ -28,7 +28,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 import { DELETE, PATCH, POST } from './route';
 
 function makeJsonRequest(method: string, body: unknown, path = '/api/schedule'): NextRequest {
-  return new NextRequest(`https://sophia.agencyos.network${path}`, {
+  return new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev${path}`, {
     method,
     headers: { 'content-type': 'application/json', ...csrfHeaders },
     body: JSON.stringify(body),
@@ -203,7 +203,7 @@ describe('/api/schedule validation', () => {
     const { db, calls } = makeDb({ deleteExisting: null });
     mocks.createServerClient.mockReturnValue(db);
 
-    const res = await DELETE(new NextRequest('https://sophia.agencyos.network/api/schedule?id=missing-sched', {
+    const res = await DELETE(new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/schedule?id=missing-sched', {
       method: 'DELETE',
       headers: csrfHeaders,
     }));

@@ -11,7 +11,7 @@ export function buildRenewalReminderHtml(
   <p>Hi ${displayName},</p>
   <p>Your <strong>${plan.toUpperCase()}</strong> plan expires on <strong>${expiresAt}</strong>.</p>
   <p>To continue uninterrupted access, please ensure your payment method is up to date.</p>
-  <a href="https://sophia.agencyos.network/dashboard/billing"
+  <a href="https://sophia-ai-factory.agencyos-openclaw.workers.dev/dashboard/billing"
      style="display:inline-block;background:#6750A4;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0;">
     Manage Billing
   </a>

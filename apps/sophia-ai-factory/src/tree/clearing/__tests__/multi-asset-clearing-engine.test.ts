@@ -52,7 +52,7 @@ import {
 
 let mockCurrentUser: { id: string; email: string; role: string } | null = {
   id: 'usr_test_treasury_001',
-  email: 'treasury@sophia.agencyos.network',
+  email: 'treasury@sophia-ai-factory.agencyos-openclaw.workers.dev',
   role: 'treasury_lead',
 };
 
@@ -225,7 +225,7 @@ describe('Multi-Asset Clearing Engine — Unit Tests', () => {
     activeTestD1 = db;
     mockCurrentUser = {
       id: 'usr_test_treasury_001',
-      email: 'treasury@sophia.agencyos.network',
+      email: 'treasury@sophia-ai-factory.agencyos-openclaw.workers.dev',
       role: 'treasury_lead',
     };
   });
@@ -548,7 +548,7 @@ describe('Multi-Asset Clearing Engine — Unit Tests', () => {
       if (!unauthRes.ok) {
         expect(unauthRes.error.code).toBe('GET_POOLS_FAILED');
       }
-      mockCurrentUser = { id: 'usr_test_treasury_001', email: 'treasury@sophia.agencyos.network', role: 'treasury_lead' };
+      mockCurrentUser = { id: 'usr_test_treasury_001', email: 'treasury@sophia-ai-factory.agencyos-openclaw.workers.dev', role: 'treasury_lead' };
     });
 
     it('quoteClearingSwapAction quotes valid asset swaps and rejects missing pools', async () => {
