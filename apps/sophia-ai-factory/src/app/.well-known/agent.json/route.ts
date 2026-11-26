@@ -5,9 +5,13 @@
 
 import { NextResponse } from 'next/server';
 import { buildAgentDiscoveryManifest } from '@/seed/aeo';
+import { buildSophiaA2AExtension } from '@/seed/aeo/x402-payment-contract';
 
 export async function GET(): Promise<NextResponse> {
-  const manifest = buildAgentDiscoveryManifest();
+  const manifest = {
+    ...buildAgentDiscoveryManifest(),
+    a2a: buildSophiaA2AExtension(),
+  };
   return NextResponse.json(manifest, {
     status: 200,
     headers: {
