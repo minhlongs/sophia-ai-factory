@@ -132,8 +132,8 @@ describe('deploy cross-environment governance: Production and Pilot isolation', 
       );
 
       expect(exec, `${jobId}: must validate pilot_expected_base_sha ancestry`).toContain('git merge-base --is-ancestor');
-      expect(exec, `${jobId}: must diff full range BASE_SHA..github.sha for migrations`).toContain(
-        'git diff --name-only "${BASE_SHA}..${{ github.sha }}" -- apps/sophia-ai-factory/migrations/',
+      expect(exec, `${jobId}: must diff full range BASE_SHA..github.sha for migrations with repo-root pathspec`).toContain(
+        'git diff --name-only "${BASE_SHA}..${{ github.sha }}" -- \':(top)apps/sophia-ai-factory/migrations/\'',
       );
       expect(exec, `${jobId}: must not use git diff-tree which misses merge commits`).not.toContain('git diff-tree');
     }
