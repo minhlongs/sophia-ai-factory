@@ -27,7 +27,7 @@ export async function GET() {
            pj.id, pj.video_id AS videoId, pj.channel_id AS target,
            pj.provider, pj.status, pj.caption, pj.scheduled_at AS scheduledAt,
            pj.created_at AS createdAt, pj.retry_count AS retryCount,
-           wt.name AS templateName
+           wt.provider_id AS templateName
          FROM publishing_jobs pj
          LEFT JOIN whatsapp_templates wt ON wt.id = CAST(pj.caption AS INTEGER)
          WHERE pj.tenant_id = ?1 AND pj.provider = 'whatsapp'
