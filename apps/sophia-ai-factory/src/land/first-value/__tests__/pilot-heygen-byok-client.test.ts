@@ -55,12 +55,23 @@ describe('pilot-heygen-byok-client core hardening', () => {
     ).rejects.toThrow('HEYGEN_SUBMIT_HTTP_429:rate_limit_exceeded|retry_after=30|req=req_99');
   });
 
-  it('marks completed without video_url as failed and extracts detailed error object', async () => {
+  it('keeps completed without video_url as recoverable processing (assetPending), recovers when video_url appears, and extracts detailed error object', async () => {
     const mockFetch = vi
       .fn()
       .mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ data: { status: 'completed' } }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: {
+              status: 'completed',
+              video_url: 'https://resource.heygen.ai/video/vid_1.mp4',
+              duration: 42,
+            },
+          }),
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -79,8 +90,18 @@ describe('pilot-heygen-byok-client core hardening', () => {
       apiKey: 'hg-key',
       videoId: 'vid_1',
     });
-    expect(noUrl.status).toBe('failed');
-    expect(noUrl.errorMessage).toBe('HEYGEN_COMPLETED_WITHOUT_VIDEO_URL');
+    expect(noUrl.status).toBe('processing');
+    expect(noUrl.assetPending).toBe(true);
+    expect(noUrl.warningCode).toBe('HEYGEN_COMPLETED_ASSET_PENDING');
+
+    const recovered = await fetchPilotHeyGenByokStatus({
+      userId: 'u_st',
+      apiKey: 'hg-key',
+      videoId: 'vid_1',
+    });
+    expect(recovered.status).toBe('completed');
+    expect(recovered.mediaUrl).toBe('https://resource.heygen.ai/video/vid_1.mp4');
+    expect(recovered.durationSec).toBe(42);
 
     const detailedErr = await fetchPilotHeyGenByokStatus({
       userId: 'u_st',

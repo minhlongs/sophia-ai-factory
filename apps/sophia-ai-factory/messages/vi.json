@@ -9826,6 +9826,7 @@
     "pilotPollHeyGenStillProcessing": "HeyGen vẫn đang render (đã kiểm tra lúc {time}). Kiểm tra lại sau 30-60 giây hoặc dùng Xuất MP4 1-Key trên trình duyệt.",
     "pilotPollHeyGenCompleted": "Video HeyGen đã hoàn tất và sẵn sàng tải xuống.",
     "pilotPollHeyGenFailed": "HeyGen báo lỗi khi render video. Xem chi tiết lý do ở trên.",
+    "pilotPollHeyGenError": "Không thể kiểm tra tiến độ HeyGen lúc này (kiểm tra lúc {time}). Vui lòng thử lại sau giây lát hoặc dùng Xuất MP4 1-Key trên trình duyệt.",
     "pilotHeyGenFailureReasonLabel": "Lý do lỗi",
     "pilotPublishTitle": "6. Đăng Thủ Công & Nhật Ký Affiliate Thực Tế",
     "pilotPublishSubtitle": "Sao chép gói nội dung để tự đăng lên TikTok / Shorts / Reels (không tự động đăng bài), dán link bài đăng thật và ghi nhận kết quả đối chiếu trung thực từ sàn Affiliate (không bao giờ tự bịa số chuyển đổi hay hoa hồng).",

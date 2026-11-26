@@ -146,6 +146,8 @@ export async function fetchPilotHeyGenByokStatus(input: {
   readonly mediaUrl?: string;
   readonly durationSec?: number;
   readonly errorMessage?: string;
+  readonly assetPending?: boolean;
+  readonly warningCode?: string;
 }> {
   const breakerRef = input.userId ? `byok:${input.userId}` : 'byok:pilot';
   if (!shouldAllowRequest('heygen', breakerRef)) {
@@ -187,7 +189,11 @@ export async function fetchPilotHeyGenByokStatus(input: {
   const rawStatus = json.data?.status;
   if (rawStatus === 'completed') {
     if (!json.data?.video_url) {
-      return { status: 'failed', errorMessage: 'HEYGEN_COMPLETED_WITHOUT_VIDEO_URL' };
+      return {
+        status: 'processing',
+        assetPending: true,
+        warningCode: 'HEYGEN_COMPLETED_ASSET_PENDING',
+      };
     }
     const safeUrl = assertSafeHeyGenMediaUrl(json.data.video_url).toString();
     return {
