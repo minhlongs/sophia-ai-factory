@@ -11,12 +11,20 @@ import {
 } from '../campaign-citation-builder';
 import { GET as getLlmsTxt } from '@/app/llms.txt/route';
 import { GET as getCitationMd } from '@/app/c/[slug]/md/route';
+import CampaignCitationPage from '@/app/c/[slug]/page';
 import {
   buildConciergeDeepLinkReply,
   buildConciergeReply,
   handleConciergeAsk,
   handleConciergeStart,
 } from '@/tree/telegram/handlers/concierge-handler';
+
+const mockNotFound = vi.fn(() => {
+  throw new Error('NEXT_NOT_FOUND');
+});
+vi.mock('next/navigation', () => ({
+  notFound: () => mockNotFound(),
+}));
 
 const mockSendTelegramMessage = vi.fn();
 vi.mock('@/tree/telegram/telegram-client', () => ({
@@ -81,6 +89,15 @@ describe('Auto-Hosted GEO Citation & @Sophia_Bbot Concierge', () => {
       { params: Promise.resolve({ slug: 'bad slug!' }) },
     );
     expect(badRes.status).toBe(400);
+
+    const pageEl = await CampaignCitationPage({
+      params: Promise.resolve({ slug: 'notion-ai-2026' }),
+    });
+    expect(pageEl).toBeTruthy();
+
+    await expect(
+      CampaignCitationPage({ params: Promise.resolve({ slug: 'bad slug!' }) }),
+    ).rejects.toThrow('NEXT_NOT_FOUND');
   });
 
   it('handles @Sophia_Bbot /ask and /start concierge_<slug> commands', async () => {
