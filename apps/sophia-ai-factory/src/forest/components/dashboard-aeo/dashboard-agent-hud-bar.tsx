@@ -55,7 +55,7 @@ export function DashboardAgentHudBar({
   return (
     <section
       aria-label={isVi ? 'Thanh Điều Khiển AI An Toàn' : 'Authenticated-Safe AI Context Bar'}
-      className="mb-6 rounded-xl border border-border/80 bg-card/85 p-3.5 sm:p-4 shadow-sm backdrop-blur-md space-y-2.5"
+      className="mb-4 rounded-xl border border-border/80 bg-card/85 p-2.5 sm:px-3.5 shadow-sm backdrop-blur-md space-y-2"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">

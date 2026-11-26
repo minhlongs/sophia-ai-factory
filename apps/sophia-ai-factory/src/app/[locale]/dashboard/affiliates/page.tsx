@@ -12,6 +12,7 @@
  */
 
 import React from 'react';
+import { Link } from '@/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { createServerClient } from '@/seed/db/client';
@@ -175,7 +176,17 @@ export default async function AffiliatesDashboardPage(props: {
             : 'rounded-lg border bg-card p-4 text-sm text-muted-foreground'
         }
       >
-        <p className="font-semibold">{stateCopy}</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="font-semibold">{stateCopy}</p>
+          {view.state === 'empty' && (
+            <Link
+              href="/dashboard/first-value"
+              className="inline-flex items-center rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
+            >
+              {isVi ? '+ Tạo kèo đầu tiên trong Affiliate Studio' : '+ Create First Offer in Affiliate Studio'}
+            </Link>
+          )}
+        </div>
         {!killSwitch.known && view.state !== 'unauthenticated' ? (
           <p className="mt-1 text-xs">
             {isVi
