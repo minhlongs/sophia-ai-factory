@@ -20,6 +20,16 @@ on:
         required: false
         type: boolean
         default: false
+      deploy_pilot_explicit:
+        description: 'Explicitly deploy sophia-ai-factory-pilot under independent pilot environment approval (never inherits production approval)'
+        required: false
+        type: boolean
+        default: false
+      allow_pilot_migrations:
+        description: 'Explicitly authorize Pilot D1 migration delta when deploying sophia-ai-factory-pilot'
+        required: false
+        type: boolean
+        default: false
 permissions:
   contents: read
 
@@ -194,12 +204,6 @@ jobs:
         if: ${{ inputs.dry_run != true }}
         run: OPEN_NEXT_DEPLOY=true npx wrangler deploy --config wrangler.toml --env "" --upload-source-maps=false
 
-      - name: 'Stage 3a-pilot: Auto-Sync Permanent Internal R&D Pilot Worker (100% Parity, $0 RaaS)'
-        if: ${{ inputs.dry_run != true }}
-        run: |
-          node scripts/verify-pilot-wrangler-isolation.mjs --require-resolved-ids
-          OPEN_NEXT_DEPLOY=true npx wrangler deploy --config wrangler.pilot.toml --upload-source-maps=false --var "COMMIT_SHA:${{ github.sha }}" --var "DEPLOYED_AT:$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-
       - name: 'Stage 3b: Inject Secret Metadata (COMMIT_SHA / DEPLOYED_AT / DEPLOY_BRANCH)'
         if: ${{ inputs.dry_run != true }}
         run: |
@@ -314,3 +318,76 @@ jobs:
           EXPECTED_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
           BASE_URL="${DEPLOY_VERIFY_URL%/}"
           node scripts/post-deploy-smoke.mjs "$BASE_URL" "$EXPECTED_SHA"
+
+  # =========================================================================
+  # STAGE 3-PILOT: Explicit Opt-In R&D Pilot Deploy (Independent Approval)
+  # =========================================================================
+  stage-3-pilot-explicit-deploy:
+    name: 'Stage 3-Pilot: Explicit Opt-In Pilot Worker Deploy'
+    needs: stage-1-quality-gate
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_pilot_explicit == true && inputs.dry_run != true }}
+    environment: pilot
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/sophia-ai-factory
+    env:
+      NODE_OPTIONS: '--max-old-space-size=4096'
+      SKIP_SENTRY_BUILD: '1'
+      SKIP_SYMBOL_UPLOAD: '1'
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: apps/sophia-ai-factory/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Preflight — Assert Cloudflare Credentials
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "❌ CRITICAL: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are required for Pilot edge deployment."
+            exit 1
+          fi
+
+      - name: Preflight — Verify Pilot Wrangler Isolation
+        run: node scripts/verify-pilot-wrangler-isolation.mjs --require-resolved-ids
+
+      - name: Preflight — Verify Exact Revision & Pilot Migration Inventory Guard
+        run: |
+          set -euo pipefail
+          HEAD_SHA=$(git rev-parse HEAD)
+          if [ "$HEAD_SHA" != "${{ github.sha }}" ]; then
+            echo "❌ CRITICAL: Checkout HEAD ($HEAD_SHA) does not match github.sha (${{ github.sha }})." >&2
+            exit 1
+          fi
+          bash scripts/check-duplicate-migration-prefixes.sh
+          if [ "${{ inputs.allow_pilot_migrations }}" != "true" ]; then
+            CHANGED_MIGRATIONS=$(git diff-tree --no-commit-id --name-only -r "${{ github.sha }}" -- apps/sophia-ai-factory/migrations/ || true)
+            if [ -n "$CHANGED_MIGRATIONS" ]; then
+              echo "❌ CRITICAL: Revision ${{ github.sha }} introduces/modifies migrations, but allow_pilot_migrations is not enabled:" >&2
+              echo "$CHANGED_MIGRATIONS" >&2
+              exit 1
+            fi
+          fi
+
+      - name: Build Next.js & OpenNext for Pilot
+        run: npm run pilot:build
+
+      - name: Post-Build — Verify Pilot Wrangler Isolation & Bundle
+        run: node scripts/verify-pilot-wrangler-isolation.mjs --require-resolved-ids --check-build
+
+      - name: Deploy Pilot Worker to Cloudflare Edge
+        run: |
+          OPEN_NEXT_DEPLOY=true npx wrangler deploy --config wrangler.pilot.toml --upload-source-maps=false --var "COMMIT_SHA:${{ github.sha }}" --var "DEPLOYED_AT:$(date -u +%Y-%m-%dT%H:%M:%SZ)"
