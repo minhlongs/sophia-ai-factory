@@ -51,14 +51,38 @@ export async function signStandardWebhookPayload(args: {
   return `v1,${toBase64(sigBuffer)}`;
 }
 
+function constantTimeEqual(a: string, b: string): boolean {
+  const bytesA = new TextEncoder().encode(a);
+  const bytesB = new TextEncoder().encode(b);
+  if (bytesA.length !== bytesB.length) return false;
+  let diff = 0;
+  for (let i = 0; i < bytesA.length; i++) {
+    diff |= bytesA[i] ^ bytesB[i];
+  }
+  return diff === 0;
+}
+
 export async function verifyStandardWebhookSignature(args: {
   readonly webhookId: string;
   readonly timestampSec: number;
   readonly rawBody: string;
   readonly secret: string;
   readonly signatureHeader: string;
+  readonly toleranceSec?: number;
+  readonly nowSec?: number;
 }): Promise<boolean> {
+  const tolerance = args.toleranceSec ?? 300;
+  const nowSec = args.nowSec ?? Math.floor(Date.now() / 1000);
+  if (!Number.isFinite(args.timestampSec) || Math.abs(nowSec - args.timestampSec) > tolerance) {
+    return false;
+  }
   const expected = await signStandardWebhookPayload(args);
   const providedCandidates = args.signatureHeader.trim().split(/\s+/);
-  return providedCandidates.includes(expected);
+  let matched = false;
+  for (const candidate of providedCandidates) {
+    if (constantTimeEqual(candidate, expected)) {
+      matched = true;
+    }
+  }
+  return matched;
 }

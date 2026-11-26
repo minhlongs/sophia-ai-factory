@@ -129,9 +129,7 @@ export async function GET(
   const affiliateUrl = new URL(offer.affiliate_link);
   affiliateUrl.searchParams.set(subParam, tid);
 
-  const cfAsn =
-    (request as unknown as { cf?: { asn?: number } }).cf?.asn ??
-    request.headers.get('x-cf-asn');
+  const cfAsn = (request as unknown as { cf?: { asn?: number } }).cf?.asn;
   const asnFraud = evaluateAsnClickFraud(cfAsn);
 
   if (!isPreviewOrCrawlerBot(userAgent) && !asnFraud.suspicious) {
