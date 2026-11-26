@@ -65,12 +65,15 @@ export default async function DashboardLayout({
     }
   }
 
+  const isFreeRdMode = isOpenInternalRdMode() || process.env.PAYMENTS_ENABLED === 'false';
+  const displayTier = isFreeRdMode ? 'R&D $0' : userTier;
+
   const dashboardUser = user
     ? {
         name: user.full_name || (isVi ? 'Nhà Sáng Lập Sophia' : 'Sophia Founder'),
         email: user.email || 'founder@sophia.ai',
         avatarUrl: user.avatar_url || null,
-        tier: userTier,
+        tier: displayTier,
         quotaUsagePercent,
         quotaUsed,
         quotaTotal,
@@ -78,7 +81,7 @@ export default async function DashboardLayout({
     : {
         name: isVi ? 'Nhà Sáng Lập Sophia' : 'Sophia Founder',
         email: 'founder@sophia.ai',
-        tier: 'PRO',
+        tier: isFreeRdMode ? 'R&D $0' : 'PRO',
         quotaUsagePercent: 0,
         quotaUsed: 0,
         quotaTotal: 1000,

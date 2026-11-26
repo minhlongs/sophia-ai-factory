@@ -36,7 +36,7 @@ export const DASHBOARD_MODULES_CATALOG: Readonly<Record<string, DashboardModuleD
     slug: 'affiliate',
     titleVi: 'Đế Chế Tiếp Thị Liên Kết 10 Mạng Lưới (Affiliate Empire)',
     titleEn: '10-Network Affiliate Empire',
-    purposeVi: 'Theo dõi shortlink /r/code, EPC, tỷ lệ nhấp và hoa hồng trên Impact, PartnerStack, Binance, Bybit, Bitget, OKX, ClickBank.',
+    purposeVi: 'Theo dõi shortlink /api/r/code, EPC, tỷ lệ nhấp và hoa hồng Crypto & SaaS trên Impact, PartnerStack, Binance, Bybit, Bitget, OKX.',
     purposeEn: 'Track /r/code shortlinks, EPC, click-through rates, and commissions across 10 affiliate networks.',
     recommendedPromptVi: 'Hãy đánh giá mạng lưới affiliate nào có EPC tốt nhất cho ngách video hiện tại.',
     recommendedPromptEn: 'Evaluate which affiliate network offers the highest EPC for our active video vertical.',

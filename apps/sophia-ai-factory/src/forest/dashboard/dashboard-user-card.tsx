@@ -44,6 +44,8 @@ export function DashboardUserCard({
   const quotaPercent = Number.isFinite(rawQuota) ? rawQuota : 0;
   const userTier = user.tier || "PRO";
 
+  const isFreeRdMode = userTier.toUpperCase() === "R&D $0";
+
   return (
     <div className="p-3 border-t border-border dark:border-white/[0.08] bg-muted/30 dark:bg-[#090A10] shrink-0">
       <div className="bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] rounded-xl p-3 space-y-2.5 shadow-sm">
@@ -69,26 +71,32 @@ export function DashboardUserCard({
         {/* Quota Progress Bar */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-[10px] text-muted-foreground font-medium">
-            <span>MCU Quota</span>
-            <span className="font-mono text-foreground dark:text-slate-300">{quotaPercent}%</span>
+            <span>{isFreeRdMode ? "BYOK R&D" : "MCU Quota"}</span>
+            <span className="font-mono text-foreground dark:text-slate-300">
+              {isFreeRdMode ? "Unlimited" : `${quotaPercent}%`}
+            </span>
           </div>
-          <div className="w-full h-1.5 bg-muted/60 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(100, Math.max(0, quotaPercent))}%` }}
-            />
-          </div>
+          {!isFreeRdMode && (
+            <div className="w-full h-1.5 bg-muted/60 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, Math.max(0, quotaPercent))}%` }}
+              />
+            </div>
+          )}
         </div>
 
-        {/* Single-line Upgrade CTA */}
-        <Link
-          href="/pricing"
-          onClick={onCloseMobile}
-          className="w-full h-7 rounded-lg bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary-text hover:text-foreground dark:hover:text-white text-xs font-semibold flex items-center justify-center gap-1 transition-all min-w-0 truncate"
-        >
-          <span>{isVi ? "Nâng Cấp Gói" : "Upgrade Tier"}</span>
-          <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
-        </Link>
+        {/* Single-line Upgrade CTA (hidden in $0 RaaS Internal R&D mode) */}
+        {!isFreeRdMode && (
+          <Link
+            href="/pricing"
+            onClick={onCloseMobile}
+            className="w-full h-7 rounded-lg bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary-text hover:text-foreground dark:hover:text-white text-xs font-semibold flex items-center justify-center gap-1 transition-all min-w-0 truncate"
+          >
+            <span>{isVi ? "Nâng Cấp Gói" : "Upgrade Tier"}</span>
+            <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
+          </Link>
+        )}
       </div>
     </div>
   );
