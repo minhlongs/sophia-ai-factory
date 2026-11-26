@@ -110,7 +110,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
         expect(item.icon).toBeDefined();
         expect(typeof item.icon).toBe('object'); // Lucide forwardRef icon
 
-        const { container } = render(<DashboardSidebarNav currentPath="/some-other-path" />);
+        const { container } = render(<DashboardSidebarNav isAdmin currentPath="/some-other-path" />);
         const links = Array.from(container.querySelectorAll(`a[href="${expected.href}"]`));
         expect(links.length).toBeGreaterThan(0);
         const link = links.find((l) => l.textContent?.includes(expected.fallbackLabel)) ?? links[0];
@@ -126,7 +126,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
     it('empirically verifies active indicator glow and left-bar on each module route', () => {
       // Test each route when it is the exact current route
       expectedModules.forEach((mod) => {
-        const { container } = render(<DashboardSidebarNav currentPath={mod.href} />);
+        const { container } = render(<DashboardSidebarNav isAdmin currentPath={mod.href} />);
         const activeLink = container.querySelector(`a[href="${mod.href}"]`);
         expect(activeLink).not.toBeNull();
 
@@ -141,7 +141,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
     });
 
     it('empirically checks route exclusivity when on /dashboard (root does not match subpaths)', () => {
-      const { container } = render(<DashboardSidebarNav currentPath="/dashboard" />);
+      const { container } = render(<DashboardSidebarNav isAdmin currentPath="/dashboard" />);
       const overviewLink = container.querySelector('a[href="/dashboard"]');
       expect(overviewLink?.className).toContain('bg-primary/10');
 
@@ -155,7 +155,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
     });
 
     it('empirically examines nested route matching on /dashboard/missions/new', () => {
-      const { container } = render(<DashboardSidebarNav currentPath="/dashboard/missions/new" />);
+      const { container } = render(<DashboardSidebarNav isAdmin currentPath="/dashboard/missions/new" />);
       const createMissionLink = container.querySelector('a[href="/dashboard/missions/new"]');
       expect(createMissionLink?.className).toContain('bg-primary/10');
 
@@ -169,7 +169,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
       const ytLinkVi = viContainer.querySelector('a[href="/dashboard/youtube"]');
       expect(ytLinkVi?.className).toContain('bg-primary/10');
 
-      const { container: enContainer } = render(<DashboardSidebarNav currentPath="/en/dashboard/handover" />);
+      const { container: enContainer } = render(<DashboardSidebarNav isAdmin currentPath="/en/dashboard/handover" />);
       const handoverLinkEn = enContainer.querySelector('a[href="/dashboard/handover"]');
       expect(handoverLinkEn?.className).toContain('bg-primary/10');
     });
@@ -408,7 +408,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
       render(<DashboardSidebarNav isMobileOpen={true} onCloseMobile={onClose} />);
       const drawer = screen.getByTestId('mobile-drawer');
       const drawerLinks = within(drawer).getAllByRole('link');
-      expect(drawerLinks.length).toBeGreaterThanOrEqual(16);
+      expect(drawerLinks.length).toBeGreaterThanOrEqual(8);
 
       // Click the 3rd link (AI Missions)
       fireEvent.click(drawerLinks[2]);
