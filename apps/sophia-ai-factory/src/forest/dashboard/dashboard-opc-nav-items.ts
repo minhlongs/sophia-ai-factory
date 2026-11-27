@@ -14,9 +14,9 @@
 
 import {
   LayoutDashboard,
+  Sparkles,
   DollarSign,
   Film,
-  Megaphone,
   ShieldCheck,
   Activity,
   BookOpen,
@@ -37,6 +37,13 @@ export const OPC_PRIMARY_NAV_GROUPS: DashboardNavModule[] = [
     fallbackLabel: "Today",
     href: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    id: "opc_engines",
+    labelKey: "opcNav.engines",
+    fallbackLabel: "19 AI Engines",
+    href: "/dashboard/engines",
+    icon: Sparkles,
   },
   {
     id: "opc_offers",
