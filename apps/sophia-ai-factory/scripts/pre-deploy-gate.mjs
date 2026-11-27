@@ -23,7 +23,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const REPO_ROOT = join(ROOT, '..', '..');
 const APP_PREFIX = `${relative(REPO_ROOT, ROOT).split(sep).join('/')}/`;
-const BASE_URL = process.env.PREVIEW_URL || process.env.PROD_URL || 'https://sophia.agencyos.network';
+const BASE_URL = process.env.PREVIEW_URL || process.env.PROD_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 const ALLOWLIST = [
   '/billing', '/contact', '/projects', '/projects/new', '/settings', '/docs',
   '/auth/signup', '/features', '/guide', '/privacy', '/reset-password', '/terms',
@@ -104,7 +104,7 @@ async function checkPageRender() {
       }
     } catch (err) {
       console.log(`  ⚠️  ${path} → ${err.message}`);
-      if (BASE_URL.includes('sophia.agencyos.network')) stepFail++;
+      if (BASE_URL.includes('sophia-ai-factory.agencyos-openclaw.workers.dev')) stepFail++;
     }
   }
 

@@ -29,7 +29,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const reportsDir = resolve(root, 'plans/reports');
 mkdirSync(reportsDir, { recursive: true });
 
-const PROD_URL = (process.env.PROD_URL || 'https://sophia.agencyos.network').replace(/\/+$/, '');
+const PROD_URL = (process.env.PROD_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev').replace(/\/+$/, '');
 
 function curl(url, opts = {}) {
   const args = ['-fsS', '-o', '/dev/null', '-w', '%{http_code}', '-H', 'Accept: application/json'];

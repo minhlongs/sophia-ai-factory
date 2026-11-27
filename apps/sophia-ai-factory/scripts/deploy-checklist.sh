@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ─── Configuration ────────────────────────────────────────────────────────────
-APP_URL="${APP_URL:-https://sophia.agencyos.network}"
+APP_URL="${APP_URL:-https://sophia-ai-factory.agencyos-openclaw.workers.dev}"
 HEALTH_TOKEN="${HEALTH_TOKEN:-}"
 FORCE_DEPLOY="${FORCE_DEPLOY:-0}"
 JUSTIFICATION="${JUSTIFICATION:-}"

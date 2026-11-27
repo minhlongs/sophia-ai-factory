@@ -10,7 +10,7 @@ import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const PROD_URL = process.env.PROD_URL ?? 'https://sophia.agencyos.network'
+const PROD_URL = process.env.PROD_URL ?? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev'
 
 // ---- Inline check implementations (no TS imports) ----
 

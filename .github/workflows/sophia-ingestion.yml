@@ -66,7 +66,7 @@ jobs:
             -H "Authorization: Bearer ${CRON_SECRET}" \
             -H "Content-Type: application/json" \
             --data-raw "${PAYLOAD}" \
-            "https://sophia.agencyos.network/api/ingestion/trigger") || {
+            "https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/ingestion/trigger") || {
             echo "::error::Ingestion trigger request failed due to transport or timeout error." >&2
             exit 1
           }

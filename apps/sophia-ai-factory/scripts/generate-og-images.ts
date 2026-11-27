@@ -59,7 +59,7 @@ function buildTwitterCardSvg(): string {
         font-size="16" font-weight="400" fill="#4a9ebb" letter-spacing="2">AI VIDEO FACTORY</text>
   <text x="${WIDTH - 90}" y="${HEIGHT / 2 + 120}" font-family="system-ui,-apple-system,sans-serif"
         font-size="16" font-weight="400" fill="#4a9ebb" text-anchor="end" letter-spacing="2">
-    sophia.agencyos.network
+    sophia-ai-factory.agencyos-openclaw.workers.dev
   </text>
   <!-- Logo mark (right) -->
   <circle cx="${WIDTH - 140}" cy="${HEIGHT / 2 - 90}" r="80" fill="none"
@@ -115,7 +115,7 @@ function buildOgImageSvg(): string {
   <!-- Domain -->
   <text x="${WIDTH / 2}" y="470" font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif"
         font-size="18" font-weight="300" fill="#4a7a94" text-anchor="middle" letter-spacing="3">
-    sophia.agencyos.network
+    sophia-ai-factory.agencyos-openclaw.workers.dev
   </text>
   <!-- Feature badges -->
   <rect x="80" y="540" width="200" height="36" rx="18" fill="#00d4ff" fill-opacity="0.12"/>

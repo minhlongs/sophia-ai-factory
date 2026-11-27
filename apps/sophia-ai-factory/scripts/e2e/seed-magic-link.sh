@@ -11,7 +11,7 @@
 set -euo pipefail
 
 DB_NAME="sophia-raas-db"
-BASE_URL="${SOPHIA_BASE_URL:-https://sophia.agencyos.network}"
+BASE_URL="${SOPHIA_BASE_URL:-https://sophia-ai-factory.agencyos-openclaw.workers.dev}"
 EMAIL="e2e-test@sophia.local"
 USER_ID="e2e00000-0000-0000-0000-000000000001"
 HANDOVER_ID="e2e00000-0000-0000-0000-000000000002"

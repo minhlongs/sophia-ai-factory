@@ -27,7 +27,7 @@ try {
   };
 }
 
-const PROD_URL = 'https://sophia.agencyos.network';
+const PROD_URL = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 
 // Proxy support for sandboxed / enterprise network environments
 try {

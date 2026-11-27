@@ -1,11 +1,11 @@
 #!/bin/bash
-# audit-dns.sh — DNS Security Audit for sophia.agencyos.network
+# audit-dns.sh — DNS Security Audit for sophia-ai-factory.agencyos-openclaw.workers.dev
 # Checks: A, AAAA, CAA, MX, TXT (SPF/DMARC), NS, DNSSEC chain
 # Output: audit-results-{date}.log
 
 set -e
 
-DOMAIN="sophia.agencyos.network"
+DOMAIN="sophia-ai-factory.agencyos-openclaw.workers.dev"
 OUTPUT_DIR="$(pwd)/audit-results"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 LOGFILE="${OUTPUT_DIR}/audit-dns-${TIMESTAMP}.log"

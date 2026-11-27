@@ -12,7 +12,7 @@
  * That is exactly what happened on 2026-10-28. Migration 0480 rebuilt three tables
  * and also carried `ALTER TABLE "user" ADD COLUMN twoFactorEnabled`; because one
  * rebuild target was already absent the whole file was skipped, so every signup on
- * sophia.agencyos.network failed for days.
+ * sophia-ai-factory.agencyos-openclaw.workers.dev failed for days.
  *
  * The helper is bash. It is sourced out of the shipped script and called directly,
  * so these tests exercise the code that deploys rather than a copy of it, and they

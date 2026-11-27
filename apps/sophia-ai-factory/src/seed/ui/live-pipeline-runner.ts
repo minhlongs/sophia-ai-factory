@@ -120,7 +120,7 @@ export function evaluateSingleEngineLive(
         })),
       },
       ctaText: 'Link in first comment',
-      shortUrl: 'https://sophia.agencyos.network/r/demo',
+      shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/demo',
       disclosureTag: '#ad #affiliate',
     });
     return {

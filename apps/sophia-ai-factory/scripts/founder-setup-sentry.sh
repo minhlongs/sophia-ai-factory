@@ -128,7 +128,7 @@ npm run deploy:full
 echo ""
 echo "▶ Verifying deploy SHA match..."
 LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
-LIVE_SHA=$(curl -fsS https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4 || echo "")
+LIVE_SHA=$(curl -fsS https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4 || echo "")
 echo "  local=$LOCAL_SHA  live=$LIVE_SHA"
 if [ "$LOCAL_SHA" != "$LIVE_SHA" ]; then
   echo "[WARN] SHA mismatch — deploy may be stale. Continuing to test event anyway."

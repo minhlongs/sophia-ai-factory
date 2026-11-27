@@ -23,7 +23,7 @@ fi
 if [ -z "${E2E_TEST_USER_PASSWORD:-}" ]; then
   echo "ERROR: E2E_TEST_USER_PASSWORD is required before deploy:full."
   echo "Bootstrap/verify the production E2E user first:"
-  echo "  PLAYWRIGHT_TEST_BASE_URL=https://sophia.agencyos.network E2E_TEST_USER_PASSWORD='<strong-password>' npm run e2e:bootstrap-user"
+  echo "  PLAYWRIGHT_TEST_BASE_URL=https://sophia-ai-factory.agencyos-openclaw.workers.dev E2E_TEST_USER_PASSWORD='<strong-password>' npm run e2e:bootstrap-user"
   exit 1
 fi
 

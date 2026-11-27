@@ -1,4 +1,4 @@
-const PRODUCTION_HOSTS = new Set(['sophia.agencyos.network', 'www.sophia.agencyos.network']);
+const PRODUCTION_HOSTS = new Set(['sophia-ai-factory.agencyos-openclaw.workers.dev', 'www.sophia-ai-factory.agencyos-openclaw.workers.dev']);
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 
 export function validateLoadTestTarget(value, remoteConfirmation) {

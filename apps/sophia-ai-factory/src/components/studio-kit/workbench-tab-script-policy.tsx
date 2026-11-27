@@ -45,7 +45,7 @@ export function WorkbenchTabScriptPolicy({ locale }: { readonly locale: 'vi' | '
         })),
       },
       ctaText: locale === 'vi' ? 'Xem link ở bình luận đầu tiên' : 'Link in first comment',
-      shortUrl: 'https://sophia.agencyos.network/r/demo',
+      shortUrl: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/r/demo',
       disclosureTag: '#ad #affiliate',
     });
     return { policy, hook, atomized };

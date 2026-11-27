@@ -35,7 +35,7 @@ jobs:
             -X GET \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             -H "Accept: application/json" \
-            "https://sophia.agencyos.network/api/cron/video-status-sync") || {
+            "https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cron/video-status-sync") || {
             echo "::error::video-status-sync request failed due to transport or timeout error." >&2
             exit 1
           }

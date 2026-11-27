@@ -34,7 +34,7 @@ import { createInterface } from 'node:readline';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const APP_DIR = resolve(__dirname, '..');
 const REPORTS_DIR = resolve(APP_DIR, 'plans/reports');
-const PROD_URL = 'https://sophia.agencyos.network';
+const PROD_URL = 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 const VERSION = '1.0.0';
 
 const FAIL_HINTS = {
@@ -575,7 +575,7 @@ export const options = {
 
 export default function () {
   // Scenario: homepage
-  const res = http.get('https://sophia.agencyos.network/');
+  const res = http.get('https://sophia-ai-factory.agencyos-openclaw.workers.dev/');
   if (res.status !== 200) {
     console.error(\`homepage failed: \${res.status}\`);
   }

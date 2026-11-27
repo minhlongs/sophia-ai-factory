@@ -5,7 +5,7 @@
 #   E2E_TEST_USER_PASSWORD='<password used by npm run e2e:bootstrap-user>'
 # Optional:
 #   E2E_TEST_USER_EMAIL='e2e-master@sophia.test'
-#   PLAYWRIGHT_TEST_BASE_URL='https://sophia.agencyos.network'
+#   PLAYWRIGHT_TEST_BASE_URL='https://sophia-ai-factory.agencyos-openclaw.workers.dev'
 
 set -euo pipefail
 
@@ -14,7 +14,7 @@ APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$APP_DIR"
 
-BASE_URL="${PLAYWRIGHT_TEST_BASE_URL:-https://sophia.agencyos.network}"
+BASE_URL="${PLAYWRIGHT_TEST_BASE_URL:-https://sophia-ai-factory.agencyos-openclaw.workers.dev}"
 
 if [ -z "${E2E_TEST_USER_PASSWORD:-}" ]; then
   echo "ERROR: E2E_TEST_USER_PASSWORD is required for go-live E2E user GAP gate."

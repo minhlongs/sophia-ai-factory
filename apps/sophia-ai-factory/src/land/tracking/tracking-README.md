@@ -5,7 +5,7 @@ Cookieless S2S affiliate tracking via Cloudflare Workers.
 ## Architecture
 
 ```
-track.sophia.agencyos.network/api/track/[id]
+track.sophia-ai-factory.agencyos-openclaw.workers.dev/api/track/[id]
   → CF Workers edge (0ms lookup)
   → D1 write (click + IP hash)
   → 302 → destination_url
@@ -15,7 +15,7 @@ track.sophia.agencyos.network/api/track/[id]
 
 1. Add CNAME record in Cloudflare DNS:
    ```
-   track.sophia.agencyos.network → sophia-ai-factory.workers.dev
+   track.sophia-ai-factory.agencyos-openclaw.workers.dev → sophia-ai-factory.workers.dev
    ```
 2. Cloudflare automatically issues TLS for the subdomain (orange-cloud enabled).
 
@@ -25,8 +25,8 @@ In `wrangler.toml`, add custom route:
 
 ```toml
 [[routes]]
-pattern = "track.sophia.agencyos.network/*"
-zone_name = "sophia.agencyos.network"
+pattern = "track.sophia-ai-factory.agencyos-openclaw.workers.dev/*"
+zone_name = "sophia-ai-factory.agencyos-openclaw.workers.dev"
 ```
 
 Or use the Cloudflare dashboard: Workers → Triggers → Add Custom Domain.
@@ -36,7 +36,7 @@ Or use the Cloudflare dashboard: Workers → Triggers → Add Custom Domain.
 Each affiliate network calls your postback URL when a conversion fires:
 
 ```
-POST https://sophia.agencyos.network/api/postback/{network}
+POST https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/postback/{network}
 Content-Type: application/json
 
 {
@@ -50,12 +50,12 @@ Content-Type: application/json
 
 | Network | Postback URL |
 |---|---|
-| Binance Link | `https://sophia.agencyos.network/api/postback/binance-link` |
-| Bybit | `https://sophia.agencyos.network/api/postback/bybit` |
-| Bitget | `https://sophia.agencyos.network/api/postback/bitget` |
-| OKX | `https://sophia.agencyos.network/api/postback/okx` |
-| PartnerStack | `https://sophia.agencyos.network/api/postback/partnerstack` |
-| Generic | `https://sophia.agencyos.network/api/postback/generic` |
+| Binance Link | `https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/postback/binance-link` |
+| Bybit | `https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/postback/bybit` |
+| Bitget | `https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/postback/bitget` |
+| OKX | `https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/postback/okx` |
+| PartnerStack | `https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/postback/partnerstack` |
+| Generic | `https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/postback/generic` |
 
 ## Privacy Design
 

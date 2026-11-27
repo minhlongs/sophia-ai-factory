@@ -113,8 +113,8 @@ for (const key of urlVars) {
   if (!rawUrl.includes('REPLACE_WITH_')) {
     try {
       const parsed = new URL(rawUrl);
-      if (parsed.hostname.toLowerCase() === 'sophia.agencyos.network') {
-        errors.push(`${key} points to production hostname "sophia.agencyos.network"`);
+      if (parsed.hostname.toLowerCase() === 'sophia-ai-factory.agencyos-openclaw.workers.dev') {
+        errors.push(`${key} points to production hostname "sophia-ai-factory.agencyos-openclaw.workers.dev"`);
       }
     } catch {
       errors.push(`${key} is not a valid URL: "${rawUrl}"`);
@@ -129,9 +129,9 @@ if (!allowedHostsMatch) {
   allowedHostsMatch[1]
     .split(',')
     .map((h) => h.trim().toLowerCase())
-    .includes('sophia.agencyos.network')
+    .includes('sophia-ai-factory.agencyos-openclaw.workers.dev')
 ) {
-  errors.push('ALLOWED_HOSTS contains production hostname "sophia.agencyos.network"');
+  errors.push('ALLOWED_HOSTS contains production hostname "sophia-ai-factory.agencyos-openclaw.workers.dev"');
 }
 
 // 4. Zero crons, queues, or Durable Objects

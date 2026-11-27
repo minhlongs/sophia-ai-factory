@@ -40,7 +40,7 @@ const routes = [
   let passed = 0, failed = 0, notfound = 0;
 
   for (const { path, expect: expected } of routes) {
-    const url = `https://sophia.agencyos.network${path}`;
+    const url = `https://sophia-ai-factory.agencyos-openclaw.workers.dev${path}`;
     const res = await ctx.request.get(url, { maxRedirects: 0 });
     const status = res.status();
     const ok = status === expected;
