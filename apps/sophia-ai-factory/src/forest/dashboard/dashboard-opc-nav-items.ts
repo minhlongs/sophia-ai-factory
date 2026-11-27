@@ -39,6 +39,13 @@ export const OPC_PRIMARY_NAV_GROUPS: DashboardNavModule[] = [
     icon: LayoutDashboard,
   },
   {
+    id: "opc_first_value",
+    labelKey: "opcNav.firstValue",
+    fallbackLabel: "First Value Studio",
+    href: "/dashboard/first-value",
+    icon: Film,
+  },
+  {
     id: "opc_engines",
     labelKey: "opcNav.engines",
     fallbackLabel: "34 AI Engines",
@@ -70,7 +77,7 @@ export const OPC_PRIMARY_NAV_GROUPS: DashboardNavModule[] = [
     id: "opc_results",
     labelKey: "opcNav.results",
     fallbackLabel: "Results",
-    href: "/dashboard/affiliates",
+    href: "/dashboard/monetization",
     icon: Activity,
   },
   {
