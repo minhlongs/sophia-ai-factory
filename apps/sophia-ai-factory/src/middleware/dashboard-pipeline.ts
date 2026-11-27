@@ -53,7 +53,7 @@ export async function handleDashboardPipeline(
   needsCsrfSeed: boolean,
 ): Promise<NextResponse | null> {
   const cleanPath = pathnameWithoutLocale(request.nextUrl.pathname);
-  if (!cleanPath.startsWith('/dashboard')) return null;
+  if (!cleanPath.startsWith('/dashboard') && !cleanPath.startsWith('/admin')) return null;
 
   // /dashboard/login and /dashboard/signup are auth entry points, not protected
   // dashboard pages. Skip them so handlePublicPipeline's BARE_REDIRECTS can
@@ -77,8 +77,8 @@ export async function handleDashboardPipeline(
     const mfaResponse = await enforceMfaGate(session.session.id, cleanPath, request);
     if (mfaResponse) return mfaResponse;
 
-    // Admin tier/role gate for /dashboard/admin/*
-    if (cleanPath.startsWith('/dashboard/admin') && session.user?.id) {
+    // Admin tier/role gate for /dashboard/admin/* and /admin/*
+    if ((cleanPath.startsWith('/dashboard/admin') || cleanPath.startsWith('/admin')) && session.user?.id) {
     try {
       const db = await getD1();
       if (!db) {
