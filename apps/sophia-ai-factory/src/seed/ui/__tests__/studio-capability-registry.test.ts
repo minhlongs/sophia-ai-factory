@@ -5,10 +5,10 @@ import {
 } from '@/seed/ui/studio-capability-registry';
 
 describe('Round 20+ — Full BE-to-FE Registry Coverage (Rounds 1–19)', () => {
-  it('registers all 29 live engines from Rounds 1-30 with unique IDs and bilingual VI/EN copy', () => {
-    expect(SOPHIA_STUDIO_CAPABILITIES.length).toBe(29);
+  it('registers all 34 live engines from Rounds 1-35 with unique IDs and bilingual VI/EN copy', () => {
+    expect(SOPHIA_STUDIO_CAPABILITIES.length).toBe(34);
     const ids = new Set(SOPHIA_STUDIO_CAPABILITIES.map((c) => c.id));
-    expect(ids.size).toBe(29);
+    expect(ids.size).toBe(34);
 
     for (const cap of SOPHIA_STUDIO_CAPABILITIES) {
       expect(cap.title.vi.trim().length).toBeGreaterThan(0);
@@ -25,7 +25,7 @@ describe('Round 20+ — Full BE-to-FE Registry Coverage (Rounds 1–19)', () => 
 
     expect(simple.length).toBe(4);
     expect(simple.every((c) => c.simpleModeVisible)).toBe(true);
-    expect(full.length).toBe(29);
+    expect(full.length).toBe(34);
   });
 
   it('filters by bilingual keyword and category accurately', () => {
@@ -39,6 +39,6 @@ describe('Round 20+ — Full BE-to-FE Registry Coverage (Rounds 1–19)', () => 
       category: 'security',
       inspectorMode: true,
     });
-    expect(byCategory.length).toBe(5);
+    expect(byCategory.length).toBe(6);
   });
 });
