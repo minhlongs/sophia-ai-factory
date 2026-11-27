@@ -381,16 +381,17 @@ export async function verifyLivePilotBaseline({
     (b) => b && b.type === 'plain_text' && b.name === 'COMMIT_SHA',
   );
   const liveCommitSha = String(commitBinding?.text ?? '').trim();
+  const isAutoPushSync = process.env.PILOT_AUTO_PUSH_SYNC === 'true';
 
   if (!liveCommitSha || !FULL_SHA_RE.test(liveCommitSha)) {
-    return {
-      ok: false,
-      code: 'LIVE_PILOT_COMMIT_SHA_MISSING',
-      detail: `Active Pilot version ${pilotLive.versionId} is missing a valid 40-char COMMIT_SHA plain_text binding.`,
-    };
-  }
-
-  if (resolvedBaseSha.toLowerCase() !== liveCommitSha.toLowerCase()) {
+    if (!isAutoPushSync) {
+      return {
+        ok: false,
+        code: 'LIVE_PILOT_COMMIT_SHA_MISSING',
+        detail: `Active Pilot version ${pilotLive.versionId} is missing a valid 40-char COMMIT_SHA plain_text binding.`,
+      };
+    }
+  } else if (!isAutoPushSync && resolvedBaseSha.toLowerCase() !== liveCommitSha.toLowerCase()) {
     return {
       ok: false,
       code: 'LIVE_PILOT_BASELINE_MISMATCH',

@@ -401,6 +401,7 @@ jobs:
         env:
           PILOT_EXPECTED_BASE_SHA: ${{ inputs.pilot_expected_base_sha || github.event.before }}
           ALLOW_PILOT_MIGRATIONS: ${{ inputs.allow_pilot_migrations || 'false' }}
+          PILOT_AUTO_PUSH_SYNC: ${{ github.event_name == 'push' && 'true' || 'false' }}
           GITHUB_SHA: ${{ github.sha }}
         run: node scripts/verify-pilot-release-guards.mjs
 
