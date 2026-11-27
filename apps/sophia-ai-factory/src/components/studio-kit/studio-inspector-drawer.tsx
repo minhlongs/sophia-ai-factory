@@ -9,7 +9,7 @@
  */
 
 import { useEffect } from 'react';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import type { CapabilityFieldSpec, StudioCapabilitySpec } from '@/seed/ui/studio-capability-registry';
 
 export interface StudioInspectorDrawerProps {
@@ -89,7 +89,7 @@ export function StudioInspectorDrawer({
       {capability.routeHref ? (
         <div className="mt-4 border-t border-border pt-4">
           <Link
-            href={`/${locale}${capability.routeHref}`}
+            href={capability.routeHref}
             className="md3-pill-button inline-flex min-h-[44px] w-full items-center justify-center bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
           >
             {locale === 'vi' ? 'Mở không gian làm việc' : 'Open Workspace'}

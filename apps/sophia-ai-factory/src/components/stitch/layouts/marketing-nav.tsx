@@ -48,7 +48,7 @@ export function MarketingNav({ className }: MarketingNavProps) {
     { href: '/features', label: t('features') },
     { href: '/pricing', label: t('pricing') },
     { href: '/guide', label: t('guide') },
-    { href: '/affiliates', label: t('affiliates') },
+    { href: '/affiliate', label: t('affiliates') },
   ];
 
   return (
