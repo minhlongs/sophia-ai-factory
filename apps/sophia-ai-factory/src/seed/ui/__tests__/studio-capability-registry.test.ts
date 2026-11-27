@@ -23,7 +23,7 @@ describe('Full BE-to-FE Registry Coverage (Rounds 1–40)', () => {
     const simple = filterCapabilities(SOPHIA_STUDIO_CAPABILITIES, { inspectorMode: false });
     const full = filterCapabilities(SOPHIA_STUDIO_CAPABILITIES, { inspectorMode: true });
 
-    expect(simple.length).toBe(4);
+    expect(simple.length).toBe(39);
     expect(simple.every((c) => c.simpleModeVisible)).toBe(true);
     expect(full.length).toBe(39);
   });

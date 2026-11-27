@@ -53,7 +53,7 @@ export function PilotWorkspaceShell({ email, isVi, children }: PilotWorkspaceShe
               href="/dashboard/engines"
               className="md3-pill-button inline-flex min-h-[44px] items-center bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
             >
-              {isVi ? '⚡ Xưởng 34 Động Cơ' : '⚡ 34 Engines Workbench'}
+              {isVi ? '⚡ Xưởng 39 Động Cơ' : '⚡ 39 Engines Workbench'}
             </Link>
             <Link href="/privacy" className="hidden text-muted-foreground hover:text-foreground sm:inline">
               {isVi ? 'Bảo mật' : 'Privacy'}

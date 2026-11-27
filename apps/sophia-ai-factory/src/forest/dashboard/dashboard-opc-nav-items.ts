@@ -48,7 +48,7 @@ export const OPC_PRIMARY_NAV_GROUPS: DashboardNavModule[] = [
   {
     id: "opc_engines",
     labelKey: "opcNav.engines",
-    fallbackLabel: "34 AI Engines",
+    fallbackLabel: "39 AI Engines",
     href: "/dashboard/engines",
     icon: Sparkles,
   },
