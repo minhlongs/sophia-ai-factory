@@ -3,7 +3,7 @@
  *
  * Clean-room pure-TS engine (MIT/Apache-2.0 patterns from parthpabari/encryptix,
  * @noem/encryption, and frameprivacy/column-seal):
- * - Manages multi-version KEK lifecycle (`active`, `decrypt_only`, `pending_deletion`)
+ * - Fail-closed multi-version KEK lifecycle (`active`, `decrypt_only`, `pending_deletion`)
  *   for zero-downtime D1 batched re-wrapping (`enc_key_version < activeVersion`).
  * - Redacts raw API keys/tokens before logging or telemetry emission.
  *
@@ -34,13 +34,20 @@ export function redactSecretsInText(raw: string): string {
 }
 
 export function planZeroDowntimeKekRotation(versions: readonly KekVersionRecord[]): KeyRotationPlan {
-  const active = versions.find((v) => v.state === 'active');
-  const activeVersion = active?.version ?? 1;
+  const activeRecords = versions.filter((v) => v.state === 'active');
+  if (activeRecords.length !== 1) {
+    throw new Error(`Expected exactly 1 active KEK version, found ${activeRecords.length}`);
+  }
+
+  const activeVersion = activeRecords[0].version;
   let rowsNeedingRewrap = 0;
   const safeToRetireVersions: number[] = [];
 
   for (const v of versions) {
-    if (v.version === activeVersion) continue;
+    if (!Number.isInteger(v.rowsEncrypted) || v.rowsEncrypted < 0) {
+      throw new Error(`Invalid rowsEncrypted for KEK v${v.version}: ${v.rowsEncrypted}`);
+    }
+    if (v.state === 'active' || v.version === activeVersion) continue;
     if (v.rowsEncrypted > 0) {
       rowsNeedingRewrap += v.rowsEncrypted;
     } else {
