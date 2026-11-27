@@ -1,0 +1,71 @@
+/**
+ * Google Material Design 3 (MD3 Expressive) + GoogleChrome Modern Web Guidance.
+ *
+ * Bridges Sophia's canonical Zen Design OS tokens (`--primary`, `--background`,
+ * `--card`) with official MD3 Expressive tonal elevation, shape scale, spring
+ * motion physics, and Baseline Web Platform features (`color-mix()`,
+ * `content-visibility: auto`, `interpolate-size: allow-keywords`,
+ * `prefers-reduced-motion`).
+ *
+ * References:
+ * - https://m3.material.io/
+ * - https://github.com/googlechrome/modern-web-guidance
+ */
+
+:root {
+  /* MD3 Shape Scale */
+  --md-sys-shape-corner-small: 0.5rem;       /* 8px */
+  --md-sys-shape-corner-medium: 0.75rem;     /* 12px */
+  --md-sys-shape-corner-large: 1rem;         /* 16px */
+  --md-sys-shape-corner-extra-large: 1.75rem; /* 28px — MD3 Expressive cards/dialogs */
+  --md-sys-shape-corner-full: 9999px;        /* Pill buttons & chips */
+
+  /* MD3 Expressive Spring Motion */
+  --md-sys-motion-easing-expressive: cubic-bezier(0.38, 1.21, 0.22, 1);
+  --md-sys-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --md-sys-motion-duration-short: 180ms;
+  --md-sys-motion-duration-medium: 320ms;
+
+  /* MD3 Dynamic Tonal Surface Containers via CSS color-mix() (Baseline 2024+) */
+  --md-sys-color-surface-container-low: color-mix(in oklab, var(--card) 94%, var(--primary) 6%);
+  --md-sys-color-surface-container: color-mix(in oklab, var(--card) 88%, var(--primary) 12%);
+  --md-sys-color-surface-container-high: color-mix(in oklab, var(--card) 80%, var(--primary) 20%);
+  --md-sys-color-primary-container: color-mix(in oklab, var(--primary) 16%, transparent);
+
+  /* Modern Web Guidance: smooth intrinsic <details> / height transitions */
+  interpolate-size: allow-keywords;
+}
+
+.md3-surface-card {
+  background-color: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  border: 1px solid color-mix(in oklab, var(--border) 85%, var(--primary) 15%);
+  transition:
+    transform var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-expressive),
+    border-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
+    background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
+}
+
+.md3-pill-button {
+  border-radius: var(--md-sys-shape-corner-full);
+  transition:
+    transform var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-expressive),
+    background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
+}
+
+.md3-pill-button:active {
+  transform: scale(0.97);
+}
+
+/* Modern Web Guidance: defer offscreen rendering for long technical sections */
+.mwg-offscreen-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .md3-surface-card,
+  .md3-pill-button {
+    transition: none;
+  }
+}

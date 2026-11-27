@@ -1116,6 +1116,7 @@
   "dashboard": {
     "opcNav": {
       "today": "Hôm nay",
+      "engines": "Xưởng 19 Động Cơ",
       "offers": "Offers",
       "campaigns": "Chiến dịch",
       "approvals": "Cần duyệt",
