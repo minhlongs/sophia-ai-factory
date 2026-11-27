@@ -4,9 +4,12 @@ import {
   filterCapabilities,
 } from '@/seed/ui/studio-capability-registry';
 
-describe('Round 20 — Sophia UI/UX 2026 Core Kit Registry', () => {
-  it('provides bilingual VI/EN copy and non-empty inspector fields for every registered engine', () => {
-    expect(SOPHIA_STUDIO_CAPABILITIES.length).toBeGreaterThanOrEqual(8);
+describe('Round 20+ — Full BE-to-FE Registry Coverage (Rounds 1–19)', () => {
+  it('registers all 19 live engines from Rounds 1-19 with unique IDs and bilingual VI/EN copy', () => {
+    expect(SOPHIA_STUDIO_CAPABILITIES.length).toBe(19);
+    const ids = new Set(SOPHIA_STUDIO_CAPABILITIES.map((c) => c.id));
+    expect(ids.size).toBe(19);
+
     for (const cap of SOPHIA_STUDIO_CAPABILITIES) {
       expect(cap.title.vi.trim().length).toBeGreaterThan(0);
       expect(cap.title.en.trim().length).toBeGreaterThan(0);
@@ -16,13 +19,13 @@ describe('Round 20 — Sophia UI/UX 2026 Core Kit Registry', () => {
     }
   });
 
-  it('hides R&D-only engines in default Simple Mode and reveals them in Inspector Mode', () => {
+  it('shows 4 core tiles in Simple Mode and reveals all 19 engines in R&D Inspector Mode', () => {
     const simple = filterCapabilities(SOPHIA_STUDIO_CAPABILITIES, { inspectorMode: false });
     const full = filterCapabilities(SOPHIA_STUDIO_CAPABILITIES, { inspectorMode: true });
 
+    expect(simple.length).toBe(4);
     expect(simple.every((c) => c.simpleModeVisible)).toBe(true);
-    expect(full.length).toBe(SOPHIA_STUDIO_CAPABILITIES.length);
-    expect(full.length).toBeGreaterThan(simple.length);
+    expect(full.length).toBe(19);
   });
 
   it('filters by bilingual keyword and category accurately', () => {
@@ -36,6 +39,6 @@ describe('Round 20 — Sophia UI/UX 2026 Core Kit Registry', () => {
       category: 'security',
       inspectorMode: true,
     });
-    expect(byCategory.map((c) => c.id)).toEqual(['asn-click-fraud-shield', 'creator-va-rbac']);
+    expect(byCategory.length).toBe(4);
   });
 });
