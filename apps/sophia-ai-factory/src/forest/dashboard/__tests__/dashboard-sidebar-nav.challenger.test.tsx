@@ -127,7 +127,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
       // Test each route when it is the exact current route
       expectedModules.forEach((mod) => {
         const { container } = render(<DashboardSidebarNav isAdmin currentPath={mod.href} />);
-        const activeLink = container.querySelector(`a[href="${mod.href}"]`);
+        const activeLink = container.querySelector(`ul a[href="${mod.href}"]`);
         expect(activeLink).not.toBeNull();
 
         // Active styling assertions (MD3 Expressive tonal pill)
@@ -139,7 +139,7 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
 
     it('empirically checks route exclusivity when on /dashboard (root does not match subpaths)', () => {
       const { container } = render(<DashboardSidebarNav isAdmin currentPath="/dashboard" />);
-      const overviewLink = container.querySelector('a[href="/dashboard"]');
+      const overviewLink = container.querySelector('nav a[href="/dashboard"]');
       expect(overviewLink?.className).toContain('bg-[var(--md-sys-color-primary-container)]');
 
       // None of the other 15 routes should be active
