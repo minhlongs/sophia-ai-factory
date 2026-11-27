@@ -109,12 +109,12 @@ describe('DashboardSidebarNav — Obsidian Cyber-Glass Navigation', () => {
 
     const missionsLink = document.querySelector('a[href="/dashboard/missions"]');
     expect(missionsLink).not.toBeNull();
-    expect(missionsLink?.className).toContain('bg-primary/10');
-    expect(missionsLink?.className).toContain('border-primary/30');
+    expect(missionsLink?.className).toContain('bg-[var(--md-sys-color-primary-container)]');
+    expect(missionsLink?.className).toContain('border-primary/35');
 
     // Overview should NOT have active class when on missions
     const overviewLink = document.querySelector('a[href="/dashboard"]');
-    expect(overviewLink?.className).not.toContain('bg-primary/10');
+    expect(overviewLink?.className).not.toContain('bg-[var(--md-sys-color-primary-container)]');
   });
 
   it('renders admin console navigation conditionally only when isAdmin=true', () => {

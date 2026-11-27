@@ -24,7 +24,7 @@ vi.mock('@/navigation', () => ({
 vi.mock('next/navigation', () => ({ usePathname: () => '/dashboard' }));
 
 const EXISTING_DASHBOARD_ROUTES = new Set([
-  '/dashboard', '/dashboard/affiliate', '/dashboard/affiliates', '/dashboard/campaigns',
+  '/dashboard', '/dashboard/engines', '/dashboard/affiliate', '/dashboard/affiliates', '/dashboard/campaigns',
   '/dashboard/approvals', '/dashboard/settings', '/dashboard/missions',
   '/dashboard/creative-economy', '/dashboard/image-studio', '/dashboard/youtube',
   '/dashboard/playbooks', '/dashboard/publish/queue', '/dashboard/sops',
@@ -33,8 +33,8 @@ const EXISTING_DASHBOARD_ROUTES = new Set([
 ]);
 
 describe('OPC primary navigation', () => {
-  it('has exactly six work groups, all pointing at existing dashboard routes', () => {
-    expect(OPC_PRIMARY_NAV_GROUPS).toHaveLength(6);
+  it('has exactly seven work groups, all pointing at existing dashboard routes', () => {
+    expect(OPC_PRIMARY_NAV_GROUPS).toHaveLength(7);
     for (const item of OPC_PRIMARY_NAV_GROUPS) {
       expect(EXISTING_DASHBOARD_ROUTES.has(item.href), item.href).toBe(true);
     }
@@ -44,7 +44,7 @@ describe('OPC primary navigation', () => {
     const { container } = render(<DashboardSidebarNav isAdmin />);
 
     const primaryNav = screen.getByRole('navigation', { name: 'Platform Navigation' });
-    expect(within(primaryNav).getAllByRole('link')).toHaveLength(2);
+    expect(within(primaryNav).getAllByRole('link')).toHaveLength(3);
 
     for (const item of SOPHIA_NAV_MODULES) {
       expect(
@@ -61,7 +61,7 @@ describe('OPC primary navigation', () => {
   it('renders Vietnamese primary labels when isVi is true', () => {
     render(<DashboardSidebarNav isVi={true} />);
     const primaryNav = screen.getByRole('navigation', { name: 'Nền Tảng AI' });
-    expect(within(primaryNav).getAllByRole('link').length).toBe(2);
+    expect(within(primaryNav).getAllByRole('link').length).toBe(3);
     expect(screen.getByText('Kết quả')).toBeDefined();
     expect(screen.getByText('Kết nối')).toBeDefined();
   });

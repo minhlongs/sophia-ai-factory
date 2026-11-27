@@ -116,7 +116,7 @@ describe('FirstValueByokCard', () => {
     render(<FirstValueByokCard byokConfigured={false} receipt={null} />);
     expect(screen.getByText('byokUnavailable')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'openSetupWizard' }).getAttribute('href')).toBe(
-      '/dashboard/setup',
+      '/dashboard/settings',
     );
   });
 });

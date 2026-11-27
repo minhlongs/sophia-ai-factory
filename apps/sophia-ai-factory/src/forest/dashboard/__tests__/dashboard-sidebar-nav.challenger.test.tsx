@@ -130,26 +130,23 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
         const activeLink = container.querySelector(`a[href="${mod.href}"]`);
         expect(activeLink).not.toBeNull();
 
-        // Active styling assertions
-        expect(activeLink?.className).toContain('bg-primary/10');
-        expect(activeLink?.className).toContain('border-primary/30');
-
-        // Active left gradient indicator bar
-        const activeBar = activeLink?.querySelector('span.bg-gradient-to-b');
-        expect(activeBar).not.toBeNull();
+        // Active styling assertions (MD3 Expressive tonal pill)
+        expect(activeLink?.className).toContain('bg-[var(--md-sys-color-primary-container)]');
+        expect(activeLink?.className).toContain('border-primary/35');
+        expect(activeLink?.getAttribute('aria-current')).toBe('page');
       });
     });
 
     it('empirically checks route exclusivity when on /dashboard (root does not match subpaths)', () => {
       const { container } = render(<DashboardSidebarNav isAdmin currentPath="/dashboard" />);
       const overviewLink = container.querySelector('a[href="/dashboard"]');
-      expect(overviewLink?.className).toContain('bg-primary/10');
+      expect(overviewLink?.className).toContain('bg-[var(--md-sys-color-primary-container)]');
 
       // None of the other 15 routes should be active
       for (const mod of expectedModules) {
         if (mod.href !== '/dashboard') {
           const otherLink = container.querySelector(`a[href="${mod.href}"]`);
-          expect(otherLink?.className).not.toContain('bg-primary/10');
+          expect(otherLink?.className).not.toContain('bg-[var(--md-sys-color-primary-container)]');
         }
       }
     });
@@ -157,21 +154,21 @@ describe('CHALLENGER 1 EMPIRICAL SUITE: DashboardSidebarNav & Shell Navigation',
     it('empirically examines nested route matching on /dashboard/missions/new', () => {
       const { container } = render(<DashboardSidebarNav isAdmin currentPath="/dashboard/missions/new" />);
       const createMissionLink = container.querySelector('a[href="/dashboard/missions/new"]');
-      expect(createMissionLink?.className).toContain('bg-primary/10');
+      expect(createMissionLink?.className).toContain('bg-[var(--md-sys-color-primary-container)]');
 
       // Check whether /dashboard/missions is also marked active due to startsWith prefix matching
       const missionsLink = container.querySelector('a[href="/dashboard/missions"]');
-      expect(missionsLink?.className).toContain('bg-primary/10');
+      expect(missionsLink?.className).toContain('bg-[var(--md-sys-color-primary-container)]');
     });
 
     it('handles localized pathnames correctly (/vi/dashboard and /en/dashboard)', () => {
       const { container: viContainer } = render(<DashboardSidebarNav isAdmin currentPath="/vi/dashboard/youtube" />);
       const ytLinkVi = viContainer.querySelector('a[href="/dashboard/youtube"]');
-      expect(ytLinkVi?.className).toContain('bg-primary/10');
+      expect(ytLinkVi?.className).toContain('bg-[var(--md-sys-color-primary-container)]');
 
       const { container: enContainer } = render(<DashboardSidebarNav isAdmin currentPath="/en/dashboard/handover" />);
       const handoverLinkEn = enContainer.querySelector('a[href="/dashboard/handover"]');
-      expect(handoverLinkEn?.className).toContain('bg-primary/10');
+      expect(handoverLinkEn?.className).toContain('bg-[var(--md-sys-color-primary-container)]');
     });
 
     it('offers no nav link to routes that have no page, strictly for MASTER tier users', () => {

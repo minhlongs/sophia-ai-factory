@@ -98,7 +98,7 @@ export function parseLiveConfig(env, fail) {
   const hostname = baseUrl.hostname.toLowerCase().replace(/\.$/, '');
   const localHttp = baseUrl.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(hostname);
   if (baseUrl.protocol !== 'https:' && !localHttp) fail('live video proof target must use HTTPS');
-  if (['sophia.agencyos.network', 'www.sophia.agencyos.network'].includes(hostname) && env.SOPHIA_LIVE_ALLOW_PRODUCTION !== '1') {
+  if (['sophia.agencyos.network', 'www.sophia.agencyos.network', 'sophia-ai-factory.agencyos-openclaw.workers.dev'].includes(hostname) && env.SOPHIA_LIVE_ALLOW_PRODUCTION !== '1') {
     fail('production target requires SOPHIA_LIVE_ALLOW_PRODUCTION=1');
   }
   if (env.SOPHIA_LIVE_TEST_TENANT !== '1') fail('set SOPHIA_LIVE_TEST_TENANT=1 to confirm this is a dedicated non-customer test tenant');

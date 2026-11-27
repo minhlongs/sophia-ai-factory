@@ -79,6 +79,7 @@ export function readPilotWranglerVars(tomlPath = join(APP_ROOT, PILOT_WRANGLER_C
   const getVar = (k) => active.match(new RegExp(`^\\s*${k}\\s*=\\s*"([^"]+)"`, 'm'))?.[1] ?? '';
   return {
     financingMode: getVar('PILOT_FINANCING_MODE') || 'UNKNOWN',
+    pilotWindowMode: getVar('PILOT_WINDOW_MODE') || 'UNKNOWN',
     paymentsEnabled: getVar('PAYMENTS_ENABLED').toLowerCase() !== 'false',
     b2PublishEnabled: getVar('B2_PUBLISH_ENABLED').toLowerCase() !== 'false',
     hasCronTriggers: active.includes('[triggers]'),
@@ -87,8 +88,13 @@ export function readPilotWranglerVars(tomlPath = join(APP_ROOT, PILOT_WRANGLER_C
 
 export function classifyPilotP0P1Findings(snapshot) {
   const findings = [];
+  const isInternalRd = snapshot.pilotWindowMode === 'OPEN_INTERNAL_RD';
 
-  if (snapshot.financingMode !== 'CUSTOMER_BYOK' || snapshot.paymentsEnabled || snapshot.b2PublishEnabled) {
+  if (
+    snapshot.financingMode !== 'CUSTOMER_BYOK' ||
+    snapshot.paymentsEnabled ||
+    (snapshot.b2PublishEnabled && !isInternalRd)
+  ) {
     findings.push({
       severity: 'P0',
       domain: 'pilot_policy_drift',
@@ -314,6 +320,7 @@ export function collectLivePilotOpsSnapshot(queryFn = runPilotD1Query, wranglerV
     monitoringMode: 'ON_DEMAND_CLI',
     backgroundMonitoringConfigured: wranglerVars.hasCronTriggers,
     financingMode: wranglerVars.financingMode,
+    pilotWindowMode: wranglerVars.pilotWindowMode,
     paymentsEnabled: wranglerVars.paymentsEnabled,
     b2PublishEnabled: wranglerVars.b2PublishEnabled,
     founderAiSubsidyUsd: wranglerVars.financingMode === 'CUSTOMER_BYOK' ? 0 : null,
