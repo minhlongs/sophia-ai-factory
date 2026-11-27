@@ -3,7 +3,7 @@
  *
  * Clean-room pure-TS engine (MIT/Apache-2.0 patterns from Portkey-AI/gateway,
  * Stackbilt-dev/llm-providers, and niieani/gpt-tokenizer):
- * - Estimates pre-call token spend deterministically before hitting BYOK keys.
+ * - Fail-closed validation of all numeric inputs (`Number.isFinite` & `>= 0`).
  * - Selects the highest-priority healthy provider while skipping open circuits
  *   and enforcing hard per-tenant daily USD caps in integer cents.
  *
@@ -30,6 +30,10 @@ export interface BudgetRoutingDecision {
   readonly reason: string;
 }
 
+function isNonNegativeFinite(value: number): boolean {
+  return Number.isFinite(value) && value >= 0;
+}
+
 export function estimateTokensRough(text: string): number {
   const clean = text.trim();
   if (!clean) return 0;
@@ -44,13 +48,29 @@ export function routeByokLlmWithBudgetGuard(args: {
   readonly dailyCapCents: number;
   readonly providers: readonly ProviderHealthEntry[];
 }): BudgetRoutingDecision {
-  const totalTokens = estimateTokensRough(args.promptText) + Math.max(0, args.expectedOutputTokens);
+  if (
+    !isNonNegativeFinite(args.expectedOutputTokens) ||
+    !isNonNegativeFinite(args.dailySpentCents) ||
+    !isNonNegativeFinite(args.dailyCapCents)
+  ) {
+    return {
+      allowed: false,
+      selectedProvider: null,
+      estimatedCostCents: 0,
+      reason: 'Invalid non-finite or negative budget/token parameters (fail-closed)',
+    };
+  }
+
+  const totalTokens = estimateTokensRough(args.promptText) + args.expectedOutputTokens;
 
   for (const p of args.providers) {
     if (!p.hasKey || p.authInvalid || p.circuitOpen) continue;
+    if (!isNonNegativeFinite(p.costPerMillionTokensCents)) continue;
+
     const estCents = Math.max(1, Math.ceil((totalTokens * p.costPerMillionTokensCents) / 1_000_000));
 
-    if (args.dailySpentCents + estCents > args.dailyCapCents) {
+    // Inverted fail-closed check prevents NaN/Infinity bypass
+    if (!(args.dailySpentCents + estCents <= args.dailyCapCents)) {
       return {
         allowed: false,
         selectedProvider: null,
