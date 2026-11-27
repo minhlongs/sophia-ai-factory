@@ -7,7 +7,7 @@
 
 import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getInstallation } from '@/seed/sop/sop-repo';
 import { SopRunTimeline } from '@/forest/components/sop/sop-run-timeline';

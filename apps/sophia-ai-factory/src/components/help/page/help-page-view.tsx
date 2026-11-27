@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { HelpCircle } from 'lucide-react';
 import type { HelpPageProps } from './types';
 import { SopsView } from './sops-view';

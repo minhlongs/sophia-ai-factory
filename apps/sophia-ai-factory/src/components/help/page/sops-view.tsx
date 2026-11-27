@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
 import type { HelpData } from './types';
 

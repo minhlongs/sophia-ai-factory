@@ -7,7 +7,7 @@
 
 import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getInstallation, getTemplateById } from '@/seed/sop/sop-repo';
 import { CategoryBadge } from '@/forest/components/sop/category-badge';

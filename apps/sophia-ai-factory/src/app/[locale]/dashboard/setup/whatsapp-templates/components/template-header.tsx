@@ -1,18 +1,17 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/navigation';
 import { ChevronRight, MessageCircle } from 'lucide-react';
 
 export function TemplateHeader() {
   const t = useTranslations('setupWizard.whatsappTemplates');
   const common = useTranslations('common');
-  const locale = useLocale();
 
   return (
     <div className="mb-8">
       <Link
-        href={`/${locale}/dashboard/setup`}
+        href="/dashboard/settings"
         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         <ChevronRight className="w-4 h-4 rotate-180" />

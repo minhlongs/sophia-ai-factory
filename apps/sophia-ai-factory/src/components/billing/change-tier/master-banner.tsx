@@ -4,7 +4,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/seed/components/ui/card';
 import { Button } from '@/seed/components/ui/button';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { ArrowUpRight } from 'lucide-react';
 
 interface MasterBannerProps {
