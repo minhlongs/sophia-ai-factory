@@ -51,7 +51,10 @@ export async function PATCH(req: NextRequest) {
   const rl = globalRateLimiter.checkLimit(`profile:write:${user.id}`, { intervalMs: 60_000, maxRequests: 20 });
   if (!rl.allowed) return createRateLimitResponse(rl);
 
-  const body: unknown = await req.json();
+  const body: unknown = await req.json().catch(() => null);
+  if (body === null) {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
   const parsed = PatchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid input', details: parsed.error.flatten() }, { status: 400 });
