@@ -8,7 +8,7 @@
  */
 
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import type { SopRunRow } from '@/seed/sop/sop-types';
 import { RunStatusBadge } from '@/forest/components/sop/run-status-badge';
 
