@@ -239,12 +239,17 @@ export function FirstValueJourneyClient({
         headers,
         body: JSON.stringify(body),
       });
-      const json = (await res.json()) as Record<string, unknown>;
+      const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
       if (!res.ok) {
         setErrorMessage(String(json.error ?? `HTTP ${res.status}`));
         return null;
       }
       return json;
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : 'Network error — please retry.',
+      );
+      return null;
     } finally {
       setBusy(false);
     }

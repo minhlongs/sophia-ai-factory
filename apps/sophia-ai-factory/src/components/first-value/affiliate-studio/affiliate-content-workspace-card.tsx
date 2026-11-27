@@ -40,6 +40,7 @@ export function AffiliateContentWorkspaceCard({
   const [savedNotice, setSavedNotice] = useState(false);
   const [copied, setCopied] = useState(false);
   const [exportFmt, setExportFmt] = useState<'markdown' | 'json'>('markdown');
+  const [approveFailed, setApproveFailed] = useState(false);
 
   const campaignId = campaign?.id ?? null;
   useEffect(() => {
@@ -47,7 +48,16 @@ export function AffiliateContentWorkspaceCard({
     setDraft(null);
     setSavedNotice(false);
     setCopied(false);
+    setApproveFailed(false);
   }, [campaignId]);
+
+  async function handleApproveClick() {
+    setApproveFailed(false);
+    const ok = await onApprove();
+    if (!ok) {
+      setApproveFailed(true);
+    }
+  }
 
   if (!campaign) {
     return (
@@ -291,14 +301,21 @@ export function AffiliateContentWorkspaceCard({
 
       <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
         {!isApproved ? (
-          <button
-            type="button"
-            disabled={busy || editing}
-            onClick={() => void onApprove()}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
-          >
-            {t('affApproveCampaignBtn')}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              disabled={busy || editing}
+              onClick={() => void handleApproveClick()}
+              className="min-h-[44px] rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            >
+              {busy ? '...' : t('affApproveCampaignBtn')}
+            </button>
+            {approveFailed ? (
+              <span role="alert" className="text-xs font-medium text-destructive">
+                {t('affApproveCampaignBtn')} — Error (check top banner or reload)
+              </span>
+            ) : null}
+          </div>
         ) : (
           <>
             <button
