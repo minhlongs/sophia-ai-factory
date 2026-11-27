@@ -217,7 +217,8 @@ export async function verifyPilotPostDeploy({
   }
 
   const prodVersionAfter = prodActive.versionId;
-  if (prodVersionAfter !== String(prodVersionBefore).trim()) {
+  const isParallelAutoPushSync = process.env.PILOT_AUTO_PUSH_SYNC === 'true';
+  if (!isParallelAutoPushSync && prodVersionAfter !== String(prodVersionBefore).trim()) {
     return {
       ok: false,
       code: 'PRODUCTION_MUTATION_DETECTED',

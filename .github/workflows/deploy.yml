@@ -419,6 +419,7 @@ jobs:
         env:
           GITHUB_SHA: ${{ github.sha }}
           PROD_VERSION_BEFORE: ${{ steps.pilot-release-guards.outputs.prod_version_before }}
+          PILOT_AUTO_PUSH_SYNC: ${{ github.event_name == 'push' && 'true' || 'false' }}
           PILOT_VERIFY_URL: ${{ vars.PILOT_VERIFY_URL || 'https://sophia-ai-factory-pilot.agencyos-openclaw.workers.dev' }}
           PILOT_CF_ACCESS_CLIENT_ID: ${{ secrets.PILOT_CF_ACCESS_CLIENT_ID }}
           PILOT_CF_ACCESS_CLIENT_SECRET: ${{ secrets.PILOT_CF_ACCESS_CLIENT_SECRET }}
