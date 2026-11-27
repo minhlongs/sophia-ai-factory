@@ -71,9 +71,11 @@ export async function submitUsdtPayoutAddress(
   }
 
   try {
+    const { getCsrfHeaders } = await import('@/seed/security/use-csrf-token');
     const res = await fetch('/api/affiliate/payout-method', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
       body: JSON.stringify({
         method: 'usdt_trc20',
         recipient_addr: clean,
@@ -94,7 +96,7 @@ export async function submitUsdtPayoutAddress(
       };
     }
 
-    const data = (await res.json()) as { error?: string };
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
     return {
       ok: false,
       message: {

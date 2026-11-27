@@ -59,8 +59,8 @@ export function CampaignCardDetails({
           {t('lastPublished') + ' ' + campaign.lastPublished}
         </span>
         <Link
-          href={`/dashboard/campaigns/${campaign.id}`}
-          className="text-primary-text text-[11px] font-bold hover:underline transition-colors"
+          href={`/campaigns/${encodeURIComponent(campaign.id)}/roi`}
+          className="md3-pill-button inline-flex min-h-[44px] items-center rounded-full px-3 text-primary-text text-xs font-bold hover:underline transition-colors"
         >
           {t('actions.' + campaign.actionLabel)}
         </Link>

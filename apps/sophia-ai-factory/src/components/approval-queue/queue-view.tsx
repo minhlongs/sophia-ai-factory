@@ -14,7 +14,7 @@ export function ApprovalQueue({ workspaceId }: ApprovalQueueProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
 
   const loadApprovals = useCallback(async () => {
     setLoading(true);
@@ -48,7 +48,10 @@ export function ApprovalQueue({ workspaceId }: ApprovalQueueProps) {
       await submitApprovalResolution(approvalId, approved, reason);
       setApprovals((prev) => prev.filter((a) => a.id !== approvalId));
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : String(err));
+      setActionError({
+        id: approvalId,
+        message: err instanceof Error ? err.message : String(err),
+      });
     } finally {
       setActionId(null);
     }
@@ -109,7 +112,7 @@ export function ApprovalQueue({ workspaceId }: ApprovalQueueProps) {
           key={approval.id}
           approval={approval}
           busy={actionId === approval.id}
-          actionError={actionId === approval.id ? actionError : null}
+          actionError={actionError?.id === approval.id ? actionError.message : null}
           onResolve={handleResolve}
         />
       ))}
