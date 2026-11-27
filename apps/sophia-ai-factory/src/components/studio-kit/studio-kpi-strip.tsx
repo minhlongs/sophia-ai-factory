@@ -1,10 +1,9 @@
 'use client';
 
 /**
- * Executive KPI Telemetry Strip (Sophia UI/UX 2026 Core Kit).
- *
- * Clean-room tokenized strip inspired by `tremorlabs/tremor` (Apache-2.0) and
- * `shadcn-ui/ui` CSS Variables mode (MIT). Zero external chart runtime overhead.
+ * Executive KPI Telemetry Strip (MD3 Expressive 100/100).
+ * Displays all registered engines using MD3 tonal surface containers,
+ * tabular-nums, and zero hardcoded light/slate backgrounds.
  */
 
 import type { StudioCapabilitySpec } from '@/seed/ui/studio-capability-registry';
@@ -30,9 +29,9 @@ export function StudioKpiStrip({
 }: StudioKpiStripProps) {
   return (
     <div
-      className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
+      className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
       role="list"
-      aria-label={locale === 'vi' ? 'Chỉ số động cơ Sophia' : 'Sophia engine telemetry'}
+      aria-label={locale === 'vi' ? 'Danh sách 34 động cơ Sophia' : 'Sophia 34 live engines'}
     >
       {capabilities.map((cap) => {
         const isSelected = selectedId === cap.id;
@@ -41,27 +40,30 @@ export function StudioKpiStrip({
             key={cap.id}
             type="button"
             onClick={() => onSelect(cap)}
-            className={`group flex flex-col items-start rounded-xl border p-4 text-left transition-all ${
+            className={`group flex flex-col items-start rounded-2xl border p-4 text-left transition-all ${
               isSelected
-                ? 'border-indigo-500 bg-indigo-50/60 shadow-sm dark:border-indigo-400 dark:bg-indigo-950/30'
-                : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'
+                ? 'border-primary bg-[var(--md-sys-color-primary-container)] shadow-sm'
+                : 'border-border bg-[var(--md-sys-color-surface-container-low)] hover:border-primary/40 hover:bg-[var(--md-sys-color-surface-container)]'
             }`}
           >
             <div className="flex w-full items-center justify-between gap-2">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                {cap.kpiLabel[locale]}
+              <span className="text-[11px] font-medium text-muted-foreground">
+                R{cap.round} • {cap.kpiLabel[locale]}
               </span>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 <span className={`h-2 w-2 rounded-full ${STATUS_DOT[cap.status]}`} />
                 {cap.status}
               </span>
             </div>
-            <div className="mt-1.5 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+            <div className="md3-tabular-nums mt-1.5 text-lg font-bold tracking-tight text-foreground">
               {cap.kpiValue}
             </div>
-            <div className="mt-1 line-clamp-1 text-sm font-medium text-slate-700 group-hover:text-indigo-600 dark:text-slate-200 dark:group-hover:text-indigo-400">
+            <div className="mt-1 line-clamp-1 text-sm font-semibold text-foreground group-hover:text-primary">
               {cap.title[locale]}
             </div>
+            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+              {cap.summary[locale]}
+            </p>
           </button>
         );
       })}

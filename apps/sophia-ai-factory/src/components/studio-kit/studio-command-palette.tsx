@@ -1,12 +1,10 @@
 'use client';
 
 /**
- * Sophia Engine Command Center & ⌘K Command Palette (Sophia UI/UX 2026 Core Kit).
+ * Sophia 34-Engine MD3 Expressive Command Center (User & Admin Unified View).
  *
- * Clean-room progressive-disclosure workspace combining:
- * - Simple Mode (default, 4 core executive tiles) vs Pro/R&D Inspector toggle
- * - Keyboard-first ⌘K / Ctrl+K capability search (`dip/cmdk` MIT pattern)
- * - Schema-driven KPI Strip + Slide-over Inspector Drawer
+ * Shows all 34 live engines by default (zero hidden features) grouped cleanly
+ * with MD3 Expressive Filter Chips, live counts, ⌘K search, and Inspector Drawer.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -27,10 +25,10 @@ export interface StudioCommandPaletteProps {
 const CATEGORIES: readonly { id: CapabilityCategory | 'all'; vi: string; en: string }[] = [
   { id: 'all', vi: 'Tất cả', en: 'All' },
   { id: 'video', vi: 'Video', en: 'Video' },
-  { id: 'affiliate', vi: 'Affiliate', en: 'Affiliate' },
+  { id: 'affiliate', vi: 'Affiliate & Doanh thu', en: 'Affiliate & Revenue' },
   { id: 'compliance', vi: 'Luật & An toàn', en: 'Compliance' },
-  { id: 'analytics', vi: 'Tối ưu EPC', en: 'Analytics' },
-  { id: 'security', vi: 'Bảo mật', en: 'Security' },
+  { id: 'analytics', vi: 'Tăng trưởng & EPC', en: 'Growth & EPC' },
+  { id: 'security', vi: 'Bảo mật & VA', en: 'Security & VA' },
 ];
 
 export function StudioCommandPalette({
@@ -39,7 +37,8 @@ export function StudioCommandPalette({
 }: StudioCommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<CapabilityCategory | 'all'>('all');
-  const [inspectorMode, setInspectorMode] = useState(false);
+  // Default to full 34-engine visibility so nothing is ever hidden from users or admins
+  const [showAllEngines, setShowAllEngines] = useState(true);
   const [selected, setSelected] = useState<StudioCapabilitySpec | null>(null);
 
   useEffect(() => {
@@ -55,90 +54,95 @@ export function StudioCommandPalette({
   }, []);
 
   const visible = useMemo(
-    () => filterCapabilities(capabilities, { query, category, inspectorMode }),
-    [capabilities, query, category, inspectorMode],
+    () => filterCapabilities(capabilities, { query, category, inspectorMode: showAllEngines }),
+    [capabilities, query, category, showAllEngines],
   );
 
+  const countFor = (catId: CapabilityCategory | 'all') =>
+    catId === 'all'
+      ? capabilities.length
+      : capabilities.filter((c) => c.category === catId).length;
+
   return (
-    <section className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-950/60">
+    <section className="md3-surface-card space-y-5 p-5 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">
-            {locale === 'vi' ? 'Trung Tâm Điều Khiển Động Cơ Sophia' : 'Sophia Engine Command Center'}
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
             {locale === 'vi'
-              ? 'Chế độ Đơn giản mặc định cho CEO; bật R&D Inspector để xem toàn bộ lõi kỹ thuật.'
-              : 'Simple Mode by default for founders; toggle R&D Inspector to inspect all backend engines.'}
+              ? `HỆ SINH THÁI MD3 • ${visible.length}/${capabilities.length} ĐỘNG CƠ ĐANG CHẠY`
+              : `MD3 ENGINE CATALOG • ${visible.length}/${capabilities.length} LIVE ENGINES`}
           </p>
+          <h2 className="mt-0.5 text-lg font-bold text-foreground">
+            {locale === 'vi' ? 'Toàn Bộ 34 Động Cơ AI Sống (Đợt 1–35)' : 'All 34 Live AI Engines (Rounds 1–35)'}
+          </h2>
         </div>
 
         <button
           type="button"
-          onClick={() => setInspectorMode((prev) => !prev)}
-          className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
-            inspectorMode
-              ? 'border-indigo-500 bg-indigo-600 text-white'
-              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200'
+          onClick={() => setShowAllEngines((prev) => !prev)}
+          className={`md3-pill-button border px-4 py-2 text-xs font-semibold ${
+            showAllEngines
+              ? 'border-primary bg-[var(--md-sys-color-primary-container)] text-foreground'
+              : 'border-border bg-card text-muted-foreground'
           }`}
         >
-          <span>{inspectorMode ? 'R&D Inspector: ON' : locale === 'vi' ? 'Chế độ Đơn giản' : 'Simple Mode'}</span>
+          {showAllEngines
+            ? locale === 'vi'
+              ? `Đang hiện đủ ${capabilities.length}/${capabilities.length}`
+              : `Showing All ${capabilities.length}/${capabilities.length}`
+            : locale === 'vi'
+              ? 'Chế độ Gọn (4 lõi)'
+              : 'Compact Mode (4 core)'}
         </button>
       </div>
 
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <input
-            id="sophia-studio-cmdk-input"
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={
-              locale === 'vi'
-                ? 'Tìm nhanh tính năng (⌘K)... ví dụ: Hook, EPC, Luật, VA'
-                : 'Quick search engines (⌘K)... e.g. Hook, EPC, Policy, VA'
-            }
-            className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          />
-        </div>
+      <div className="flex flex-col gap-3">
+        <input
+          id="sophia-studio-cmdk-input"
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={
+            locale === 'vi'
+              ? 'Tìm nhanh trong 34 động cơ (⌘K)... ví dụ: Hook, EPC, B-Roll, LTV, VA, Tax'
+              : 'Quick search all 34 engines (⌘K)... e.g. Hook, EPC, B-Roll, LTV, VA, Tax'
+          }
+          className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground"
+        />
 
-        <div className="flex flex-wrap gap-1.5">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setCategory(cat.id)}
-              className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
-                category === cat.id
-                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
-              }`}
-            >
-              {cat[locale]}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((cat) => {
+            const active = category === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setCategory(cat.id)}
+                className={`md3-pill-button border px-3.5 py-1.5 text-xs font-semibold ${
+                  active
+                    ? 'border-primary bg-[var(--md-sys-color-primary-container)] text-foreground'
+                    : 'border-border bg-card text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {cat[locale]}{' '}
+                <span className="md3-tabular-nums opacity-75">({countFor(cat.id)})</span>
+              </button>
+            );
+          })}
         </div>
       </div>
+
+      <StudioInspectorDrawer
+        locale={locale}
+        capability={selected}
+        onClose={() => setSelected(null)}
+      />
 
       <StudioKpiStrip
         locale={locale}
         capabilities={visible}
         selectedId={selected?.id ?? null}
         onSelect={setSelected}
-      />
-
-      {visible.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-slate-300 p-4 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-          {locale === 'vi'
-            ? 'Không có động cơ phù hợp. Thử bật R&D Inspector hoặc xóa bộ lọc.'
-            : 'No matching engines. Try enabling R&D Inspector or clearing filters.'}
-        </p>
-      ) : null}
-
-      <StudioInspectorDrawer
-        locale={locale}
-        capability={selected}
-        onClose={() => setSelected(null)}
       />
     </section>
   );
