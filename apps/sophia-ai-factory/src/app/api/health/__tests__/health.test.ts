@@ -152,15 +152,15 @@ describe('/api/health', () => {
   });
 
   describe('authenticated path (HEALTH_TOKEN set)', () => {
-    it('returns 401 when Authorization header is missing', async () => {
+    it('returns redacted public 200 when Authorization header is missing', async () => {
       process.env.HEALTH_TOKEN = 'test-token';
       const { GET } = await freshImportRoute();
       const req = new Request('http://localhost/api/health');
       const resp = await GET(req);
 
-      expect(resp.status).toBe(401);
+      expect(resp.status).toBe(200);
       const body = (await resp.json()) as Record<string, unknown>;
-      expect(body.error).toBe('Unauthorized');
+      expect(body.status).toBe('healthy');
       expect(body.version).toBeUndefined();
       expect(body.components).toBeUndefined();
     });
@@ -187,7 +187,7 @@ describe('/api/health', () => {
       expect(components.circuitBreaker?.status).toBe('ok');
     });
 
-    it('returns 401 when Bearer token is incorrect', async () => {
+    it('returns redacted public 200 when Bearer token is incorrect', async () => {
       process.env.HEALTH_TOKEN = 'test-token';
       const { GET } = await freshImportRoute();
       const req = new Request('http://localhost/api/health', {
@@ -195,7 +195,7 @@ describe('/api/health', () => {
       });
       const resp = await GET(req);
 
-      expect(resp.status).toBe(401);
+      expect(resp.status).toBe(200);
       const body = (await resp.json()) as Record<string, unknown>;
       expect(body.version).toBeUndefined();
       expect(body.components).toBeUndefined();
@@ -328,6 +328,7 @@ describe('/api/health', () => {
 
   describe('error handling', () => {
     it('handles build-metadata error without taking down entire response', async () => {
+      process.env.HEALTH_TOKEN = 'test-token';
       getBuildMetadataSpy.mockImplementation(() => {
         throw new Error('Fatal');
       });
