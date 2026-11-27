@@ -40,7 +40,7 @@ export function useRegister2027State(redirectTo?: string) {
       const name = formState.companyName.trim() || formState.email.split('@')[0].trim() || 'user';
       const callbackPath = redirectTo
         ? resolveRedirectTarget(redirectTo)
-        : '/dashboard/onboarding';
+        : '/dashboard/first-value';
       const result = await authClient.signUp.email({
         name,
         email: formState.email.trim(),

@@ -541,6 +541,7 @@ export function AffiliateCampaignStudio(props: AffiliateCampaignStudioProps) {
           onSaveEdit={handleSaveEdit}
           onApprove={handleApprove}
           onExport={handleExport}
+          onGoToStudio={() => setActiveTab('studio')}
         />
       </div>
 

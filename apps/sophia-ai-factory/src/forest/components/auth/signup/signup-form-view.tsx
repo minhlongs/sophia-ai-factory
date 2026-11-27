@@ -41,7 +41,7 @@ export function SignupFormView({ t }: SignupFormProps) {
         name,
         email,
         password,
-        callbackURL: '/dashboard/onboarding',
+        callbackURL: '/dashboard/first-value',
       });
 
       if (authError) {
@@ -56,7 +56,7 @@ export function SignupFormView({ t }: SignupFormProps) {
 
       setSuccess(true);
       trackSignupComplete({ method: 'email' });
-      router.push('/dashboard/onboarding');
+      router.push('/dashboard/first-value');
       router.refresh();
     } catch {
       setError(t.error_generic);
