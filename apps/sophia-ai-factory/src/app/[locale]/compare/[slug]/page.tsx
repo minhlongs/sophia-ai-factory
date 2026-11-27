@@ -143,30 +143,30 @@ export default async function ProgrammaticComparisonPage({
     <main className="min-h-screen bg-background text-foreground px-4 py-10">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdGraph) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdGraph).replace(/</g, '\\u003c') }}
       />
       <div className="mx-auto max-w-3xl space-y-6">
         <header className="space-y-2 border-b border-border pb-5">
-          <p className="font-mono text-xs uppercase tracking-wider text-primary">
-            {isVi ? 'SO SÁNH CHUẨN AEO / GEO • 2026' : 'AEO / GEO VERIFIED COMPARISON • 2026'}
+          <p className="font-mono text-xs uppercase tracking-wider text-primary-text">
+            {isVi ? 'SO SÁNH MINH BẠCH • 2026' : 'VERIFIED COMPARISON • 2026'}
           </p>
           <h1 className="text-3xl font-bold tracking-tight">{heading}</h1>
           <p className="text-sm text-muted-foreground">
             {isVi
-              ? 'Phân tích khách quan chuẩn trích dẫn AI Search (Perplexity / ChatGPT) về chi phí BYOK, 34 động cơ bảo vệ doanh thu và tự động hóa affiliate.'
-              : 'Objective AI-Search citation comparison covering BYOK wholesale economics, 34 revenue-guard engines, and affiliate automation.'}
+              ? 'Phân tích khách quan về chi phí dùng khóa AI gốc (BYOK), 34 công cụ bảo vệ doanh thu và tự động hóa affiliate.'
+              : 'Objective comparison covering BYOK wholesale economics, 34 revenue-guard tools, and affiliate automation.'}
           </p>
         </header>
 
         {curated ? (
           <section className="md3-surface-card p-6 space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-primary">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-primary-text">
               {isVi ? 'Tóm Tắt Nhanh (TL;DR)' : 'Executive Summary (TL;DR)'}
             </h2>
             <ul className="space-y-2.5 text-sm leading-relaxed text-foreground">
               {(isVi ? curated.tldrVi : curated.tldrEn).map((bullet, idx) => (
                 <li key={idx} className="flex gap-2.5">
-                  <span className="font-bold text-primary">•</span>
+                  <span aria-hidden="true" className="font-bold text-primary-text">•</span>
                   <span>{bullet}</span>
                 </li>
               ))}

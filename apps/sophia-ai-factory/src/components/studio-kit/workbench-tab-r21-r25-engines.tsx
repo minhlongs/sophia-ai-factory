@@ -17,51 +17,65 @@ export function WorkbenchTabR21R25Engines({ locale }: { readonly locale: 'vi' | 
   const [postsToday, setPostsToday] = useState(2);
   const [grossUsd, setGrossUsd] = useState(999.99);
 
-  const live = useMemo(() => {
-    const frame1 = scoreFrame1VisualHook({
-      platform,
-      headline: locale === 'vi' ? 'Giảm 40% Phí Giao Dịch 2026' : 'Cut Trading Fees 40% in 2026',
-      textHex: '#FFFFFF',
-      bgHex: '#090A10',
-      textBox: { x: 100, y: 280, width: 700, height: 180 },
-    });
+  const frame1 = useMemo(
+    () =>
+      scoreFrame1VisualHook({
+        platform,
+        headline: locale === 'vi' ? 'Giảm 40% Phí Giao Dịch 2026' : 'Cut Trading Fees 40% in 2026',
+        textHex: `${String.fromCharCode(35)}FFFFFF`,
+        bgHex: `${String.fromCharCode(35)}090A10`,
+        textBox: { x: 100, y: 280, width: 700, height: 180 },
+      }),
+    [platform, locale],
+  );
 
-    const geo = resolveGeoFailoverOffer(
-      [
-        { id: 'Bybit Global Rebate', url: 'https://partner.bybit.com/b/sophia', blockedCountries: ['US', 'UK'], consecutiveHardFailures: 0, breakerState: 'closed' },
-        { id: 'TradingView SaaS Pro', url: 'https://www.tradingview.com/?aff_id=sophia', blockedCountries: [], consecutiveHardFailures: 0, breakerState: 'closed' },
-      ],
-      country,
-    );
+  const geo = useMemo(
+    () =>
+      resolveGeoFailoverOffer(
+        [
+          { id: 'Bybit Global Rebate', url: 'https://partner.bybit.com/b/sophia', blockedCountries: ['US', 'UK'], consecutiveHardFailures: 0, breakerState: 'closed' },
+          { id: 'TradingView SaaS Pro', url: 'https://www.tradingview.com/?aff_id=sophia', blockedCountries: [], consecutiveHardFailures: 0, breakerState: 'closed' },
+        ],
+        country,
+      ),
+    [country],
+  );
 
-    const cadence = evaluateCreatorCadence({
-      postsToday,
-      dailyCap: 3,
-      currentStreakDays: 8,
-      graceTokensRemaining: 2,
-      actionBlockTripped: false,
-    });
+  const cadence = useMemo(
+    () =>
+      evaluateCreatorCadence({
+        postsToday,
+        dailyCap: 3,
+        currentStreakDays: 8,
+        graceTokensRemaining: 2,
+        actionBlockTripped: false,
+      }),
+    [postsToday],
+  );
 
-    const cents = BigInt(Math.max(0, Math.round(grossUsd * 100)));
-    const split = allocateIntegerCentWaterfall(cents, [
+  const split = useMemo(() => {
+    const safeGrossUsd = Number.isFinite(grossUsd)
+      ? Math.min(1_000_000_000, Math.max(0, grossUsd))
+      : 0;
+    const cents = BigInt(Math.round(safeGrossUsd * 100));
+    return allocateIntegerCentWaterfall(cents, [
       { participantId: 'Creator (70%)', role: 'creator', basisPoints: 7000 },
       { participantId: 'VA Editor (20%)', role: 'va_editor', basisPoints: 2000 },
       { participantId: 'Agency (10%)', role: 'agency', basisPoints: 1000 },
     ]);
-
-    return { frame1, geo, cadence, split };
-  }, [country, platform, postsToday, grossUsd, locale]);
+  }, [grossUsd]);
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {/* R22: Frame-1 Safe-Zone & Contrast */}
       <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wide text-primary">
+          <span className="text-xs font-semibold uppercase tracking-wide text-primary-text">
             {locale === 'vi' ? 'Khung Hình Đầu (Frame-1)' : 'Frame-1 Visual Hook'}
           </span>
           <select
             value={platform}
+            aria-label={locale === 'vi' ? 'Chọn nền tảng video ngắn' : 'Select short-form platform'}
             onChange={(e) => setPlatform(e.target.value as ShortFormPlatform)}
             className="rounded-lg border border-border bg-background px-2 py-1 text-xs"
           >
@@ -70,24 +84,25 @@ export function WorkbenchTabR21R25Engines({ locale }: { readonly locale: 'vi' | 
             <option value="instagram_reels">Instagram Reels</option>
           </select>
         </div>
-        <div className="text-xl font-bold text-foreground">
-          {live.frame1.score100}/100 • {live.frame1.contrastRatio}:1 WCAG
+        <div className="md3-tabular-nums text-xl font-bold text-foreground">
+          {frame1.score100}/100 • {frame1.contrastRatio}:1 WCAG
         </div>
         <p className="text-xs text-muted-foreground">
-          {live.frame1.safeZoneClear
+          {frame1.safeZoneClear
             ? locale === 'vi' ? '✅ Chữ nằm gọn trong vùng an toàn (không bị che nút Like/Share)' : '✅ Text sits safely inside UI clear zone'
-            : live.frame1.warnings[0]}
+            : frame1.warnings[0]}
         </p>
       </div>
 
       {/* R23: Geo-Routing & Failover */}
       <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wide text-primary">
+          <span className="text-xs font-semibold uppercase tracking-wide text-primary-text">
             {locale === 'vi' ? 'Chuyển Hướng Theo Quốc Gia' : 'Edge Geo-Routing & Failover'}
           </span>
           <select
             value={country}
+            aria-label={locale === 'vi' ? 'Chọn quốc gia người xem' : 'Select viewer country'}
             onChange={(e) => setCountry(e.target.value as 'VN' | 'US' | 'UK' | 'SG')}
             className="rounded-lg border border-border bg-background px-2 py-1 text-xs"
           >
@@ -97,15 +112,15 @@ export function WorkbenchTabR21R25Engines({ locale }: { readonly locale: 'vi' | 
             <option value="SG">Singapore (SG)</option>
           </select>
         </div>
-        <div className="text-base font-bold text-emerald-500">
-          {live.geo.selectedOfferId ?? 'Fallback'}
+        <div className="text-base font-bold text-emerald-700 dark:text-emerald-400">
+          {geo.selectedOfferId ?? 'Fallback'}
         </div>
-        <p className="text-xs text-muted-foreground">{live.geo.reason}</p>
+        <p className="text-xs text-muted-foreground">{geo.reason}</p>
       </div>
 
       {/* R24: Anti-Burnout Publishing Cadence */}
       <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
-        <div className="text-xs font-semibold uppercase tracking-wide text-primary">
+        <div className="text-xs font-semibold uppercase tracking-wide text-primary-text">
           {locale === 'vi' ? 'Nhịp Đăng Bài Chống Spam' : 'Anti-Burnout Publishing Cadence'}
         </div>
         <label className="flex flex-col gap-1 text-xs text-muted-foreground">
@@ -119,8 +134,8 @@ export function WorkbenchTabR21R25Engines({ locale }: { readonly locale: 'vi' | 
           />
         </label>
         <p className="text-xs font-medium text-foreground">
-          {live.cadence.status === 'ready'
-            ? locale === 'vi' ? `✅ Còn ${live.cadence.remainingSlotsToday} suất đăng an toàn hôm nay` : `✅ ${live.cadence.remainingSlotsToday} safe slot(s) remaining today`
+          {cadence.status === 'ready'
+            ? locale === 'vi' ? `✅ Còn ${cadence.remainingSlotsToday} suất đăng an toàn hôm nay` : `✅ ${cadence.remainingSlotsToday} safe slot(s) remaining today`
             : locale === 'vi' ? '⏳ Đã đủ ngưỡng ngày — tự động dời sang ngày mai để tránh bị bóp reach' : '⏳ Daily cap reached — deferring burst to tomorrow'}
         </p>
       </div>
@@ -128,23 +143,25 @@ export function WorkbenchTabR21R25Engines({ locale }: { readonly locale: 'vi' | 
       {/* R25: Integer-Cent 70/20/10 Revenue Split */}
       <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wide text-primary">
+          <span className="text-xs font-semibold uppercase tracking-wide text-primary-text">
             {locale === 'vi' ? 'Chia Hoa Hồng 70/20/10 (0 Sai Số)' : '70/20/10 Integer-Cent Split'}
           </span>
           <input
             type="number"
             min={0}
+            max={1000000000}
             step={10}
+            aria-label={locale === 'vi' ? 'Tổng doanh thu USD để chia hoa hồng' : 'Gross USD revenue to split'}
             value={grossUsd}
             onChange={(e) => setGrossUsd(Number(e.target.value) || 0)}
             className="w-24 rounded-lg border border-border bg-background px-2 py-1 text-right text-xs font-mono"
           />
         </div>
         <ul className="space-y-1 text-xs">
-          {live.split.allocations.map((a) => (
+          {split.allocations.map((a) => (
             <li key={a.participantId} className="flex justify-between">
               <span className="text-muted-foreground">{a.participantId}</span>
-              <span className="font-mono font-semibold text-foreground">{a.formattedUsd}</span>
+              <span className="md3-tabular-nums font-mono font-semibold text-foreground">{a.formattedUsd}</span>
             </li>
           ))}
         </ul>

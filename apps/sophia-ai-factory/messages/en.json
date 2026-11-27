@@ -7696,6 +7696,30 @@
         "chatSophia2": "Draft locked ($0.00 spend) → SHA-256 approval digest verified → queued for ElevenLabs + HeyGen synthesis & Domain B 0%-fee ledger.",
         "ecosystemKicker": "03 / 5-STATION ASSEMBLY & 7-LEVEL EVIDENCE",
         "joinKicker": "04 / LAUNCH YOUR WORKSPACE"
+      },
+      "videoShowcase": {
+        "kicker": "LIVE PRODUCT DEMOS",
+        "title": "Watch Sophia AI Factory in action",
+        "subtitle": "Three real workflows showing how non-technical CEOs turn one idea into an automated AI video pipeline.",
+        "tablistLabel": "Select a Sophia AI Factory demo video",
+        "cta": "Launch Pilot Workspace",
+        "tabs": {
+          "glean-agents": {
+            "label": "Multi-Agent Flow",
+            "title": "One command expands into a governed multi-agent workflow",
+            "description": "From a single prompt, Sophia orchestrates scripting, voiceover, video synthesis, and multi-channel publishing."
+          },
+          "bolt-skills": {
+            "label": "Reusable Skills",
+            "title": "Turn repeatable video rules into reusable team skills",
+            "description": "Package brand colors, script standards, and layouts once so every campaign stays on-brand in one click."
+          },
+          "voice-input": {
+            "label": "Voice Campaigns",
+            "title": "Speak your idea naturally — Sophia handles the rest",
+            "description": "Built for busy CEOs: launch campaigns from Telegram or Web with zero technical setup."
+          }
+        }
       }
     },
     "settingsPage": {

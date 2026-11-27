@@ -10,13 +10,31 @@
  */
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Md3SegmentedGroup, Md3SurfaceCard } from '@/components/md3/md3-primitives';
 import { WorkbenchTabScriptPolicy } from './workbench-tab-script-policy';
-import { WorkbenchTabMediaSlide } from './workbench-tab-media-slide';
-import { WorkbenchTabRevenueGrowth } from './workbench-tab-revenue-growth';
-import { WorkbenchTabSecurityRbac } from './workbench-tab-security-rbac';
-import { WorkbenchTabR21R25Engines } from './workbench-tab-r21-r25-engines';
 import { StudioCommandPalette } from './studio-command-palette';
+
+const TabSkeleton = () => (
+  <div className="min-h-[240px] animate-pulse rounded-2xl bg-muted/40" aria-busy="true" />
+);
+
+const WorkbenchTabMediaSlide = dynamic(
+  () => import('./workbench-tab-media-slide').then((m) => m.WorkbenchTabMediaSlide),
+  { loading: TabSkeleton },
+);
+const WorkbenchTabRevenueGrowth = dynamic(
+  () => import('./workbench-tab-revenue-growth').then((m) => m.WorkbenchTabRevenueGrowth),
+  { loading: TabSkeleton },
+);
+const WorkbenchTabSecurityRbac = dynamic(
+  () => import('./workbench-tab-security-rbac').then((m) => m.WorkbenchTabSecurityRbac),
+  { loading: TabSkeleton },
+);
+const WorkbenchTabR21R25Engines = dynamic(
+  () => import('./workbench-tab-r21-r25-engines').then((m) => m.WorkbenchTabR21R25Engines),
+  { loading: TabSkeleton },
+);
 
 type StepId = 'script' | 'media' | 'revenue' | 'security' | 'scale';
 
@@ -45,7 +63,7 @@ const STEPS: readonly StepMeta[] = [
     title: { vi: 'Tạo Slide & Giọng Đọc', en: 'Create Slide & Voice' },
     purpose: {
       vi: 'Nhập tiêu đề & ý chính để tạo ảnh slide Carousel sắc nét tải về ngay, đồng thời chia đoạn giọng đọc miễn phí ngay trên trình duyệt.',
-      en: 'Enter a headline and key point to preview and download a crisp SVG carousel slide and prepare free browser voice chunks.',
+      en: 'Enter a headline and key point to preview and download a crisp carousel slide and generate free voiceover segments in your browser.',
     },
     nextId: 'revenue',
   },
@@ -75,7 +93,7 @@ const STEPS: readonly StepMeta[] = [
     title: { vi: 'Mở Rộng & Chia Hoa Hồng', en: 'Scale & Revenue Split' },
     purpose: {
       vi: 'Kiểm tra vùng an toàn khung hình đầu, chuyển hướng link theo quốc gia (VN/US/UK), giữ nhịp đăng bài chống spam và chia hoa hồng 70/20/10 chính xác từng cent.',
-      en: 'Check Frame-1 safe zones, geo-route affiliate links by country, enforce anti-burnout cadence, and split 70/20/10 payouts with zero floating-point drift.',
+      en: 'Check first-frame safe zones, route affiliate links by country, keep a spam-safe posting pace, and split 70/20/10 payouts to the exact cent.',
     },
   },
 ];
@@ -88,16 +106,16 @@ export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
   return (
     <div className="space-y-6">
       <header className="space-y-1.5">
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-          {locale === 'vi' ? 'Quy Trình Vận Hành 4 Bước • Sophia 2026' : '4-Step Operations Flow • Sophia 2026'}
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary-text">
+          {locale === 'vi' ? 'Quy Trình Vận Hành 5 Bước • Sophia 2026' : '5-Step Campaign Workflow • Sophia 2026'}
         </p>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           {locale === 'vi' ? 'Xưởng Vận Hành Chiến Dịch AI' : 'AI Campaign Operations Workbench'}
         </h1>
         <p className="max-w-3xl text-sm text-muted-foreground">
           {locale === 'vi'
-            ? 'Làm lần lượt từ Bước 1 đến Bước 4. Mọi kiểm tra đều chạy tức thì trên trình duyệt, hoàn toàn minh bạch và không tốn thêm chi phí AI.'
-            : 'Follow Steps 1 to 4 in order. Every check runs instantly in your browser with full transparency and $0 extra AI cost.'}
+            ? 'Làm lần lượt từ Bước 1 đến Bước 5. Mọi kiểm tra đều chạy tức thì trên trình duyệt, hoàn toàn minh bạch và không tốn thêm chi phí AI.'
+            : 'Follow Steps 1 to 5 in order. Every check runs instantly in your browser with full transparency and $0 extra AI cost.'}
         </p>
       </header>
 
@@ -112,7 +130,7 @@ export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
       {/* Transparent Purpose Banner for Active Step */}
       <div className="md3-surface-tonal flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center">
         <div className="space-y-0.5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary-text">
             {locale === 'vi' ? `Bước ${current.num}: ${current.title.vi}` : `Step ${current.num}: ${current.title.en}`}
           </p>
           <p className="text-sm text-muted-foreground">{current.purpose[locale]}</p>
@@ -121,7 +139,7 @@ export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
           <button
             type="button"
             onClick={() => setActiveStep(nextStep.id)}
-            className="md3-pill-button shrink-0 bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground shadow-sm"
+            className="md3-pill-button min-h-[44px] shrink-0 bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground shadow-sm"
           >
             {locale === 'vi' ? `Sang Bước ${nextStep.num} →` : `Next: Step ${nextStep.num} →`}
           </button>
@@ -138,7 +156,9 @@ export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
       </Md3SurfaceCard>
 
       {/* Always-Visible MD3 34-Engine Catalog (Zero Hidden Features) */}
-      <StudioCommandPalette locale={locale} />
+      <div className="[content-visibility:auto] [contain-intrinsic-size:1px_640px]">
+        <StudioCommandPalette locale={locale} />
+      </div>
     </div>
   );
 }

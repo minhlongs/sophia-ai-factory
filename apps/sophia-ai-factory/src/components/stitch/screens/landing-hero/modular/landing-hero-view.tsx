@@ -6,6 +6,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { MarketingNav, MarketingFooter } from '@/components/stitch/layouts';
 import { HeroHeader } from './hero-header';
 import { PipelineMockup } from './pipeline-mockup';
+import { LandingVideoShowcase } from './landing-video-showcase';
 import { WorkflowAndFeatures } from './workflow-and-features';
 import { FaqAndCta } from './faq-and-cta';
 
@@ -49,6 +50,8 @@ export function LandingHeroView({ beforeFooterSlot }: LandingHeroViewProps = {})
           </div>
         </section>
       </main>
+
+      <LandingVideoShowcase />
 
       <WorkflowAndFeatures tLanding={tLanding} t={t} />
       <FaqAndCta t={t} tLanding={tLanding} />
