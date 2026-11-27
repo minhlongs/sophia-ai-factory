@@ -98,7 +98,7 @@ describe("Director's Control Deck Design System Verification", () => {
     const loginPage = readSrcFile('components/stitch/screens/login/login-page.tsx');
     const registerView = readSrcFile('components/stitch/screens/auth/register/register-page-view.tsx');
 
-    expect(landingView).toContain('bg-[#F8F9FC] dark:bg-[#090A10]');
+    expect(landingView).toContain('bg-[var(--background)] text-[var(--on-surface)]');
     // The landing preview is illustrative — no REC/LIVE decoration. The
     // `camera-rec` utility still exists for real studio previews (Phase 4).
     expect(pipelineMockup).not.toContain('camera-rec');
