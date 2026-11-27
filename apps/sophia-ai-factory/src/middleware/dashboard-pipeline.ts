@@ -65,8 +65,7 @@ export async function handleDashboardPipeline(
   const authResult = await requireAuth(request, locale);
   if (authResult instanceof NextResponse) {
     const isDemoPreview =
-      cleanPath === '/dashboard/control-deck' ||
-      (process.env.NODE_ENV !== 'production' && request.nextUrl.searchParams.get('demo') === '1');
+      process.env.NODE_ENV !== 'production' && request.nextUrl.searchParams.get('demo') === '1';
     if (!isDemoPreview) {
       return authResult;
     }
