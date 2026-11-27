@@ -126,8 +126,8 @@
   },
   "seo": {
     "home": {
-      "title": "Sophia AI Factory — Automate Video, Affiliate & Revenue",
-      "description": "Create AI videos, discover affiliate offers, publish across channels. Crypto/USDT payouts. Start free in minutes."
+      "title": "Sophia AI Factory — 34-Engine Autonomous Affiliate Video Factory",
+      "description": "34 quality engines that script, lint, render 30fps in-browser, and guard affiliate commissions. Bring your own AI keys (BYOK), $0 platform markup."
     },
     "login": {
       "title": "Sign In · Sophia AI Factory",
@@ -1117,12 +1117,12 @@
     "opcNav": {
       "today": "Today",
       "engines": "AI Workbench (34 Engines)",
-      "offers": "Offers",
+      "offers": "Commission Offers",
       "campaigns": "Campaigns",
       "approvals": "Needs approval",
       "results": "Results",
-      "connections": "Connections",
-      "referSophia": "Refer Sophia",
+      "connections": "Connect AI Keys",
+      "referSophia": "Partner Rewards",
       "workspace": "Workspace",
       "moreTools": "More tools (all deep links)",
       "referralProgramme": "Referral programme"
