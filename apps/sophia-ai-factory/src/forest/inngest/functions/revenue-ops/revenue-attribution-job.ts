@@ -18,9 +18,9 @@ export const revenueAttribution = inngest.createFunction(
     let totalSkipped = 0;
     let offset = 0;
 
-    // Batch through unattributed jobs in pages of BATCH_SIZE.
-    // D1 has no transactions — avoid giant single queries.
-    while (true) {
+    // Batch through unattributed jobs in pages of BATCH_SIZE (bounded to prevent runaway loops).
+    const MAX_BATCHES = 100;
+    for (let batch = 0; batch < MAX_BATCHES; batch += 1) {
       const jobs = await step.run(`fetch-unattributed-jobs-${offset}`, async () => {
         const _db = await getD1();
         if (!_db) throw new Error('D1 database binding not available');
@@ -38,6 +38,7 @@ export const revenueAttribution = inngest.createFunction(
         }
       }
 
+      if (jobs.length < BATCH_SIZE) break;
       offset += BATCH_SIZE;
     }
 
