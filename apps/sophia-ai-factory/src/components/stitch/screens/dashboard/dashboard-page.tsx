@@ -3,7 +3,8 @@
 import React from 'react';
 import { Download, Plus } from 'lucide-react';
 import { Button } from '@/components/stitch';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { StudioCommandPalette } from '@/components/studio-kit/studio-command-palette';
 import type { DashboardData, DashboardMetric } from '@/forest/dashboard/types';
 import type { SystemReadiness } from '@/tree/readiness/readiness-checker';
 import { DashboardNextStepBanner } from '@/forest/dashboard/dashboard-next-step-banner';
@@ -32,6 +33,8 @@ interface DashboardPageProps {
 }
 
 export default function DashboardPage({ initialData, loadFailed, readiness }: DashboardPageProps) {
+  const rawLocale = useLocale();
+  const studioLocale: 'vi' | 'en' = rawLocale === 'en' ? 'en' : 'vi';
   let t: (key: string) => string;
   try {
     const hookT = useTranslations('stitch.dashboard');
@@ -136,6 +139,8 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
       </DataStateBoundary>
 
       {/* Optional local rendering engine & Control Deck preview, kept out of the primary work area. */}
+      <StudioCommandPalette locale={studioLocale} />
+
       <details
         data-testid="dashboard-advanced-tools"
         className="rounded-2xl border border-border bg-muted/20 p-4"
