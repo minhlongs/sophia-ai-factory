@@ -13,14 +13,14 @@ vi.mock('next/navigation', () => ({
 }));
 
 describe('DashboardTopBar — Obsidian Cyber-Glass TopBar', () => {
-  it('renders fixed header with backdrop-blur-xl and obsidian border', () => {
+  it('renders sticky header with backdrop-blur-xl and semantic MD3 border', () => {
     render(<DashboardTopBar />);
 
     const header = screen.getByTestId('dashboard-topbar');
-    expect(header.className).toContain('fixed');
+    expect(header.className).toContain('sticky');
     expect(header.className).toContain('backdrop-blur-xl');
-    expect(header.className).toContain('bg-[#08090D]/80');
-    expect(header.className).toContain('border-[#222536]');
+    expect(header.className).toContain('bg-background/85');
+    expect(header.className).toContain('border-border');
   });
 
   it('renders clean search input with magnifying glass icon', () => {

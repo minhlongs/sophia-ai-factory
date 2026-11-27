@@ -95,36 +95,28 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
         </div>
       </div>
 
-      {/* The one action that matches the customer's current state */}
-      <DashboardNextStepBanner readiness={readiness} initialData={initialData} />
-
-      {/* CEO Onboarding & System Readiness Callout */}
-      <DashboardOnboardingBanner readiness={readiness} />
+      {/* Single context-aware action banner (never stack two redundant banners) */}
+      {readiness?.readyForMissions ? (
+        <DashboardNextStepBanner readiness={readiness} initialData={initialData} />
+      ) : (
+        <DashboardOnboardingBanner readiness={readiness} />
+      )}
 
       {loadFailed && (
         <DataStateBoundary state="error" testId="dashboard-load-error-boundary" />
       )}
 
       <DataStateBoundary state="live" testId="dashboard-data-boundary">
-        {/* Metrics Grid */}
+        {/* Spatial Bento Executive KPI Grid */}
         <DashboardMetricsGrid metrics={metrics} />
 
-        {/* Baoyu-Design (claude-dashboard) Sources & D1 Lineage Trace Drawer */}
-        <div className="mt-6">
-          <DashboardSourcesDrawer
-            t={t}
-            dataTruthState={
-              loadFailed
-                ? 'error'
-                : initialData?.metrics && initialData.metrics.length > 0
-                  ? 'live'
-                  : 'verified_empty'
-            }
-          />
+        {/* Promoted Above-the-Fold: Realtime 34-Engine A-to-Z Pipeline Runner */}
+        <div id="live-pipeline" className="mt-6">
+          <StudioCommandPalette locale={studioLocale} />
         </div>
 
-        {/* Chart & Affiliates Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 mt-6">
+        {/* Analytics & Activity Bento (below-the-fold containment) */}
+        <div className="mwg-offscreen-section grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 mt-6">
           <DashboardRevenueChart
             // Keep "the server reported nothing" distinct from "the load failed":
             // an empty array is a real verified-empty period, whereas `undefined`
@@ -135,11 +127,10 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
         </div>
 
         {/* Recent Activity Table */}
-        <DashboardTransactionsCard transactions={recentTransactions} />
+        <div className="mwg-offscreen-section">
+          <DashboardTransactionsCard transactions={recentTransactions} />
+        </div>
       </DataStateBoundary>
-
-      {/* Optional local rendering engine & Control Deck preview, kept out of the primary work area. */}
-      <StudioCommandPalette locale={studioLocale} />
 
       <details
         data-testid="dashboard-advanced-tools"
@@ -149,6 +140,16 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
           {t('advanced.localEngineLabel')}
         </summary>
         <div className="mt-4 space-y-4">
+          <DashboardSourcesDrawer
+            t={t}
+            dataTruthState={
+              loadFailed
+                ? 'error'
+                : initialData?.metrics && initialData.metrics.length > 0
+                  ? 'live'
+                  : 'verified_empty'
+            }
+          />
           <DashboardControlDeckBanner />
           <LocalEngineSetupGuide />
         </div>
