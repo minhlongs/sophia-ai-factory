@@ -126,7 +126,15 @@ export async function GET(
   const tid = clickId.replace(/-/g, '').slice(0, 24);
   const subParam = getSubIdParam(offer.network || 'clickbank');
 
-  const affiliateUrl = new URL(offer.affiliate_link);
+  let affiliateUrl: URL;
+  try {
+    affiliateUrl = new URL(offer.affiliate_link);
+    if (affiliateUrl.protocol !== 'https:' && affiliateUrl.protocol !== 'http:') {
+      return Response.redirect(HOMEPAGE_URL, 302);
+    }
+  } catch {
+    return Response.redirect(HOMEPAGE_URL, 302);
+  }
   affiliateUrl.searchParams.set(subParam, tid);
 
   const cfAsn = (request as unknown as { cf?: { asn?: number } }).cf?.asn;

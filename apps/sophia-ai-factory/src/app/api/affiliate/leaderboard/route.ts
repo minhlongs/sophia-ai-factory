@@ -45,7 +45,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     const d1 = await getD1();
-    if (!d1) throw new Error('D1 database binding not available');
+    if (!d1) {
+      return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
+    }
     const summary = await getMonthlyLeaderboard(d1, period);
 
     return NextResponse.json(summary, {

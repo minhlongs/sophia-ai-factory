@@ -10,6 +10,9 @@ minify = true
 # SSR inline scripts (e.g., next-themes pre-hydration script via Function.toString).
 keep_names = false
 
+[limits]
+cpu_ms = 300000
+
 # Health check worker (bypasses OpenNext bundling)
 [[env]]
 name = "health"
@@ -140,6 +143,7 @@ preview_id = "f2cf595dec5543dc96f6370bebbc8754"
 
 [vars]
 # Technical Worker identity (Cloudflare-owned, independent of brand domain renewal)
+HOSTNAME = "sophia-ai-factory.agencyos-openclaw.workers.dev"
 WORKER_TECHNICAL_URL = "https://sophia-ai-factory.agencyos-openclaw.workers.dev"
 ALLOWED_HOSTS = "sophia-ai-factory.agencyos-openclaw.workers.dev"
 
