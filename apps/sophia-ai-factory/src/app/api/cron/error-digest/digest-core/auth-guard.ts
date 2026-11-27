@@ -1,8 +1,6 @@
 import { NextRequest } from 'next/server';
+import { verifyCronAuth } from '@/seed/security/cron-auth';
 
 export function verifyCronSecret(request: NextRequest): boolean {
-  if (process.env.NODE_ENV === 'development') return true;
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) return false;
-  return request.headers.get('authorization') === `Bearer ${cronSecret}`;
+  return verifyCronAuth(request) === null;
 }

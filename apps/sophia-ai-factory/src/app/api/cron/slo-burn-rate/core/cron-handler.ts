@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
+import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { recordSloBurn } from './alert-recorder';
@@ -8,11 +9,9 @@ import { SLO_CONFIGS } from './slo-configs';
 import type { SLOCronItemResult, SLOCronResponse } from './types';
 
 export async function handleSloBurnRateCron(request: NextRequest): Promise<NextResponse<SLOCronResponse | { error: string }>> {
-  const cronSecret = request.headers.get('Authorization')?.replace('Bearer ', '');
-  const expectedSecret = process.env.CRON_SECRET;
-
-  if (!expectedSecret || cronSecret !== expectedSecret) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const authError = verifyCronAuth(request);
+  if (authError) {
+    return authError as NextResponse<{ error: string }>;
   }
 
   const now = new Date();
