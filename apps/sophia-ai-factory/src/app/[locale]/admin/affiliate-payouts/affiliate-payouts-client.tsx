@@ -71,9 +71,11 @@ export function AffiliatePayoutsClient({
     setRowState(payout.id, { pending: true, error: null });
 
     try {
+      const { getCsrfHeaders } = await import('@/seed/security/use-csrf-token');
       const response = await fetch('/api/admin/affiliate-payouts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
         body: JSON.stringify({
           payoutId: payout.id,
           currentVersion: payout.version,
@@ -84,6 +86,7 @@ export function AffiliatePayoutsClient({
 
       if (response.status === 409) {
         setRowState(payout.id, {
+          pending: false,
           error: t('Người quản trị khác đã xử lý khoản này.', 'Another admin already actioned this payout.'),
         });
         return;
@@ -92,6 +95,7 @@ export function AffiliatePayoutsClient({
       if (!response.ok) {
         const payload = (await response.json().catch(() => ({}))) as { error?: string };
         setRowState(payout.id, {
+          pending: false,
           error: payload.error ?? t('Xử lý thất bại.', 'Request failed.'),
         });
         return;
@@ -100,6 +104,7 @@ export function AffiliatePayoutsClient({
       setPayouts((prev) => prev.filter((row) => row.id !== payout.id));
     } catch (err) {
       setRowState(payout.id, {
+        pending: false,
         error: err instanceof Error ? err.message : t('Lỗi kết nối.', 'Network error.'),
       });
     }
