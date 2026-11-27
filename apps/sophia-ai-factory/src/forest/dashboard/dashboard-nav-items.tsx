@@ -100,7 +100,7 @@ export function DashboardNavItems({
     return isVi ? group.fallbackLabelVi : group.fallbackLabel;
   };
   const isFreeRdMode = userTier.toUpperCase() === "R&D $0";
-  const CORE_PRIMARY_IDS = new Set(["opc_results", "opc_connections"]);
+  const CORE_PRIMARY_IDS = new Set(["opc_engines", "opc_results", "opc_connections"]);
   const primaryItems = OPC_PRIMARY_NAV_GROUPS.filter((g) => CORE_PRIMARY_IDS.has(g.id));
   const groupedModules = isAdmin ? groupNavModules(SOPHIA_NAV_MODULES) : [];
 
