@@ -1,55 +1,80 @@
 /**
- * Google Material Design 3 (MD3 Expressive) + GoogleChrome Modern Web Guidance.
+ * Google Material Design 3 (MD3 Expressive 100/100) + Modern Web Guidance.
  *
- * Bridges Sophia's canonical Zen Design OS tokens (`--primary`, `--background`,
- * `--card`) with official MD3 Expressive tonal elevation, shape scale, spring
- * motion physics, and Baseline Web Platform features (`color-mix()`,
- * `content-visibility: auto`, `interpolate-size: allow-keywords`,
- * `prefers-reduced-motion`, `:focus-visible`).
- *
- * References:
- * - https://m3.material.io/
- * - https://github.com/googlechrome/modern-web-guidance
+ * Implements the complete official MD3 tonal elevation ladder (5 levels),
+ * tactile 8%/12% state layers via `color-mix(in oklab, ...)`, expressive
+ * spring curves, and GoogleChrome Modern Web Guidance Baseline APIs:
+ * - `@view-transition { navigation: auto; }` (zero-JS cross-document transitions)
+ * - CSS Container Queries (`container-type: inline-size`)
+ * - CSS `:has(:focus-visible)` interactive card elevation
+ * - `interpolate-size: allow-keywords` & `content-visibility: auto`
+ * - `font-variant-numeric: tabular-nums` for financial/EPC metrics
  */
 
-:root {
-  /* MD3 Shape Scale */
-  --md-sys-shape-corner-small: 0.5rem;       /* 8px */
-  --md-sys-shape-corner-medium: 0.75rem;     /* 12px */
-  --md-sys-shape-corner-large: 1rem;         /* 16px */
-  --md-sys-shape-corner-extra-large: 1.75rem; /* 28px — MD3 Expressive cards/dialogs */
-  --md-sys-shape-corner-full: 9999px;        /* Pill buttons, chips & nav drawers */
+@view-transition {
+  navigation: auto;
+}
 
-  /* MD3 Expressive Spring Motion */
+:root {
+  /* ── MD3 Shape Scale ─────────────────────────────────────────────────── */
+  --md-sys-shape-corner-small: 0.5rem;        /* 8px */
+  --md-sys-shape-corner-medium: 0.75rem;      /* 12px */
+  --md-sys-shape-corner-large: 1rem;          /* 16px */
+  --md-sys-shape-corner-extra-large: 1.75rem; /* 28px — MD3 Expressive cards */
+  --md-sys-shape-corner-full: 9999px;         /* Pill buttons, chips, nav */
+
+  /* ── MD3 Expressive Spring Motion ────────────────────────────────────── */
   --md-sys-motion-easing-expressive: cubic-bezier(0.38, 1.21, 0.22, 1);
   --md-sys-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
   --md-sys-motion-duration-short: 180ms;
   --md-sys-motion-duration-medium: 320ms;
 
-  /* MD3 Dynamic Tonal Surface Containers via CSS color-mix() (Baseline 2024+) */
+  /* ── MD3 5-Level Dynamic Tonal Surface Ladder (OKLab color-mix) ──────── */
+  --md-sys-color-surface-container-lowest: color-mix(in oklab, var(--background) 98%, var(--primary) 2%);
   --md-sys-color-surface-container-low: color-mix(in oklab, var(--card) 94%, var(--primary) 6%);
-  --md-sys-color-surface-container: color-mix(in oklab, var(--card) 88%, var(--primary) 12%);
-  --md-sys-color-surface-container-high: color-mix(in oklab, var(--card) 80%, var(--primary) 20%);
+  --md-sys-color-surface-container: color-mix(in oklab, var(--card) 89%, var(--primary) 11%);
+  --md-sys-color-surface-container-high: color-mix(in oklab, var(--card) 83%, var(--primary) 17%);
+  --md-sys-color-surface-container-highest: color-mix(in oklab, var(--card) 76%, var(--primary) 24%);
   --md-sys-color-primary-container: color-mix(in oklab, var(--primary) 16%, transparent);
 
-  /* Modern Web Guidance: smooth intrinsic <details> / height transitions */
+  /* ── MD3 State Layers (8% hover / 12% press) ─────────────────────────── */
+  --md-sys-state-hover: color-mix(in oklab, var(--primary) 8%, transparent);
+  --md-sys-state-pressed: color-mix(in oklab, var(--primary) 12%, transparent);
+
+  /* Modern Web Guidance: smooth intrinsic <details> / height animations */
   interpolate-size: allow-keywords;
 }
 
-/* Modern Web Guidance + WCAG AA: crisp keyboard focus ring across all interactive elements */
+/* WCAG AA + Modern Web Guidance crisp keyboard focus indicator */
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
+.md3-container {
+  container-type: inline-size;
+}
+
 .md3-surface-card {
   background-color: var(--md-sys-color-surface-container-low);
   border-radius: var(--md-sys-shape-corner-extra-large);
-  border: 1px solid color-mix(in oklab, var(--border) 85%, var(--primary) 15%);
+  border: 1px solid color-mix(in oklab, var(--border) 84%, var(--primary) 16%);
   transition:
     transform var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-expressive),
     border-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
     background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
+}
+
+/* Modern Web Guidance CSS :has() — elevate surface when child control is focused */
+.md3-surface-card:has(:focus-visible) {
+  background-color: var(--md-sys-color-surface-container);
+  border-color: color-mix(in oklab, var(--primary) 55%, var(--border) 45%);
+}
+
+.md3-surface-tonal {
+  background-color: var(--md-sys-color-surface-container);
+  border-radius: var(--md-sys-shape-corner-large);
+  border: 1px solid color-mix(in oklab, var(--border) 80%, var(--primary) 20%);
 }
 
 .md3-pill-button,
@@ -61,8 +86,18 @@
     color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
 }
 
-.md3-pill-button:active {
+.md3-pill-button:hover:not(:disabled),
+.md3-nav-pill:hover {
+  background-color: var(--md-sys-state-hover);
+}
+
+.md3-pill-button:active:not(:disabled) {
+  background-color: var(--md-sys-state-pressed);
   transform: scale(0.97);
+}
+
+.md3-tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Modern Web Guidance: defer offscreen rendering for below-the-fold sections */
