@@ -29,6 +29,29 @@ export function LandingVideoShowcase() {
     SHOWCASE_ITEMS.find((item) => item.id === activeTab) ?? SHOWCASE_ITEMS[0];
   const videoSrc = `/videos/sophia-${activeItem.id}-${lang}.mp4`;
 
+  const handleTabKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) => {
+    let nextIndex = index;
+    if (event.key === 'ArrowRight') {
+      nextIndex = (index + 1) % SHOWCASE_ITEMS.length;
+    } else if (event.key === 'ArrowLeft') {
+      nextIndex = (index - 1 + SHOWCASE_ITEMS.length) % SHOWCASE_ITEMS.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = SHOWCASE_ITEMS.length - 1;
+    } else {
+      return;
+    }
+    event.preventDefault();
+    const nextItem = SHOWCASE_ITEMS[nextIndex];
+    setActiveTab(nextItem.id);
+    const nextButton = document.getElementById(`showcase-tab-${nextItem.id}`);
+    nextButton?.focus();
+  };
+
   return (
     <section
       id="video-showcase"
@@ -62,7 +85,7 @@ export function LandingVideoShowcase() {
           aria-label={t('tablistLabel')}
           className="mt-8 inline-flex flex-wrap items-center justify-center gap-2 p-1.5 rounded-full bg-[var(--surface-container-low)] border border-[var(--outline-variant)]"
         >
-          {SHOWCASE_ITEMS.map((item) => {
+          {SHOWCASE_ITEMS.map((item, index) => {
             const Icon = item.icon;
             const isSelected = item.id === activeTab;
             return (
@@ -71,9 +94,11 @@ export function LandingVideoShowcase() {
                 type="button"
                 role="tab"
                 id={`showcase-tab-${item.id}`}
+                tabIndex={isSelected ? 0 : -1}
                 aria-selected={isSelected}
                 aria-controls="video-showcase-panel"
                 onClick={() => setActiveTab(item.id)}
+                onKeyDown={(event) => handleTabKeyDown(event, index)}
                 className={[
                   'inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] cursor-pointer',
                   isSelected
@@ -122,7 +147,7 @@ export function LandingVideoShowcase() {
               <h3 className="text-base font-semibold text-[var(--studio-stage-fg)]">
                 {t(`tabs.${activeItem.id}.title`)}
               </h3>
-              <p className="mt-0.5 text-sm text-slate-300">
+              <p className="mt-0.5 text-sm text-[var(--studio-stage-fg)]/75">
                 {t(`tabs.${activeItem.id}.description`)}
               </p>
             </div>
