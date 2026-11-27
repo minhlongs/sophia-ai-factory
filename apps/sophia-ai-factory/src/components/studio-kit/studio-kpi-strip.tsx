@@ -7,18 +7,40 @@
  */
 
 import type { StudioCapabilitySpec } from '@/seed/ui/studio-capability-registry';
+import type { EngineLiveTelemetry } from '@/seed/ui/live-pipeline-runner';
 
 export interface StudioKpiStripProps {
   readonly locale: 'vi' | 'en';
   readonly capabilities: readonly StudioCapabilitySpec[];
   readonly selectedId: string | null;
   readonly onSelect: (capability: StudioCapabilitySpec) => void;
+  readonly liveTelemetry?: Readonly<Record<string, EngineLiveTelemetry>>;
+  readonly activeEngineId?: string | null;
 }
 
 const STATUS_DOT: Record<StudioCapabilitySpec['status'], string> = {
   live: 'bg-emerald-500',
   beta: 'bg-amber-500',
   guarded: 'bg-sky-500',
+};
+
+const LIVE_STATE_DOT: Record<EngineLiveTelemetry['state'], string> = {
+  idle: 'bg-muted-foreground/40',
+  running: 'bg-primary animate-pulse',
+  passed: 'bg-emerald-500',
+  warning: 'bg-amber-500',
+  blocked: 'bg-rose-500',
+};
+
+const LIVE_STATE_LABEL: Record<
+  EngineLiveTelemetry['state'],
+  { readonly vi: string; readonly en: string }
+> = {
+  idle: { vi: 'Sẵn sàng', en: 'Ready' },
+  running: { vi: 'Đang chạy…', en: 'Running…' },
+  passed: { vi: 'Đạt', en: 'Passed' },
+  warning: { vi: 'Cảnh báo', en: 'Warning' },
+  blocked: { vi: 'Chặn', en: 'Blocked' },
 };
 
 const STATUS_LABEL: Record<
@@ -35,6 +57,8 @@ export function StudioKpiStrip({
   capabilities,
   selectedId,
   onSelect,
+  liveTelemetry,
+  activeEngineId,
 }: StudioKpiStripProps) {
   return (
     <ul
@@ -43,16 +67,22 @@ export function StudioKpiStrip({
     >
       {capabilities.map((cap) => {
         const isSelected = selectedId === cap.id;
+        const isRunning = activeEngineId === cap.id;
+        const telemetry = liveTelemetry?.[cap.id];
+        const liveState = isRunning ? 'running' : telemetry?.state;
+
         return (
           <li key={cap.id} className="list-none">
             <button
               type="button"
               aria-pressed={isSelected}
               onClick={() => onSelect(cap)}
-              className={`group flex h-full w-full flex-col items-start rounded-2xl border p-4 text-left transition-all ${
-                isSelected
-                  ? 'border-primary bg-[var(--md-sys-color-primary-container)] shadow-sm'
-                  : 'border-border bg-[var(--md-sys-color-surface-container-low)] hover:border-primary/40 hover:bg-[var(--md-sys-color-surface-container)]'
+              className={`group flex h-full w-full flex-col items-start rounded-2xl border p-4 text-left transition-all motion-reduce:transition-none ${
+                isRunning
+                  ? 'border-primary ring-2 ring-primary/40 bg-[var(--md-sys-color-primary-container)] shadow-sm'
+                  : isSelected
+                    ? 'border-primary bg-[var(--md-sys-color-primary-container)] shadow-sm'
+                    : 'border-border bg-[var(--md-sys-color-surface-container-low)] hover:border-primary/40 hover:bg-[var(--md-sys-color-surface-container)]'
               }`}
             >
               <div className="flex w-full items-center justify-between gap-2">
@@ -60,18 +90,23 @@ export function StudioKpiStrip({
                   {cap.kpiLabel[locale]}
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  <span aria-hidden="true" className={`h-2 w-2 rounded-full ${STATUS_DOT[cap.status]}`} />
-                  {STATUS_LABEL[cap.status][locale]}
+                  <span
+                    aria-hidden="true"
+                    className={`h-2 w-2 rounded-full ${
+                      liveState ? LIVE_STATE_DOT[liveState] : STATUS_DOT[cap.status]
+                    }`}
+                  />
+                  {liveState ? LIVE_STATE_LABEL[liveState][locale] : STATUS_LABEL[cap.status][locale]}
                 </span>
               </div>
               <div className="md3-tabular-nums mt-1.5 text-lg font-bold tracking-tight text-foreground">
-                {cap.kpiValue}
+                {telemetry ? telemetry.metricOutput : cap.kpiValue}
               </div>
               <div className="mt-1 line-clamp-1 text-sm font-semibold text-foreground group-hover:text-primary-text">
                 {cap.title[locale]}
               </div>
               <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                {cap.summary[locale]}
+                {telemetry ? `${telemetry.detail[locale]} (${telemetry.durationMs}ms)` : cap.summary[locale]}
               </p>
             </button>
           </li>
