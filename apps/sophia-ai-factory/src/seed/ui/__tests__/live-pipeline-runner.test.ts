@@ -9,7 +9,7 @@ describe('live-pipeline-runner (34-Engine A-to-Z Realtime Runner)', () => {
   it('executes all 34 registered engines and returns real telemetry for every engine', () => {
     const results = runAll34EnginesSnapshot(DEFAULT_LIVE_PIPELINE_INPUT);
     expect(results).toHaveLength(SOPHIA_STUDIO_CAPABILITIES.length);
-    expect(results.length).toBe(34);
+    expect(results.length).toBe(39);
 
     for (const r of results) {
       expect(['passed', 'warning', 'blocked']).toContain(r.state);
