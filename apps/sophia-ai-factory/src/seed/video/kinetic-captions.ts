@@ -5,7 +5,8 @@
  * xixihhhh/hotclip):
  * - Chunks word tokens into 2–4 word kinetic beats with silence-gap (750ms) and
  *   punctuation-aware line breaks.
- * - Emits ASS `{\k<cs>}` karaoke sweep tags and WebVTT inline timestamps in 0ms.
+ * - Escapes ASS control/override characters (`{`, `}`, `\`, CR/LF) before
+ *   emitting ASS `{\k<cs>}` karaoke sweep tags in 0ms.
  *
  * Layer: seed/video (pure deterministic text/timing math, zero deps)
  *
@@ -28,6 +29,13 @@ export interface KineticBeat {
 
 const HARD_PUNCT_END = /[.!?…]+$/;
 
+function sanitizeAssText(raw: string): string {
+  return raw
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/[\\{}]/g, '')
+    .trim();
+}
+
 export function chunkWordsIntoKineticBeats(
   words: readonly WordTiming[],
   options?: { readonly maxWords?: number; readonly silenceGapMs?: number },
@@ -45,7 +53,7 @@ export function chunkWordsIntoKineticBeats(
       .map((w, idx) => {
         const nextStart = idx + 1 < current.length ? current[idx + 1].startMs : w.endMs;
         const cs = Math.max(1, Math.round((Math.max(w.endMs, nextStart) - w.startMs) / 10));
-        return `{\\k${cs}}${w.text.trim()}`;
+        return `{\\k${cs}}${sanitizeAssText(w.text)}`;
       })
       .join(' ');
     beats.push({ index: beats.length + 1, startMs, endMs, words: current, assKaraokeLine });
@@ -53,7 +61,7 @@ export function chunkWordsIntoKineticBeats(
   };
 
   for (const raw of words) {
-    const text = raw.text.trim();
+    const text = sanitizeAssText(raw.text);
     if (!text) continue;
     const token: WordTiming = { text, startMs: raw.startMs, endMs: Math.max(raw.startMs + 50, raw.endMs) };
 
