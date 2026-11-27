@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "../styles/v3-core.css";
+@import "../styles/md3-expressive-modern-web.css";
 
 @plugin "tailwindcss-animate";
 

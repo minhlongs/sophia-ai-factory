@@ -97,10 +97,11 @@ export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
             <button
               key={step.id}
               type="button"
+              aria-current={isCurrent ? 'step' : undefined}
               onClick={() => setActiveStep(step.id)}
-              className={`flex items-center gap-3 rounded-xl border p-3.5 text-left transition ${
+              className={`md3-pill-button flex items-center gap-3 border px-4 py-3 text-left ${
                 isCurrent
-                  ? 'border-primary bg-primary/10 text-foreground shadow-sm'
+                  ? 'border-primary bg-[var(--md-sys-color-primary-container)] text-foreground shadow-sm'
                   : 'border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground'
               }`}
             >
@@ -136,16 +137,16 @@ export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
         ) : null}
       </div>
 
-      {/* Active Step Workspace */}
-      <div className="rounded-2xl border border-border bg-card p-5">
+      {/* Active Step Workspace (MD3 Expressive Tonal Surface) */}
+      <div className="md3-surface-card p-6">
         {activeStep === 'script' ? <WorkbenchTabScriptPolicy locale={locale} /> : null}
         {activeStep === 'media' ? <WorkbenchTabMediaSlide locale={locale} /> : null}
         {activeStep === 'revenue' ? <WorkbenchTabRevenueGrowth locale={locale} /> : null}
         {activeStep === 'security' ? <WorkbenchTabSecurityRbac locale={locale} /> : null}
       </div>
 
-      {/* Collapsed R&D Technical Registry (Hidden by default to keep UI clutter-free) */}
-      <details className="rounded-xl border border-border bg-card/60 p-4">
+      {/* Collapsed R&D Technical Registry (Modern Web Guidance content-visibility) */}
+      <details className="mwg-offscreen-section rounded-2xl border border-border bg-card/60 p-4">
         <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground">
           {locale === 'vi'
             ? 'Danh mục kỹ thuật 19 động cơ AI (Dành cho R&D — bấm để mở rộng)'
