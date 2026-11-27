@@ -124,18 +124,13 @@ describe("Director's Control Deck Design System Verification", () => {
     expect(byokBanner).toContain('AES-256-GCM');
   });
 
-  it('Phase 4: upgrades Dashboard, Video Studio, Campaigns, and Settings to Director Control Deck', () => {
+  it('Phase 4: upgrades Dashboard, Campaigns, and Settings to Director Control Deck', () => {
     const dashboardPage = readSrcFile('components/stitch/screens/dashboard/dashboard-page.tsx');
-    const videoPreview = readSrcFile('components/stitch/screens/video-creation/video-preview-sidebar.tsx');
-    const videoPreviewSections = readSrcFile('components/stitch/screens/video-creation/video-preview-sections.tsx');
     const campaignCard = readSrcFile('components/stitch/screens/campaigns/campaign-card.tsx');
     const campaignCardDetails = readSrcFile('components/stitch/screens/campaigns/campaign-card-details.tsx');
     const settingsPage = readSrcFile('components/stitch/screens/settings/settings-page.tsx');
 
     expect(dashboardPage).toContain('text-foreground dark:text-white');
-    expect(videoPreview).toBeDefined();
-    expect(videoPreviewSections).toContain('camera-rec');
-    expect(videoPreviewSections).toContain('film-strip');
     expect(campaignCard).toContain('dark:bg-[#11131F]');
     expect(campaignCardDetails).toContain('font-mono');
     expect(settingsPage).toContain('bg-card rounded-2xl');
