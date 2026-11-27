@@ -153,7 +153,7 @@ describe('SidebarQuotaWidget', () => {
     expect(screen.queryByRole('progressbar')).toBeNull();
   });
 
-  it('links to /dashboard/billing', () => {
+  it('links to /dashboard/monetization', () => {
     mockQuery({
       data: {
         license: { nonce: 'a...', tier: 'BASIC' },
@@ -167,7 +167,7 @@ describe('SidebarQuotaWidget', () => {
     });
     render(<SidebarQuotaWidget />, { wrapper });
     const widget = screen.getByTestId('sidebar-quota-widget');
-    expect(widget.getAttribute('href')).toBe('/dashboard/billing');
+    expect(widget.getAttribute('href')).toBe('/dashboard/monetization');
   });
 
   it('caps percentage at 100% when usage exceeds limit (over-quota)', () => {

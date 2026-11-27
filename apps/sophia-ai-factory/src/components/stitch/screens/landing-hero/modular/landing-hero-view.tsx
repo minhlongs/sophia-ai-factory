@@ -29,11 +29,11 @@ export function LandingHeroView({ beforeFooterSlot }: LandingHeroViewProps = {})
   const tLanding = useTranslations('landing');
 
   return (
-    <div className="v3-core min-h-screen bg-[#F8F9FC] dark:bg-[#090A10] text-[#0B0F19] dark:text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-900 dark:selection:text-indigo-200 transition-colors duration-300">
+    <div className="v3-core min-h-screen bg-[var(--background)] text-[var(--on-surface)] selection:bg-[var(--primary)]/30 transition-colors duration-300 motion-reduce:transition-none">
       <MarketingNav />
 
-      <main className="relative pt-32 pb-20 md:pt-44 md:pb-28 overflow-hidden">
-        <section id="hero" className="max-w-7xl mx-auto px-6 flex flex-col items-center text-center">
+      <main className="relative overflow-hidden">
+        <section id="hero" className="max-w-7xl mx-auto px-6 pt-32 pb-20 md:pt-44 md:pb-28 flex flex-col items-center text-center">
           <HeroHeader t={t} />
       <p className="text-sm text-muted-foreground">{pilotCopy.scope}</p>
       <p className="text-sm text-muted-foreground">{pilotCopy.refund}</p>
@@ -49,14 +49,14 @@ export function LandingHeroView({ beforeFooterSlot }: LandingHeroViewProps = {})
             </ul>
           </div>
         </section>
+
+        <LandingVideoShowcase />
+
+        <WorkflowAndFeatures tLanding={tLanding} t={t} />
+        <FaqAndCta t={t} tLanding={tLanding} />
+
+        {beforeFooterSlot}
       </main>
-
-      <LandingVideoShowcase />
-
-      <WorkflowAndFeatures tLanding={tLanding} t={t} />
-      <FaqAndCta t={t} tLanding={tLanding} />
-
-      {beforeFooterSlot}
       <MarketingFooter />
     </div>
   );

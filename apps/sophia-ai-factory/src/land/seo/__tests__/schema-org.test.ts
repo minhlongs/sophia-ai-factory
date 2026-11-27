@@ -160,7 +160,9 @@ describe('buildBreadcrumbSchema', () => {
 
   it('guideFaq breadcrumb has correct URL sequence', () => {
     const { itemListElement } = buildBreadcrumbSchema(BREADCRUMBS.guideFaq);
-    expect(itemListElement[0].item).toMatch(/sophia\.agencyos\.network\/?$/);
+    expect(itemListElement[0].item).toMatch(
+      /(?:sophia\.agencyos\.network|sophia-ai-factory\.agencyos-openclaw\.workers\.dev)\/?$/,
+    );
     expect(itemListElement[1].item).toContain('/guide');
     expect(itemListElement[2].item).toContain('/guide/faq');
   });

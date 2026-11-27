@@ -100,7 +100,7 @@ export function LandingVideoShowcase() {
                 onClick={() => setActiveTab(item.id)}
                 onKeyDown={(event) => handleTabKeyDown(event, index)}
                 className={[
-                  'inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] cursor-pointer',
+                  'inline-flex min-h-[44px] items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors duration-200 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)] cursor-pointer',
                   isSelected
                     ? 'bg-[var(--primary)] text-[var(--on-primary)] shadow-sm'
                     : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]',
@@ -112,7 +112,7 @@ export function LandingVideoShowcase() {
                   className={[
                     'text-xs font-mono px-1.5 py-0.5 rounded-full',
                     isSelected
-                      ? 'bg-white/20 text-[var(--on-primary)]'
+                      ? 'bg-[var(--on-primary)]/20 text-[var(--on-primary)]'
                       : 'bg-[var(--surface-container-high)] text-[var(--on-surface-variant)]',
                   ].join(' ')}
                 >
@@ -128,7 +128,7 @@ export function LandingVideoShowcase() {
           id="video-showcase-panel"
           role="tabpanel"
           aria-labelledby={`showcase-tab-${activeItem.id}`}
-          className="mt-8 w-full rounded-[28px] overflow-hidden border border-[var(--studio-stage-border)] bg-[var(--studio-stage-bg)] shadow-xl"
+          className="mt-8 w-full rounded-[28px] overflow-hidden border border-[var(--studio-stage-border)] bg-[var(--studio-stage-bg)] shadow-sm"
         >
           <div className="relative aspect-video w-full bg-[var(--studio-stage-bg)]">
             <video
@@ -154,7 +154,7 @@ export function LandingVideoShowcase() {
 
             <Link
               href="/signup"
-              className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-[var(--primary)] text-[var(--on-primary)] hover:opacity-95 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]"
+              className="shrink-0 inline-flex min-h-[44px] items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-[var(--primary)] text-[var(--on-primary)] hover:opacity-95 transition-opacity motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]"
             >
               <span>{t('cta')}</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />

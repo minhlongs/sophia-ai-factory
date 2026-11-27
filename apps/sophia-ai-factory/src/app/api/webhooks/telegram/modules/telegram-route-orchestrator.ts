@@ -107,7 +107,8 @@ export async function processTelegramMessage(
     return NextResponse.json({ ok: true });
   }
 
-  if (adminChatId && chatId !== adminChatId && !isPublicCommand && !userIsPaired) {
+  const isAdmin = Boolean(adminChatId && chatId === adminChatId);
+  if (!isAdmin && !isPublicCommand && !userIsPaired) {
     if (!db) {
       logger.error('[telegram-webhook] Cannot request pairing: database unavailable', { chatId });
       return NextResponse.json(

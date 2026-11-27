@@ -10,7 +10,7 @@ import { createRequester, parseDeploymentVersion, poll, redact } from './live-pr
 
 const TIERS = new Set(['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER']);
 const PERIODS = new Set(['monthly', 'yearly', 'lifetime']);
-const PRODUCTION_HOSTS = new Set(['sophia.agencyos.network', 'www.sophia.agencyos.network']);
+const PRODUCTION_HOSTS = new Set(['sophia.agencyos.network', 'www.sophia.agencyos.network', 'sophia-ai-factory.agencyos-openclaw.workers.dev']);
 const NOWPAYMENTS_INVOICE_HOSTS = new Set(['nowpayments.io']);
 const evidence = createEvidenceRecorder(process.env.SOPHIA_PAYMENT_LIVE_EVIDENCE_PATH?.trim(), {
   schema: 'sophia-live-saas-payment-proof-v4',
