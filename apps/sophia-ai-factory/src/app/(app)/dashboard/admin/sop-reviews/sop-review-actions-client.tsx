@@ -21,20 +21,27 @@ export function SopReviewActionsClient({
   labels,
 }: SopReviewActionsClientProps) {
   const [isPending, setIsPending] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const handleApprove = async () => {
     if (isPending) return;
     setIsPending(true);
+    setActionError(null);
     try {
+      const { getCsrfHeaders } = await import('@/seed/security/use-csrf-token');
       const res = await fetch(`/dashboard/admin/sop-reviews/${listingId}/approve`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
       });
       if (res.ok) {
         window.location.reload();
+      } else {
+        const payload = (await res.json().catch(() => ({}))) as { error?: string };
+        setActionError(payload.error ?? `HTTP ${res.status}`);
       }
-    } catch {
-      // network or fetch error
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Network error');
     } finally {
       setIsPending(false);
     }
@@ -43,25 +50,38 @@ export function SopReviewActionsClient({
   const handleReject = async () => {
     if (isPending) return;
     const reason = window.prompt(labels.rejectPrompt);
+    if (reason === null) return;
     setIsPending(true);
+    setActionError(null);
     try {
+      const { getCsrfHeaders } = await import('@/seed/security/use-csrf-token');
       const res = await fetch(`/dashboard/admin/sop-reviews/${listingId}/reject`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
         body: JSON.stringify({ reason: reason || labels.defaultRejectReason }),
       });
       if (res.ok) {
         window.location.reload();
+      } else {
+        const payload = (await res.json().catch(() => ({}))) as { error?: string };
+        setActionError(payload.error ?? `HTTP ${res.status}`);
       }
-    } catch {
-      // network or fetch error
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Network error');
     } finally {
       setIsPending(false);
     }
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="space-y-1.5">
+      {actionError ? (
+        <p role="alert" className="text-xs font-medium text-destructive">
+          {actionError}
+        </p>
+      ) : null}
+      <div className="flex flex-wrap gap-2">
       <a
         href={`/${locale}/dashboard/sop-creator/${listingId}`}
         target="_blank"
@@ -89,6 +109,7 @@ export function SopReviewActionsClient({
         <X className="w-4 h-4 mr-1" />
         {labels.reject}
       </button>
+      </div>
     </div>
   );
 }
