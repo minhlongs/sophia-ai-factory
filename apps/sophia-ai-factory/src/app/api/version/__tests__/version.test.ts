@@ -68,11 +68,12 @@ describe('GET /api/version', () => {
     expect(body.branch).toBe('main');
   });
 
-  it('admin response is NOT cached (no Cache-Control header)', async () => {
+  it('admin response is NOT cached (Cache-Control: no-store + Vary: Authorization)', async () => {
     process.env.INTROSPECT_TOKEN = 'topsecret';
     const resp = await GET(buildRequest({ authorization: 'Bearer topsecret' }));
     const h = headersRecord(resp);
-    expect(h['cache-control']).toBeUndefined();
+    expect(h['cache-control']).toBe('no-store');
+    expect(h['vary']).toBe('Authorization');
   });
 
   it('falls back to public when Bearer token does not match', async () => {
