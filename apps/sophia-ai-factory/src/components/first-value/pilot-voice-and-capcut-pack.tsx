@@ -99,9 +99,11 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
       const voiceOption =
         VOICE_OPTIONS.find((v) => v.id === selectedVoiceId) ?? VOICE_OPTIONS[0];
       const text = buildNarrationTextFromScript(props.script, props.ctaText);
+      const { getCsrfHeaders } = await import('@/seed/security/use-csrf-token');
       const response = await fetch('/api/first-value/voice', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
         body: JSON.stringify({
           text,
           locale: voiceOption.locale,

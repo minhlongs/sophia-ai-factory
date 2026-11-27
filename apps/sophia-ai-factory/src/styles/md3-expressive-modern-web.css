@@ -102,6 +102,98 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Canonical MD3 Typescale Utility Classes (Inter + JetBrains Mono Lock) ── */
+.font-headline-lg,
+.text-headline-lg {
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-size: 2rem;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.font-headline-md,
+.text-headline-md {
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-size: 1.75rem;
+  line-height: 1.28;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.font-headline-sm,
+.text-headline-sm {
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-size: 1.5rem;
+  line-height: 1.33;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.font-title-lg {
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-size: 1.375rem;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.font-title-md {
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.font-body-lg {
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.font-body-md {
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-size: 0.875rem;
+  line-height: 1.43;
+  font-weight: 400;
+}
+
+.font-body-sm {
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-size: 0.75rem;
+  line-height: 1.33;
+  font-weight: 400;
+}
+
+.font-label-lg {
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-size: 0.875rem;
+  line-height: 1.43;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.font-label-md {
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-size: 0.75rem;
+  line-height: 1.33;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.font-label-sm {
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-size: 0.6875rem;
+  line-height: 1.27;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+.font-code {
+  font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Modern Web Guidance: defer offscreen rendering for below-the-fold sections */
 .mwg-offscreen-section {
   content-visibility: auto;

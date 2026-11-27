@@ -27,7 +27,7 @@ export function DashboardActivityTable({
   try {
     const hookT = useTranslations("stitch.dashboard");
     t = (key: string, params?: Record<string, unknown>) => {
-      if (params) return `${key}:${JSON.stringify(params)}`;
+      if (params) return hookT(key, params as Record<string, string | number | Date>);
       return hookT(key);
     };
   } catch {
