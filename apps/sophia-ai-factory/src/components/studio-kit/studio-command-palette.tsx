@@ -63,12 +63,29 @@ export function StudioCommandPalette({
     setShowAllEngines(true);
     setLiveTelemetry({});
 
+    let serverMap: Record<string, EngineLiveTelemetry> = {};
+    try {
+      const resp = await fetch('/api/studio/pipeline/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(DEFAULT_LIVE_PIPELINE_INPUT),
+      });
+      if (resp.ok) {
+        const json = (await resp.json()) as { results?: EngineLiveTelemetry[] };
+        if (Array.isArray(json.results)) {
+          serverMap = Object.fromEntries(json.results.map((r) => [r.engineId, r]));
+        }
+      }
+    } catch {
+      // Fallback to in-browser pure seed execution when offline
+    }
+
     for (const cap of capabilities) {
       if (runTokenRef.current !== token) return;
       setActiveEngineId(cap.id);
-      await new Promise((resolve) => window.setTimeout(resolve, 45));
+      await new Promise((resolve) => window.setTimeout(resolve, 35));
       if (runTokenRef.current !== token) return;
-      const result = evaluateSingleEngineLive(cap.id, DEFAULT_LIVE_PIPELINE_INPUT);
+      const result = serverMap[cap.id] ?? evaluateSingleEngineLive(cap.id, DEFAULT_LIVE_PIPELINE_INPUT);
       setLiveTelemetry((prev) => ({ ...prev, [cap.id]: result }));
     }
 
