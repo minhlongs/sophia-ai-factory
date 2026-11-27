@@ -17,7 +17,6 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/seed/utils/cn";
 import { DashboardSidebarNav, type DashboardUserProps } from "./dashboard-sidebar-nav";
 import { DashboardTopBar } from "./dashboard-topbar";
-import { DashboardAgentHudBar } from "../components/dashboard-aeo";
 import { CmdKPalette } from "../components/cmd-k/cmd-k-palette";
 
 export interface DashboardShellProps {
@@ -78,13 +77,13 @@ export function DashboardShell({
         onCloseMobile={() => setIsMobileDrawerOpen(false)}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 md:pl-[280px] flex flex-col min-h-screen min-w-0">
-        {/* Obsidian TopBar */}
+      {/* Main Content Area (2026 240px Sticky Rail + 64px Sticky TopBar) */}
+      <div className="flex-1 flex flex-col min-h-screen min-w-0">
+        {/* Executive TopBar */}
         <DashboardTopBar
           onOpenMobileDrawer={() => setIsMobileDrawerOpen(true)}
           onOpenCmdK={enableCmdK ? handleOpenCmdK : undefined}
-          unreadNotificationCount={3}
+          unreadNotificationCount={0}
           user={user}
         />
 
@@ -99,7 +98,7 @@ export function DashboardShell({
         {/* Page Content Viewport */}
         <main
           id="main-content"
-          className="flex-1 pt-16 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl w-full mx-auto"
+          className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-[1280px] w-full mx-auto"
         >
           {children}
         </main>

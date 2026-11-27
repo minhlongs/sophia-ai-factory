@@ -17,8 +17,6 @@
 
 import React from "react";
 import { usePathname } from "next/navigation";
-import { Compass, Zap } from "lucide-react";
-import { Link } from "@/navigation";
 import { cn } from "@/seed/utils/cn";
 import {
   SOPHIA_NAV_MODULES,
@@ -59,44 +57,23 @@ export function DashboardSidebarNav({
 
   return (
     <>
-      {/* Desktop Persistent Sidebar */}
+      {/* Desktop Persistent Sidebar (2026 240px MD3 Sticky Rail) */}
       <aside
         className={cn(
-          "hidden md:flex flex-col w-[280px] h-screen fixed top-0 left-0 bg-card dark:bg-[#090A10] border-r border-border dark:border-white/[0.08] z-30 select-none",
+          "hidden md:flex flex-col w-[240px] shrink-0 h-screen sticky top-0 bg-[var(--md-sys-color-surface-container-lowest)] border-r border-border z-30 select-none",
           className
         )}
       >
-        <div className="h-16 px-6 border-b border-border dark:border-white/[0.08] flex items-center gap-3 shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground border border-primary/25 flex items-center justify-center font-bold shadow-sm">
+        <div className="h-16 px-4 border-b border-border flex items-center gap-3 shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground border border-primary/25 flex items-center justify-center font-bold shadow-sm shrink-0">
             S
           </div>
           <div className="min-w-0 flex-1 truncate">
-            <h2 className="text-sm font-bold text-foreground dark:text-white tracking-tight truncate">Sophia AI Factory</h2>
+            <h2 className="text-sm font-bold text-foreground tracking-tight truncate">Sophia AI Factory</h2>
             <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest truncate">
-              Autonomous Video
+              {isVi ? "Xưởng Video AI" : "AI Video Studio"}
             </p>
           </div>
-        </div>
-
-        <div className="px-3 pt-3 pb-1 flex flex-col gap-1.5 border-b border-border/60 dark:border-white/[0.06]">
-          <Link
-            href="/dashboard/first-value"
-            className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/15 transition-colors"
-          >
-            <Zap className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">
-              {isVi ? "Affiliate Studio (4 Bước)" : "Affiliate Studio (4 Steps)"}
-            </span>
-          </Link>
-          <Link
-            href="/guide"
-            className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-          >
-            <Compass className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">
-              {isVi ? "Hướng dẫn 5 phút" : "5-Min Quickstart Guide"}
-            </span>
-          </Link>
         </div>
 
         <DashboardNavItems

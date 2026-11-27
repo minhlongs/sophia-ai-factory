@@ -103,7 +103,7 @@ export function DashboardMetricsGrid({ metrics, className }: DashboardMetricsGri
         return (
           <div
             key={metric.id}
-            className="bg-card dark:bg-[#11131F] backdrop-blur-xl border border-border dark:border-white/[0.08] hover:border-primary/40 rounded-xl p-5 shadow-sm dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_4px_20px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-0.5 group relative overflow-hidden"
+            className="md3-surface-card p-5 hover:bg-[var(--md-sys-color-surface-container)] hover:border-primary/40 transition-colors duration-200 motion-reduce:transition-none group relative overflow-hidden"
             data-testid={`kpi-card-${metric.id}`}
           >
             {/* Top Row: Tinted Icon Pill + Trend Badge */}

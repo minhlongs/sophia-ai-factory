@@ -30,7 +30,7 @@ export interface DashboardTopBarProps {
 export function DashboardTopBar({
   onOpenMobileDrawer,
   onOpenCmdK,
-  unreadNotificationCount = 3,
+  unreadNotificationCount = 0,
   user = {
     name: "Sophia Founder",
     email: "founder@sophia.ai",
@@ -75,7 +75,7 @@ export function DashboardTopBar({
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 md:left-[280px] h-16 z-20 bg-background/85 dark:bg-[#08090D]/80 studio-glass backdrop-blur-xl border-b border-border dark:border-[#222536] px-4 md:px-8 flex items-center justify-between transition-all select-none",
+        "sticky top-0 h-16 z-20 bg-background/85 backdrop-blur-xl border-b border-border px-4 md:px-8 flex items-center justify-between transition-colors motion-reduce:transition-none select-none",
         className
       )}
       data-testid="dashboard-topbar"
@@ -85,7 +85,7 @@ export function DashboardTopBar({
         <button
           type="button"
           onClick={onOpenMobileDrawer}
-          className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/60 dark:hover:bg-white/[0.06] border border-transparent hover:border-border dark:hover:border-white/[0.08] transition-colors shrink-0"
+          className="md:hidden min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 border border-transparent hover:border-border transition-colors shrink-0"
           aria-label={isVi ? "Mở menu điều hướng di động" : "Open mobile navigation"}
           data-testid="mobile-drawer-trigger"
         >
@@ -94,14 +94,15 @@ export function DashboardTopBar({
 
         <div className="relative w-full">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
             aria-hidden="true"
           />
           <input
             type="search"
             placeholder={resolvedSearchPlaceholder}
             aria-label={resolvedSearchPlaceholder}
-            className="w-full pl-9 pr-14 py-1.5 text-xs md:text-sm rounded-lg bg-muted/60 dark:bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-sans"
+            onFocus={onOpenCmdK}
+            className="w-full pl-10 pr-14 py-2 text-xs md:text-sm rounded-full bg-[var(--md-sys-color-surface-container-low)] border border-border text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring transition-colors font-sans"
             data-testid="dashboard-search-input"
           />
           {onOpenCmdK && (
