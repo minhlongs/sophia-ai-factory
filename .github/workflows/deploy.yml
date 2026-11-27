@@ -329,9 +329,9 @@ jobs:
   # STAGE 3-PILOT: Explicit Opt-In R&D Pilot Deploy (Independent Approval)
   # =========================================================================
   stage-3-pilot-explicit-deploy:
-    name: 'Stage 3-Pilot: Explicit Opt-In Pilot Worker Deploy'
+    name: 'Stage 3-Pilot: Parallel Pilot Worker Deploy'
     needs: stage-1-quality-gate
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_pilot_explicit == true && inputs.dry_run != true }}
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.deploy_pilot_explicit == true && inputs.dry_run != true) }}
     environment: pilot
     runs-on: ubuntu-latest
     defaults:
@@ -399,8 +399,8 @@ jobs:
       - name: Preflight — Verify Live Pilot Baseline, Fail-Closed Migration Diff & Remote D1 Schema
         id: pilot-release-guards
         env:
-          PILOT_EXPECTED_BASE_SHA: ${{ inputs.pilot_expected_base_sha }}
-          ALLOW_PILOT_MIGRATIONS: ${{ inputs.allow_pilot_migrations }}
+          PILOT_EXPECTED_BASE_SHA: ${{ inputs.pilot_expected_base_sha || github.event.before }}
+          ALLOW_PILOT_MIGRATIONS: ${{ inputs.allow_pilot_migrations || 'false' }}
           GITHUB_SHA: ${{ github.sha }}
         run: node scripts/verify-pilot-release-guards.mjs
 
