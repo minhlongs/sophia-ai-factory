@@ -98,7 +98,7 @@ export default async function ProgrammaticComparisonPage({
   const { locale, slug } = await params;
   const isVi = locale === 'vi';
   const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
-  const curated = CURATED_COMPARISONS[cleanSlug];
+  const curated = Object.hasOwn(CURATED_COMPARISONS, cleanSlug) ? CURATED_COMPARISONS[cleanSlug] : undefined;
   const [toolA, toolB] = parseComparisonPair(cleanSlug);
 
   const heading = curated ? (isVi ? curated.h1Vi : curated.h1En) : `${toolA} vs ${toolB}`;
