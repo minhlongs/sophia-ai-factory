@@ -39,19 +39,17 @@ export function DashboardNavLinkItem({
     <Link
       href={href}
       onClick={onClick}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-300 group min-h-[42px]",
+        "md3-nav-pill relative flex items-center gap-3 px-4 py-2.5 group min-h-[42px] border",
         active
-          ? "text-foreground dark:text-white bg-primary/10 font-medium border border-primary/30"
-          : "text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/60 hover:translate-x-1.5 border border-transparent",
+          ? "text-foreground dark:text-white bg-[var(--md-sys-color-primary-container)] font-semibold border-primary/35 shadow-sm"
+          : "text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/60 border-transparent",
       )}
     >
-      {active && (
-        <span className="absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full bg-gradient-to-b from-primary to-accent" />
-      )}
       <IconComponent
         className={cn(
-          "w-4 h-4 shrink-0 transition-transform duration-300 group-hover:scale-110",
+          "w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-105",
           active
             ? "text-primary"
             : "text-muted-foreground group-hover:text-foreground dark:group-hover:text-white",
