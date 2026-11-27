@@ -3,7 +3,6 @@
 import React from 'react';
 import { Card, CardHeader, CardContent, Button, Avatar } from '@/components/stitch';
 import { useTranslations } from 'next-intl';
-import { Link } from '@/navigation';
 import { Users, Compass } from 'lucide-react';
 import type { AffiliateStats } from '@/forest/dashboard/types';
 
@@ -15,38 +14,34 @@ export function DashboardAffiliatesCard({ affiliates }: DashboardAffiliatesCardP
   const t = useTranslations('stitch.dashboard');
 
   return (
-    <Card padding="lg" className="bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08]">
+    <Card padding="lg" className="md3-surface-card border border-border">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <h4 className="text-base font-bold text-foreground dark:text-white tracking-tight">
+          <h4 className="text-base font-bold text-foreground tracking-tight">
             {t('topAffiliates.title')}
           </h4>
           {affiliates.length > 0 && (
-            <Link href="/dashboard/monetization">
-              <Button variant="ghost" size="sm" className="text-primary">
-                {t('topAffiliates.viewAll')}
-              </Button>
-            </Link>
+            <Button href="/dashboard/monetization" variant="ghost" size="sm" className="text-primary">
+              {t('topAffiliates.viewAll')}
+            </Button>
           )}
         </div>
       </CardHeader>
       <CardContent>
         {affiliates.length === 0 ? (
           <div className="py-xl text-center flex flex-col items-center justify-center">
-            <div className="w-12 h-12 rounded-full bg-muted dark:bg-white/[0.04] border border-border dark:border-white/[0.08] flex items-center justify-center text-muted-foreground mb-md">
+            <div className="w-12 h-12 rounded-full bg-muted border border-border flex items-center justify-center text-muted-foreground mb-md">
               <Users className="w-6 h-6 opacity-60" />
             </div>
-            <p className="text-sm text-foreground dark:text-white font-semibold mb-xs">
+            <p className="text-sm text-foreground font-semibold mb-xs">
               {t('topAffiliates.emptyTitle')}
             </p>
             <p className="text-xs text-muted-foreground max-w-xs mb-lg">
               {t('topAffiliates.emptyDesc')}
             </p>
-            <Link href="/dashboard/monetization">
-              <Button size="sm" variant="outline" iconLeft={<Compass className="w-4 h-4" />}>
-                {t('topAffiliates.discover')}
-              </Button>
-            </Link>
+            <Button href="/dashboard/monetization" size="sm" variant="outline" iconLeft={<Compass className="w-4 h-4" />}>
+              {t('topAffiliates.discover')}
+            </Button>
           </div>
         ) : (
           <>
@@ -60,7 +55,7 @@ export function DashboardAffiliatesCard({ affiliates }: DashboardAffiliatesCardP
                     size="md"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground dark:text-white truncate">{affiliate.name}</p>
+                    <p className="text-sm font-semibold text-foreground truncate">{affiliate.name}</p>
                     <p className="text-[12px] font-mono text-muted-foreground truncate">{affiliate.stats}</p>
                   </div>
                   <div className="text-emerald-600 dark:text-emerald-400 font-mono text-sm font-semibold shrink-0">
@@ -69,12 +64,10 @@ export function DashboardAffiliatesCard({ affiliates }: DashboardAffiliatesCardP
                 </div>
               ))}
             </div>
-            <div className="mt-lg pt-lg border-t border-border dark:border-white/[0.08]">
-              <Link href="/dashboard/monetization">
-                <Button variant="outline" fullWidth>
-                  {t('topAffiliates.invite')}
-                </Button>
-              </Link>
+            <div className="mt-lg pt-lg border-t border-border">
+              <Button href="/dashboard/monetization" variant="outline" fullWidth>
+                {t('topAffiliates.invite')}
+              </Button>
             </div>
           </>
         )}

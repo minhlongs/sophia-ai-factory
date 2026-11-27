@@ -161,8 +161,8 @@ describe('Dashboard Subcomponents', () => {
       const exportLink = screen.getByRole('link', { name: /actions\.exportData/i });
       const addProductLink = screen.getByRole('link', { name: /actions\.addProduct/i });
 
-      expect(exportLink.getAttribute('href')).toBe('/dashboard/campaigns');
-      expect(addProductLink.getAttribute('href')).toBe('/dashboard/affiliates');
+      expect(exportLink.getAttribute('href')).toBe('/dashboard/first-value');
+      expect(addProductLink.getAttribute('href')).toBe('/dashboard/monetization');
 
       const advancedDetails = container.querySelector('details[data-testid="dashboard-advanced-tools"]');
       expect(advancedDetails).not.toBeNull();

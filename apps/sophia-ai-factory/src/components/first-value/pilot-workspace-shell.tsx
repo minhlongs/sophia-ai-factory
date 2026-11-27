@@ -51,9 +51,9 @@ export function PilotWorkspaceShell({ email, isVi, children }: PilotWorkspaceShe
           >
             <Link
               href="/dashboard/engines"
-              className="rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+              className="md3-pill-button inline-flex min-h-[44px] items-center bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
             >
-              {isVi ? '⚡ Xưởng 19 Động Cơ' : '⚡ 19 Engines Workbench'}
+              {isVi ? '⚡ Xưởng 34 Động Cơ' : '⚡ 34 Engines Workbench'}
             </Link>
             <Link href="/privacy" className="hidden text-muted-foreground hover:text-foreground sm:inline">
               {isVi ? 'Bảo mật' : 'Privacy'}
@@ -64,7 +64,7 @@ export function PilotWorkspaceShell({ email, isVi, children }: PilotWorkspaceShe
             <Link
               href="/dashboard/first-value"
               locale={isVi ? 'en' : 'vi'}
-              className="rounded-md border border-border px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="md3-pill-button inline-flex min-h-[44px] items-center border border-border px-3 font-mono text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               {isVi ? 'EN' : 'VI'}
             </Link>
@@ -77,7 +77,7 @@ export function PilotWorkspaceShell({ email, isVi, children }: PilotWorkspaceShe
               type="button"
               disabled={signingOut}
               onClick={() => void handleSignOut()}
-              className="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
+              className="md3-pill-button inline-flex min-h-[44px] items-center border border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
             >
               {signingOut
                 ? isVi

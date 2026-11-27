@@ -17,6 +17,7 @@
 
 import React from "react";
 import { usePathname } from "next/navigation";
+import { Link } from "@/navigation";
 import { cn } from "@/seed/utils/cn";
 import {
   SOPHIA_NAV_MODULES,
@@ -64,7 +65,10 @@ export function DashboardSidebarNav({
           className
         )}
       >
-        <div className="h-16 px-4 border-b border-border flex items-center gap-3 shrink-0">
+        <Link
+          href="/dashboard"
+          className="h-16 px-4 border-b border-border flex items-center gap-3 shrink-0 hover:bg-muted/40 transition-colors"
+        >
           <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground border border-primary/25 flex items-center justify-center font-bold shadow-sm shrink-0">
             S
           </div>
@@ -74,7 +78,7 @@ export function DashboardSidebarNav({
               {isVi ? "Xưởng Video AI" : "AI Video Studio"}
             </p>
           </div>
-        </div>
+        </Link>
 
         <DashboardNavItems
           currentPath={rawPathname}
