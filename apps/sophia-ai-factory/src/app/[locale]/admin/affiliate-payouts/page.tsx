@@ -74,7 +74,7 @@ export default async function AdminAffiliatePayoutsPage({ params }: PageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-4 py-8 md:px-8">
+    <main className="min-h-screen bg-background text-foreground px-4 py-8 md:px-8">
       <AffiliatePayoutsClient
         initialPayouts={payouts}
         locale={activeLocale}
