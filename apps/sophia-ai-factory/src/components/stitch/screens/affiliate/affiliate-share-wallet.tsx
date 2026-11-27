@@ -56,16 +56,29 @@ export function AffiliateShareWallet({
         </div>
 
         <div className="flex items-center justify-center gap-3">
-          {SOCIAL_PLATFORMS.map((platform) => (
-            <button
-              key={platform.id}
-              type="button"
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-white transition-transform hover:scale-110 ${platform.bg}`}
-              aria-label={platform.ariaLabel}
-            >
-              <SocialIcon path={platform.path} />
-            </button>
-          ))}
+          {SOCIAL_PLATFORMS.map((platform) => {
+            const encodedUrl = encodeURIComponent(referralLink);
+            const shareHref =
+              platform.id === 'twitter' || platform.id === 'x'
+                ? `https://twitter.com/intent/tweet?url=${encodedUrl}`
+                : platform.id === 'facebook'
+                  ? `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`
+                  : platform.id === 'linkedin'
+                    ? `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`
+                    : `https://t.me/share/url?url=${encodedUrl}`;
+            return (
+              <a
+                key={platform.id}
+                href={shareHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-white transition-transform hover:scale-110 ${platform.bg}`}
+                aria-label={platform.ariaLabel}
+              >
+                <SocialIcon path={platform.path} />
+              </a>
+            );
+          })}
         </div>
       </section>
 

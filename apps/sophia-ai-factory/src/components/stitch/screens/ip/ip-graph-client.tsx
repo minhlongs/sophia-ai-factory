@@ -24,6 +24,7 @@ export function IpGraphClient({ workspaceId }: { workspaceId: string }) {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [form, setForm] = useState<IpEntityFormState>({
     type: 'universe',
     name: '',
@@ -56,6 +57,7 @@ export function IpGraphClient({ workspaceId }: { workspaceId: string }) {
     e.preventDefault();
     if (!workspaceId || !form.name.trim()) return;
     setCreating(true);
+    setActionError(null);
     try {
       const res = await fetch('/api/ip-graph', {
         method: 'POST',
@@ -71,27 +73,43 @@ export function IpGraphClient({ workspaceId }: { workspaceId: string }) {
       if (res.ok) {
         setForm({ type: 'universe', name: '', description: '', parentId: '' });
         await load();
+      } else {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setActionError(body.error ?? `HTTP ${res.status}`);
       }
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Network error');
     } finally {
       setCreating(false);
     }
   }
 
   async function updateStatus(entity: IpEntity, status: string) {
+    setActionError(null);
     try {
       const res = await fetch(`/api/ip-graph/${entity.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
-      if (res.ok) await load();
-    } catch {
-      // status update failure is non-fatal for the list view
+      if (res.ok) {
+        await load();
+      } else {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setActionError(body.error ?? `HTTP ${res.status}`);
+      }
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Network error');
     }
   }
 
   return (
     <DashboardLayout title={t('title')} subtitle={t('subtitle')}>
+      {actionError ? (
+        <p role="alert" className="mb-4 rounded-xl border border-destructive/30 bg-[var(--error-container)] px-4 py-2.5 text-xs font-medium text-[var(--on-error-container)]">
+          {actionError}
+        </p>
+      ) : null}
       <IpGraphTable
         entities={entities}
         query={query}

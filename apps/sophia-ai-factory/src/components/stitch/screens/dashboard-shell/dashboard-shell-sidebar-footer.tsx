@@ -3,7 +3,7 @@
 import React from 'react';
 import { Bell } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
-import { usePathname, useRouter } from '@/navigation';
+import { Link, usePathname, useRouter } from '@/navigation';
 import { cn } from '@/seed/utils/cn';
 
 export interface SidebarUserFooterProps {
@@ -61,13 +61,13 @@ export function SidebarUserFooter({ userName, userEmail }: SidebarUserFooterProp
       </div>
 
       {/* Notifications */}
-      <button
-        className="relative text-on-surface-variant hover:text-on-surface transition-colors"
+      <Link
+        href="/dashboard/first-value"
+        className="relative inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface transition-colors"
         aria-label={t('header.notifications')}
       >
         <Bell className="w-5 h-5" />
-        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-error border-2 border-surface rounded-full" />
-      </button>
+      </Link>
     </div>
   );
 }
