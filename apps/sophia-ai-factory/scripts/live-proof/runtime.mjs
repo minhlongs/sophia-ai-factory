@@ -11,7 +11,7 @@ try {
 export function usage() {
   console.log(`Usage:
   SOPHIA_LIVE_CONFIRM=run-real-provider-flow \\
-  SOPHIA_LIVE_BASE_URL=https://sophia.agencyos.network \\
+  SOPHIA_LIVE_BASE_URL=https://sophia-ai-factory.agencyos-openclaw.workers.dev \\
   SOPHIA_LIVE_EMAIL=user@example.com \\
   SOPHIA_LIVE_PASSWORD='...' \\
   SOPHIA_LIVE_EXPECTED_TIER=BASIC \\
@@ -87,7 +87,7 @@ export function parseLiveConfig(env, fail) {
     fail('SOPHIA_LIVE_CHANNEL_PROVIDERS must include at least 2 distinct providers');
   }
 
-  const baseUrlStr = optionalEnv(env, 'SOPHIA_LIVE_BASE_URL') || (preflightOnly ? 'https://sophia.agencyos.network' : undefined);
+  const baseUrlStr = optionalEnv(env, 'SOPHIA_LIVE_BASE_URL') || (preflightOnly ? 'https://sophia-ai-factory.agencyos-openclaw.workers.dev' : undefined);
   if (!baseUrlStr) fail('missing required env SOPHIA_LIVE_BASE_URL');
   let baseUrl;
   try {
@@ -98,7 +98,7 @@ export function parseLiveConfig(env, fail) {
   const hostname = baseUrl.hostname.toLowerCase().replace(/\.$/, '');
   const localHttp = baseUrl.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(hostname);
   if (baseUrl.protocol !== 'https:' && !localHttp) fail('live video proof target must use HTTPS');
-  if (['sophia.agencyos.network', 'www.sophia.agencyos.network', 'sophia-ai-factory.agencyos-openclaw.workers.dev'].includes(hostname) && env.SOPHIA_LIVE_ALLOW_PRODUCTION !== '1') {
+  if (['sophia-ai-factory.agencyos-openclaw.workers.dev', 'www.sophia-ai-factory.agencyos-openclaw.workers.dev', 'sophia-ai-factory.agencyos-openclaw.workers.dev'].includes(hostname) && env.SOPHIA_LIVE_ALLOW_PRODUCTION !== '1') {
     fail('production target requires SOPHIA_LIVE_ALLOW_PRODUCTION=1');
   }
   if (env.SOPHIA_LIVE_TEST_TENANT !== '1') fail('set SOPHIA_LIVE_TEST_TENANT=1 to confirm this is a dedicated non-customer test tenant');

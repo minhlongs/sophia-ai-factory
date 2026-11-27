@@ -34,7 +34,7 @@ APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$APP_DIR/../.." && pwd)"
 EVIDENCE_DIR="$APP_DIR/plans/evidence"
 REPORT_DIR="$APP_DIR/plans/reports"
-PROD_URL="${PROD_URL:-https://sophia.agencyos.network}"
+PROD_URL="${PROD_URL:-https://sophia-ai-factory.agencyos-openclaw.workers.dev}"
 
 mkdir -p "$EVIDENCE_DIR" "$REPORT_DIR"
 cd "$APP_DIR"
@@ -247,7 +247,7 @@ cat > "$REPORT_FILE" <<REPORT_EOF
 cat plans/reports/zero-bug-proof-<sha>.md
 
 # 3. Verify production yourself
-curl -s https://sophia.agencyos.network/api/version | jq .shortSha
+curl -s https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/version | jq .shortSha
 # Must match: git rev-parse HEAD | cut -c1-8
 \`\`\`
 

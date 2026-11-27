@@ -10,22 +10,22 @@ const CRON_WORKFLOW_SPECS = [
   {
     file: 'cron-fulfillment-reconcile.yml',
     cron: '0 6 * * *',
-    url: 'https://sophia.agencyos.network/api/cron/fulfillment-reconcile',
+    url: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cron/fulfillment-reconcile',
   },
   {
     file: 'cron-fulfillment-retry.yml',
     cron: '*/2 * * * *',
-    url: 'https://sophia.agencyos.network/api/cron/fulfillment-retry',
+    url: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cron/fulfillment-retry',
   },
   {
     file: 'cron-smoke-one-time.yml',
     cron: '*/15 * * * *',
-    url: 'https://sophia.agencyos.network/api/cron/smoke-one-time',
+    url: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cron/smoke-one-time',
   },
   {
     file: 'cron-video-status-sync.yml',
     cron: '*/5 * * * *',
-    url: 'https://sophia.agencyos.network/api/cron/video-status-sync',
+    url: 'https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cron/video-status-sync',
   },
 ] as const;
 
@@ -157,7 +157,7 @@ describe('sophia-ingestion.yml and cron-*.yml workflow contracts', () => {
   it('preserves existing cron schedules and targets canonical production endpoints', () => {
     const ingestion = readWorkflow('sophia-ingestion.yml');
     expect(ingestion).toContain("- cron: '0 2 * * *'");
-    expect(ingestion).toContain('https://sophia.agencyos.network/api/ingestion/trigger');
+    expect(ingestion).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/ingestion/trigger');
 
     for (const spec of CRON_WORKFLOW_SPECS) {
       const wf = readWorkflow(spec.file);
@@ -182,7 +182,7 @@ describe('sophia-ingestion.yml and cron-*.yml workflow contracts', () => {
       INPUT_NETWORKS: '',
     });
     expect(scheduledOk.status).toBe(0);
-    expect(scheduledOk.recordedArgs).toContain('https://sophia.agencyos.network/api/ingestion/trigger');
+    expect(scheduledOk.recordedArgs).toContain('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/ingestion/trigger');
     expect(scheduledOk.recordedArgs).toContain('{"networks":["clickbank","shareasale"]}');
     expect(scheduledOk.stdout + scheduledOk.stderr).not.toContain(token);
     expect(scheduledOk.stdout + scheduledOk.stderr).not.toContain('LEAKED_SECRET_BODY_PAYLOAD');

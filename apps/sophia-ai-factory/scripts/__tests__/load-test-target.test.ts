@@ -7,7 +7,7 @@ import {
 } from '../load-test-target.mjs';
 
 describe('validateLoadTestTarget', () => {
-  it.each(['https://sophia.agencyos.network', 'https://www.sophia.agencyos.network'])(
+  it.each(['https://sophia-ai-factory.agencyos-openclaw.workers.dev', 'https://www.sophia-ai-factory.agencyos-openclaw.workers.dev'])(
     'always blocks production origin %s', (target) => {
       expect(() => validateLoadTestTarget(target, 'run-staging-load'))
         .toThrow('Load tests against Sophia production are disabled');

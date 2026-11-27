@@ -14,7 +14,7 @@
  * 6. Verifies the key still decrypts correctly
  *
  * Requires:
- * - STAGING_URL env var set (e.g., https://staging.sophia.agencyos.network)
+ * - STAGING_URL env var set (e.g., https://staging.sophia-ai-factory.agencyos-openclaw.workers.dev)
  * - ADMIN_SESSION_TOKEN env var set (admin user with recent auth)
  * - BYOK_MASTER_KEY set on staging Workers
  *
@@ -26,7 +26,7 @@
 import { readFile } from 'fs/promises';
 import { lookup } from 'dns/promises';
 
-const STAGING_URL = process.env.STAGING_URL || 'https://staging.sophia.agencyos.network';
+const STAGING_URL = process.env.STAGING_URL || 'https://staging.sophia-ai-factory.agencyos-openclaw.workers.dev';
 const ADMIN_TOKEN = process.env.ADMIN_SESSION_TOKEN;
 
 if (!ADMIN_TOKEN) {

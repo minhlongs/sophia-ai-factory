@@ -19,7 +19,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
-PROD_URL="${1:-${PROD_URL:-https://sophia.agencyos.network}}"
+PROD_URL="${1:-${PROD_URL:-https://sophia-ai-factory.agencyos-openclaw.workers.dev}}"
 EXPECTED_SHA="${2:-${EXPECTED_SHA:-$(git -C "$REPO_ROOT" rev-parse HEAD | cut -c1-8)}}"
 
 echo "==> feature-smoke-phase2"

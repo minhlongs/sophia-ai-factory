@@ -227,7 +227,7 @@ const isDirectCall = process.argv[1] && (
 );
 
 if (isDirectCall) {
-  const baseUrl = process.argv[2] || process.env.PROD_URL || 'https://sophia.agencyos.network';
+  const baseUrl = process.argv[2] || process.env.PROD_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
   const localSha = process.argv[3] || process.env.LOCAL_SHA || '';
   const outputPath = process.argv[4] || process.env.SMOKE_REPORT_PATH;
 

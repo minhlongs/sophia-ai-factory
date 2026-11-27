@@ -9,7 +9,7 @@
  *     npx tsx scripts/e2e-bootstrap-user.ts
  *
  *   # Remote (production / preview)
- *   PLAYWRIGHT_TEST_BASE_URL=https://sophia.agencyos.network \
+ *   PLAYWRIGHT_TEST_BASE_URL=https://sophia-ai-factory.agencyos-openclaw.workers.dev \
  *   E2E_TEST_USER_PASSWORD='<strong-pw>' \
  *     npx tsx scripts/e2e-bootstrap-user.ts
  *

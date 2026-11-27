@@ -144,7 +144,7 @@ COMMIT_SHORT=$(echo "$COMMIT_SHA" | cut -c1-8)
 # Use macOS-compatible date (no GNU-specific flags)
 DEPLOYED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 DEPLOY_BRANCH=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD)
-PROD_URL="${PROD_URL:-https://sophia.agencyos.network}"
+PROD_URL="${PROD_URL:-https://sophia-ai-factory.agencyos-openclaw.workers.dev}"
 VERSION_BASE_URL="${VERSION_URL:-$PROD_URL/api/version}"
 PREVIOUS_VERSION_URL=$(cache_bust_url "$VERSION_BASE_URL" "pre-${COMMIT_SHORT}-$(date +%s)")
 VERIFY_VERSION_URL=$(cache_bust_url "$VERSION_BASE_URL" "sha-${COMMIT_SHORT}")
@@ -202,7 +202,7 @@ if [ "${SKIP_ATTESTATION:-0}" != "1" ]; then
         eval "export DEPLOY_OPERATOR_${K}=\"operator-${K}\""
       fi
     done
-    if ! CREATE_APPROVAL_RESPONSE=$(curl --fail -fsS -X POST "https://sophia.agencyos.network/api/admin/deploy-guard/create-approval" \
+    if ! CREATE_APPROVAL_RESPONSE=$(curl --fail -fsS -X POST "https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/admin/deploy-guard/create-approval" \
       -H "Content-Type: application/json" \
       -H "X-Deploy-Guard-Token: ${DEPLOY_GUARD_API_TOKEN}" \
       -H "X-Deploy-Operator: ${OPERATOR_USER}" \
@@ -238,7 +238,7 @@ if [ "${SKIP_ATTESTATION:-0}" != "1" ]; then
           OPERATOR_ID_VAR="DEPLOY_OPERATOR_${KEY_NUM}"
           OPERATOR_ID="${!OPERATOR_ID_VAR:-operator-${KEY_NUM}}"
           echo "  Recording attestation ${KEY_NUM} (operator: ${OPERATOR_ID})..."
-          if ! curl --fail -fsS -X POST "https://sophia.agencyos.network/api/admin/deploy-guard/attest" \
+          if ! curl --fail -fsS -X POST "https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/admin/deploy-guard/attest" \
             -H "Content-Type: application/json" \
             -H "X-Deploy-Guard-Token: ${DEPLOY_GUARD_API_TOKEN}" \
             -H "X-Deploy-Operator: ${OPERATOR_ID}" \
@@ -288,7 +288,7 @@ else
     echo "==> Recording Deploy Guard emergency override"
     # Read reason from environment or prompt? For automation, use SKIP_ATTESTATION_REASON env var
     OVERRIDE_REASON="${SKIP_ATTESTATION_REASON:-Emergency bypass: SKIP_ATTESTATION=1}"
-    if ! curl --fail -fsS -X POST "https://sophia.agencyos.network/api/admin/deploy-guard/override" \
+    if ! curl --fail -fsS -X POST "https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/admin/deploy-guard/override" \
       -H "Content-Type: application/json" \
       -H "X-Deploy-Guard-Token: ${DEPLOY_GUARD_API_TOKEN}" \
       -H "X-Deploy-Operator: ${OPERATOR_USER}" \
@@ -307,7 +307,7 @@ echo "==> Recording deploy audit log entry"
 # Build JSON payload for audit log
 AUDIT_PAYLOAD=$(node -e "const fs=require('fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const [commit_sha,branch,timestamp,operator_host,operator_user,diff_summary,files_changed]=process.argv.slice(1); var ov=(pkg.dependencies&&pkg.dependencies['@opennextjs/cloudflare'])||''; var om=ov.match(/\^([0-9.]+)/); console.log(JSON.stringify({event:'DEPLOY',commit_sha,branch,timestamp,operator_host,operator_user,diff_summary,files_changed:Number(files_changed),manifest:{commit_sha,branch,timestamp,operator_host,operator_user,diff_summary,files_changed:Number(files_changed),opennext_version:om?om[1]:'unknown',attestation_count:${ATTESTATION_COUNT},skip_attestation:${SKIP_ATTESTATION:-0},skip_tests:${SKIP_TESTS:-0},skip_tsc:${SKIP_TSC:-0}}}));" "$COMMIT_SHA" "$DEPLOY_BRANCH" "$DEPLOYED_AT" "$OPERATOR_HOST" "$OPERATOR_USER" "$DIFF_STAT" "$FILES_CHANGED")
 # Fire-and-forget: deploy must not fail if audit endpoint is temporarily unreachable
-if ! curl --fail -fsS -X POST "https://sophia.agencyos.network/api/admin/audit/deploy" \
+if ! curl --fail -fsS -X POST "https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/admin/audit/deploy" \
   -H "Content-Type: application/json" \
   --retry 3 --retry-delay 5 --connect-timeout 10 --max-time 30 \
   -d "$AUDIT_PAYLOAD" 2>>"$DEPLOY_LOG"; then

@@ -162,7 +162,7 @@ main() {
   log "INFO" "=== D1 Restore Finished ==="
   log "INFO" ""
   log "INFO" "Next steps:"
-  log "INFO" "1. Verify production: curl https://sophia.agencyos.network/api/health"
+  log "INFO" "1. Verify production: curl https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/health"
   log "INFO" "2. Test user login"
   log "INFO" "3. Check recent changes: git log --oneline | head -5"
   log "INFO" "4. Document incident in docs/incidents.log"

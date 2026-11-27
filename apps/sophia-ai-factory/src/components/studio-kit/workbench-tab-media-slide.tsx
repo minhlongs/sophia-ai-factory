@@ -28,7 +28,7 @@ export function WorkbenchTabMediaSlide({ locale }: { readonly locale: 'vi' | 'en
         totalSlides: 5,
         headline: deferredHeadline,
         body: deferredBody,
-        footerUrl: 'sophia.agencyos.network/r/demo',
+        footerUrl: 'sophia-ai-factory.agencyos-openclaw.workers.dev/r/demo',
         disclosureTag: '#ad #affiliate',
       }),
     [deferredHeadline, deferredBody],

@@ -1,9 +1,9 @@
 {
   "url": [
-    "https://sophia.agencyos.network/vi",
-    "https://sophia.agencyos.network/vi/dashboard",
-    "https://sophia.agencyos.network/vi/pricing",
-    "https://sophia.agencyos.network/vi/dashboard/admin"
+    "https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi",
+    "https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/dashboard",
+    "https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/pricing",
+    "https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/dashboard/admin"
   ],
   "settings": {
     "chromeFlags": "--headless --no-sandbox",

@@ -28,9 +28,9 @@ If deploying on a known-broken base (tracked issue), the commit message must car
 ## Production URLs
 
 ```bash
-PROD_URL="https://sophia.agencyos.network"
-HEALTH_URL="https://sophia.agencyos.network/api/health"
-VERSION_URL="https://sophia.agencyos.network/api/version"
+PROD_URL="https://sophia-ai-factory.agencyos-openclaw.workers.dev"
+HEALTH_URL="https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/health"
+VERSION_URL="https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/version"
 ```
 
 ## ✅ MANDATORY Verify Sequence (Post-Deploy)
@@ -41,17 +41,17 @@ gh run watch || gh run list --workflow=deploy.yml
 
 # Step 2: Verify bit-for-bit SHA match (CRITICAL — proves new code is live, not stale)
 LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
-LIVE_SHA=$(curl -s "https://sophia.agencyos.network/api/version?deployVerify=$(date +%s)" | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
+LIVE_SHA=$(curl -s "https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/version?deployVerify=$(date +%s)" | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
 echo "Local commit SHA: $LOCAL_SHA  Live edge SHA: $LIVE_SHA"
 [ "$LOCAL_SHA" = "$LIVE_SHA" ] && echo "✅ DEPLOY MATCHES COMMIT" || { echo "❌ STALE — live edge does not match commit SHA"; exit 1; }
 
 # Step 3: Production HTTP health checks
-curl -s -o /dev/null -w "%{http_code}\n" https://sophia.agencyos.network/api/health  # must be 200
-curl -s -o /dev/null -w "%{http_code}\n" https://sophia.agencyos.network/login        # must be 307 or 200
-curl -s -o /dev/null -w "%{http_code}\n" https://sophia.agencyos.network/vi/login     # must be 200
+curl -s -o /dev/null -w "%{http_code}\n" https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/health  # must be 200
+curl -s -o /dev/null -w "%{http_code}\n" https://sophia-ai-factory.agencyos-openclaw.workers.dev/login        # must be 307 or 200
+curl -s -o /dev/null -w "%{http_code}\n" https://sophia-ai-factory.agencyos-openclaw.workers.dev/vi/login     # must be 200
 
 # Step 4: Run automated post-deploy smoke suite
-node scripts/post-deploy-smoke.mjs "https://sophia.agencyos.network" "$LOCAL_SHA"
+node scripts/post-deploy-smoke.mjs "https://sophia-ai-factory.agencyos-openclaw.workers.dev" "$LOCAL_SHA"
 ```
 
 **Endpoint reference:**

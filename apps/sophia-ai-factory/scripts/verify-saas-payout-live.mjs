@@ -4,7 +4,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { createEvidenceRecorder } from './live-proof/evidence.mjs';
 import { createRequester, parseDeploymentVersion } from './live-proof/runtime.mjs';
 
-const PRODUCTION_HOSTS = new Set(['sophia.agencyos.network', 'www.sophia.agencyos.network', 'sophia-ai-factory.agencyos-openclaw.workers.dev']);
+const PRODUCTION_HOSTS = new Set(['sophia-ai-factory.agencyos-openclaw.workers.dev', 'www.sophia-ai-factory.agencyos-openclaw.workers.dev', 'sophia-ai-factory.agencyos-openclaw.workers.dev']);
 const evidence = createEvidenceRecorder(process.env.SOPHIA_PAYOUT_LIVE_EVIDENCE_PATH?.trim(), {
   schema: 'sophia-live-saas-payout-proof-v2',
 });

@@ -40,7 +40,7 @@ REPO_ROOT="$(cd "$APP_DIR/../.." && pwd)"
 cd "$APP_DIR"
 
 # ─── Config ────────────────────────────────────────────────────────────────
-PROD_URL="${PROD_URL:-https://sophia.agencyos.network}"
+PROD_URL="${PROD_URL:-https://sophia-ai-factory.agencyos-openclaw.workers.dev}"
 VERSION_URL="${VERSION_URL:-$PROD_URL/api/version}"
 COMMIT_SHA="$(git -C "$REPO_ROOT" rev-parse HEAD)"
 COMMIT_SHORT="$(echo "$COMMIT_SHA" | cut -c1-8)"

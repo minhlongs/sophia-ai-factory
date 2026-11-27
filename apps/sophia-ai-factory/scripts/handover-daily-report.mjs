@@ -10,18 +10,18 @@
  *   ADMIN_SESSION_COOKIE='__Secure-better-auth.session_token=…' \
  *     node scripts/handover-daily-report.mjs
  *
- * Get the cookie by logging into sophia.agencyos.network as admin and
+ * Get the cookie by logging into sophia-ai-factory.agencyos-openclaw.workers.dev as admin and
  * copying the `__Secure-better-auth.session_token` cookie value from
  * DevTools → Application → Cookies.
  *
  * Env:
  *   ADMIN_SESSION_COOKIE — Better Auth session cookie header (full Cookie header)
- *   PROD_URL             — defaults to https://sophia.agencyos.network
+ *   PROD_URL             — defaults to https://sophia-ai-factory.agencyos-openclaw.workers.dev
  *   TELEGRAM_BOT_TOKEN   — optional; enables Telegram delivery
  *   TELEGRAM_OPS_CHAT_ID — optional; required when bot token set
  */
 
-const PROD_URL = process.env.PROD_URL || 'https://sophia.agencyos.network';
+const PROD_URL = process.env.PROD_URL || 'https://sophia-ai-factory.agencyos-openclaw.workers.dev';
 const SESSION_COOKIE = process.env.ADMIN_SESSION_COOKIE;
 const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TG_CHAT  = process.env.TELEGRAM_OPS_CHAT_ID;

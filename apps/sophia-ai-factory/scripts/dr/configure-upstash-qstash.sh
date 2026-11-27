@@ -15,7 +15,7 @@ set -euo pipefail
 : "${QSTASH_TOKEN:?QSTASH_TOKEN required — get from Upstash console}"
 : "${CRON_SECRET:?CRON_SECRET required — must match wrangler secret on Worker}"
 
-ENDPOINT="https://sophia.agencyos.network/api/cron/d1-backup"
+ENDPOINT="https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/cron/d1-backup"
 CRON_EXPR="${CRON_EXPR:-0 3 * * *}"   # 03:00 UTC daily by default
 
 echo "Registering QStash schedule:"

@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$APP_DIR/../.." && pwd)"
 
-PROD_URL="${PROD_URL:-https://sophia.agencyos.network}"
+PROD_URL="${PROD_URL:-https://sophia-ai-factory.agencyos-openclaw.workers.dev}"
 LOCAL_SHA="$(git -C "$REPO_ROOT" rev-parse HEAD | cut -c1-8)"
 VERIFY_URL="$PROD_URL/api/version?deployVerify=$LOCAL_SHA"
 
