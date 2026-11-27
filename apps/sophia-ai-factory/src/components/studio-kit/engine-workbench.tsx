@@ -14,9 +14,10 @@ import { WorkbenchTabScriptPolicy } from './workbench-tab-script-policy';
 import { WorkbenchTabMediaSlide } from './workbench-tab-media-slide';
 import { WorkbenchTabRevenueGrowth } from './workbench-tab-revenue-growth';
 import { WorkbenchTabSecurityRbac } from './workbench-tab-security-rbac';
+import { WorkbenchTabR21R25Engines } from './workbench-tab-r21-r25-engines';
 import { StudioCommandPalette } from './studio-command-palette';
 
-type StepId = 'script' | 'media' | 'revenue' | 'security';
+type StepId = 'script' | 'media' | 'revenue' | 'security' | 'scale';
 
 interface StepMeta {
   readonly id: StepId;
@@ -65,6 +66,16 @@ const STEPS: readonly StepMeta[] = [
       vi: 'Kiểm tra quyền nhân viên (VA được sửa kịch bản nhưng bị khóa cứng link hoa hồng của bạn) và chặn bot click ảo làm sai lệch báo cáo.',
       en: 'Verify team permissions (VA editors can edit scripts while your affiliate links stay locked) and filter bot/datacenter clicks.',
     },
+    nextId: 'scale',
+  },
+  {
+    id: 'scale',
+    num: 5,
+    title: { vi: 'Mở Rộng & Chia Hoa Hồng', en: 'Scale & Revenue Split' },
+    purpose: {
+      vi: 'Kiểm tra vùng an toàn khung hình đầu, chuyển hướng link theo quốc gia (VN/US/UK), giữ nhịp đăng bài chống spam và chia hoa hồng 70/20/10 chính xác từng cent.',
+      en: 'Check Frame-1 safe zones, geo-route affiliate links by country, enforce anti-burnout cadence, and split 70/20/10 payouts with zero floating-point drift.',
+    },
   },
 ];
 
@@ -89,8 +100,8 @@ export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
         </p>
       </header>
 
-      {/* Clean 4-Step Horizontal Stepper */}
-      <nav aria-label={locale === 'vi' ? 'Các bước vận hành' : 'Workflow steps'} className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      {/* Clean 5-Step Horizontal Stepper */}
+      <nav aria-label={locale === 'vi' ? 'Các bước vận hành' : 'Workflow steps'} className="grid grid-cols-2 gap-2.5 lg:grid-cols-5">
         {STEPS.map((step) => {
           const isCurrent = step.id === activeStep;
           return (
@@ -143,6 +154,7 @@ export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
         {activeStep === 'media' ? <WorkbenchTabMediaSlide locale={locale} /> : null}
         {activeStep === 'revenue' ? <WorkbenchTabRevenueGrowth locale={locale} /> : null}
         {activeStep === 'security' ? <WorkbenchTabSecurityRbac locale={locale} /> : null}
+        {activeStep === 'scale' ? <WorkbenchTabR21R25Engines locale={locale} /> : null}
       </div>
 
       {/* Collapsed R&D Technical Registry (Modern Web Guidance content-visibility) */}
