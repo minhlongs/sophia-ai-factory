@@ -63,7 +63,7 @@ export function ActivatedInviteView({
       </div>
 
       <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
-        <Link href="/affiliates" className="w-full">
+        <Link href="/dashboard/monetization" className="w-full">
           <Button variant="primary" fullWidth iconRight={<ArrowRight className="w-4 h-4" />}>
             {t('goToDashboard')}
           </Button>

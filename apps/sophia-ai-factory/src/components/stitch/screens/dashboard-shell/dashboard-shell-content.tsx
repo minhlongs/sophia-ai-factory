@@ -85,7 +85,7 @@ export function DashboardContent({
               </span>
             </h2>
             <Link
-              href="/projects"
+              href="/dashboard/first-value"
               className="text-sm text-primary font-semibold flex items-center gap-1 hover:underline"
             >
               {t('recentProjects.viewAll')}
@@ -109,7 +109,7 @@ export function DashboardContent({
             <Link href="/terms" className="hover:text-primary transition-colors">
               {t('footer.terms')}
             </Link>
-            <Link href="/help" className="hover:text-primary transition-colors">
+            <Link href="/guide" className="hover:text-primary transition-colors">
               {t('footer.help')}
             </Link>
           </div>

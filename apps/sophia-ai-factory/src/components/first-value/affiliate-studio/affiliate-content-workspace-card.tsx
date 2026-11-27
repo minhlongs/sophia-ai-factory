@@ -24,6 +24,7 @@ export interface AffiliateContentWorkspaceCardProps {
   readonly onSaveEdit: (pack: AffiliateCampaignPack) => Promise<boolean>;
   readonly onApprove: () => Promise<boolean>;
   readonly onExport: (format: 'markdown' | 'json') => Promise<void>;
+  readonly onGoToStudio?: () => void;
 }
 
 export function AffiliateContentWorkspaceCard({
@@ -33,6 +34,7 @@ export function AffiliateContentWorkspaceCard({
   onSaveEdit,
   onApprove,
   onExport,
+  onGoToStudio,
 }: AffiliateContentWorkspaceCardProps) {
   const t = useTranslations('firstValue');
   const [editing, setEditing] = useState(false);
@@ -337,6 +339,7 @@ export function AffiliateContentWorkspaceCard({
             <a
               href="#pilot-mp4-affiliate"
               data-testid="next-step-create-mp4-link"
+              onClick={() => onGoToStudio?.()}
               className="rounded-lg border border-amber-500/60 bg-amber-500/15 px-4 py-2 text-sm font-semibold text-amber-600 transition hover:bg-amber-500/25 dark:text-amber-400"
             >
               {t('nextStepCreateMp4Btn')}

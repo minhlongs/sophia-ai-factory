@@ -78,9 +78,9 @@ export const MAIN_NAV: NavItem[] = [
 ];
 
 export const MANAGEMENT_NAV: NavItem[] = [
-  { label: 'billing', icon: CreditCard, href: '/billing' },
-  { label: 'affiliates', icon: Link2, href: '/affiliates' },
-  { label: 'settings', icon: Settings, href: '/settings' },
+  { label: 'billing', icon: CreditCard, href: '/dashboard/monetization' },
+  { label: 'affiliates', icon: Link2, href: '/dashboard/monetization' },
+  { label: 'settings', icon: Settings, href: '/dashboard/settings' },
 ];
 
 export const ADMIN_NAV: NavItem[] = [
