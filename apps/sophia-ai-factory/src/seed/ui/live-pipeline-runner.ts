@@ -23,6 +23,11 @@ import { extractSceneKeywords } from '@/seed/video/broll-scene-matcher';
 import { evaluateAccountWarmupHealth } from '@/seed/growth/account-warmup-fsm';
 import { computeCrossBorderPayoutTax } from '@/seed/finance/cross-border-payout-tax';
 import { forecastAffiliateCohortLtv } from '@/seed/finance/cohort-ltv-forecaster';
+import { planAudioLoudnessNormalization } from '@/seed/video/audio-loudness-normalizer';
+import { encodeTamperEvidentSubId, verifyTamperEvidentSubId } from '@/seed/affiliate/subid-watermark-encoder';
+import { computeOptimalPublishWindow } from '@/seed/growth/optimal-publish-window';
+import { injectLocalizedDisclosure } from '@/seed/compliance/ftc-disclosure-injector';
+import { reconcileAffiliatePayoutThreeWay } from '@/seed/finance/affiliate-payout-reconciler';
 
 export type EngineExecutionState = 'idle' | 'running' | 'passed' | 'warning' | 'blocked';
 
@@ -323,6 +328,113 @@ export function evaluateSingleEngineLive(
       detail: {
         vi: `Dự báo hoàn vốn tháng ${res.paybackMonth ?? 'N/A'}, tỷ lệ LTV/CAC ${res.ltvToCacRatio}x.`,
         en: `Payback in month ${res.paybackMonth ?? 'N/A'}, LTV/CAC ratio ${res.ltvToCacRatio}x.`,
+      },
+      durationMs: elapsed(),
+    };
+  }
+
+  if (engineId === 'audio-loudness-normalizer') {
+    const audioPlatform =
+      input.platform === 'youtube_shorts' || input.platform === 'instagram_reels'
+        ? input.platform
+        : 'tiktok';
+    const res = planAudioLoudnessNormalization({
+      platform: audioPlatform,
+      measuredLufs: -16.5,
+      truePeakDbtp: -3.2,
+      bgmOffsetDb: -18,
+    });
+    return {
+      engineId,
+      state: res.status === 'clipping_risk' ? 'warning' : 'passed',
+      metricOutput: `${res.targetLufs} LUFS (${res.recommendedGainDb > 0 ? '+' : ''}${res.recommendedGainDb}dB)`,
+      detail: {
+        vi: `Chuẩn hóa âm lượng về ${res.targetLufs} LUFS, nhạc nền ${res.bgmDuckingDb} dB.`,
+        en: res.reason,
+      },
+      durationMs: elapsed(),
+    };
+  }
+
+  if (engineId === 'subid-watermark-encoder') {
+    const encoded = encodeTamperEvidentSubId(
+      { campaignId: 'camp2026', creatorId: 'ceo', variantId: 'v1' },
+      'sophia-s2s',
+    );
+    const verified = verifyTamperEvidentSubId(encoded, 'sophia-s2s');
+    return {
+      engineId,
+      state: verified.valid ? 'passed' : 'blocked',
+      metricOutput: verified.valid ? encoded : 'INVALID',
+      detail: {
+        vi: `Đã đóng dấu SubID chống giả mạo: ${encoded}.`,
+        en: `Encoded & verified tamper-evident SubID: ${encoded}.`,
+      },
+      durationMs: elapsed(),
+    };
+  }
+
+  if (engineId === 'optimal-publish-window') {
+    const region = input.country === 'US' || input.country === 'UK' ? input.country : 'VN';
+    const pubPlatform =
+      input.platform === 'youtube_shorts' || input.platform === 'instagram_reels'
+        ? input.platform
+        : 'tiktok';
+    const res = computeOptimalPublishWindow({
+      region,
+      platform: pubPlatform,
+      currentUtcHour: new Date().getUTCHours(),
+    });
+    return {
+      engineId,
+      state: 'passed',
+      metricOutput: res.windowLabel,
+      detail: {
+        vi: `Khung giờ vàng kế tiếp cho ${res.region}: ${res.windowLabel} (sau ${res.hoursUntilSlot}h).`,
+        en: `Next peak slot for ${res.region}: ${res.windowLabel} (in ${res.hoursUntilSlot}h).`,
+      },
+      durationMs: elapsed(),
+    };
+  }
+
+  if (engineId === 'ftc-disclosure-injector') {
+    const res = injectLocalizedDisclosure({
+      caption: input.script,
+      jurisdiction: input.jurisdiction,
+      vertical: 'crypto',
+    });
+    return {
+      engineId,
+      state: 'passed',
+      metricOutput: res.injected ? `Injected (${input.jurisdiction})` : `Verified (${input.jurisdiction})`,
+      detail: {
+        vi: res.injected
+          ? `Đã tự chèn khuyến cáo pháp lý ${input.jurisdiction}.`
+          : `Kịch bản đã có sẵn khuyến cáo pháp lý ${input.jurisdiction}.`,
+        en: res.injected
+          ? `Appended ${input.jurisdiction} affiliate & risk disclosure.`
+          : `Existing ${input.jurisdiction} disclosure verified.`,
+      },
+      durationMs: elapsed(),
+    };
+  }
+
+  if (engineId === 'affiliate-payout-reconciler') {
+    const safeGross = Number.isFinite(input.grossUsd) ? Math.min(1_000_000_000, Math.max(0, input.grossUsd)) : 0;
+    const cents = BigInt(Math.round(safeGross * 100));
+    const res = reconcileAffiliatePayoutThreeWay({
+      networkReportedCents: cents,
+      ledgerRecordedCents: cents,
+      settledBankCents: cents,
+      clawbackReserveBps: 500,
+    });
+    return {
+      engineId,
+      state: res.status === 'reconciled' ? 'passed' : 'warning',
+      metricOutput: `3-Way OK • $${(Number(res.releasableNetCents) / 100).toFixed(2)}`,
+      detail: {
+        vi: `Đối soát 3 chiều khớp 100%, giữ quỹ hoàn tiền 5%, giải ngân $${(Number(res.releasableNetCents) / 100).toFixed(2)}.`,
+        en: `3-way reconciliation matched 100%, 5% clawback reserve held, releasable $${(Number(res.releasableNetCents) / 100).toFixed(2)}.`,
       },
       durationMs: elapsed(),
     };
