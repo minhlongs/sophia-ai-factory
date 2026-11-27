@@ -49,16 +49,10 @@ export async function requireAuth(req: NextRequest): Promise<AuthResult | Respon
  * Used by /api/cron/weekly-signals-digest.
  */
 export async function requireCron(req: NextRequest): Promise<{ type: 'cron' } | Response> {
-  const authHeader = req.headers.get('authorization') ?? ''
-  const cronSecret = process.env.CRON_SECRET
-
-  if (!cronSecret) {
-    return Response.json({ error: 'server misconfigured' }, { status: 500 })
+  const { verifyCronAuth } = await import('@/seed/security/cron-auth')
+  const authError = verifyCronAuth(req)
+  if (authError) {
+    return authError
   }
-
-  if (authHeader.startsWith('Bearer ') && authHeader.slice(7) === cronSecret) {
-    return { type: 'cron' }
-  }
-
-  return Response.json({ error: 'unauthorized' }, { status: 401 })
+  return { type: 'cron' }
 }

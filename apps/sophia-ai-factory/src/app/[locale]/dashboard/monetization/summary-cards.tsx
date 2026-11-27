@@ -22,12 +22,12 @@ function formatPercent(value: number): string {
 
 export function SummaryCards({ aggregate, dynamicPricing, t }: SummaryCardsProps) {
   const cards = [
-    { label: t('totalRevenue'), value: formatCents(aggregate.totalRevenueCents), color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    { label: t('totalCost'), value: formatCents(aggregate.totalCostCents), color: 'bg-rose-50 text-rose-700 border-rose-200' },
-    { label: t('roi'), value: formatPercent(aggregate.roi), color: aggregate.roi >= 0 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200' },
-    { label: t('unitCount'), value: aggregate.unitCount.toLocaleString(), color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-    { label: t('avgRevenuePerUnit'), value: formatCents(aggregate.avgRevenuePerUnit), color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    { label: t('avgCostPerUnit'), value: formatCents(aggregate.avgCostPerUnit), color: 'bg-rose-50 text-rose-700 border-rose-200' },
+    { label: t('totalRevenue'), value: formatCents(aggregate.totalRevenueCents), color: 'bg-success/10 text-success border-success/30' },
+    { label: t('totalCost'), value: formatCents(aggregate.totalCostCents), color: 'bg-[var(--error-container)] text-[var(--on-error-container)] border-destructive/30' },
+    { label: t('roi'), value: formatPercent(aggregate.roi), color: aggregate.roi >= 0 ? 'bg-[var(--tertiary-container)] text-[var(--on-tertiary-container)] border-accent/30' : 'bg-[var(--error-container)] text-[var(--on-error-container)] border-destructive/30' },
+    { label: t('unitCount'), value: aggregate.unitCount.toLocaleString(), color: 'bg-[var(--primary-container)] text-[var(--on-primary-container)] border-primary/30' },
+    { label: t('avgRevenuePerUnit'), value: formatCents(aggregate.avgRevenuePerUnit), color: 'bg-success/10 text-success border-success/30' },
+    { label: t('avgCostPerUnit'), value: formatCents(aggregate.avgCostPerUnit), color: 'bg-[var(--error-container)] text-[var(--on-error-container)] border-destructive/30' },
   ];
 
   return (
@@ -36,31 +36,31 @@ export function SummaryCards({ aggregate, dynamicPricing, t }: SummaryCardsProps
         {cards.map((card) => (
           <div
             key={card.label}
-            className={`rounded-lg border p-3 ${card.color}`}
+            className={`rounded-2xl border p-3.5 ${card.color}`}
           >
             <p className="text-xs font-medium opacity-80">{card.label}</p>
-            <p className="mt-1 text-lg font-semibold">{card.value}</p>
+            <p className="md3-tabular-nums mt-1 text-lg font-semibold">{card.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
-        <h3 className="text-sm font-semibold text-indigo-700">{t('dynamicPricing')}</h3>
+      <div className="mt-4 rounded-2xl border border-primary/30 bg-[var(--primary-container)] p-4">
+        <h3 className="text-sm font-semibold text-[var(--on-primary-container)]">{t('dynamicPricing')}</h3>
         <div className="mt-2 grid grid-cols-3 gap-4 text-sm">
           <div>
-            <span className="text-indigo-600/70">{t('currentTier')}</span>
-            <p className="font-semibold text-indigo-800">{dynamicPricing.tier}</p>
+            <span className="text-[var(--on-primary-container)]/75">{t('currentTier')}</span>
+            <p className="font-semibold text-[var(--on-primary-container)]">{dynamicPricing.tier}</p>
           </div>
           <div>
-            <span className="text-indigo-600/70">{t('baseCostMCU')}</span>
-            <p className="font-semibold text-indigo-800">{dynamicPricing.baseCostMCU}</p>
+            <span className="text-[var(--on-primary-container)]/75">{t('baseCostMCU')}</span>
+            <p className="md3-tabular-nums font-semibold text-[var(--on-primary-container)]">{dynamicPricing.baseCostMCU}</p>
           </div>
           <div>
-            <span className="text-indigo-600/70">{t('adjustedCostMCU')}</span>
-            <p className="font-semibold text-indigo-800">{dynamicPricing.adjustedCostMCU}</p>
+            <span className="text-[var(--on-primary-container)]/75">{t('adjustedCostMCU')}</span>
+            <p className="md3-tabular-nums font-semibold text-[var(--on-primary-container)]">{dynamicPricing.adjustedCostMCU}</p>
           </div>
         </div>
-        <p className="mt-2 text-xs text-indigo-600/70">
+        <p className="mt-2 text-xs text-[var(--on-primary-container)]/75">
           {t('multiplier')}: {dynamicPricing.multiplier}x
         </p>
       </div>
