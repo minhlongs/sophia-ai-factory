@@ -5,7 +5,7 @@
  * Layer: forest/dashboard/activity-table
  */
 
-import React from "react";
+import React, { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/navigation";
 import { ArrowRight } from "lucide-react";
@@ -21,6 +21,8 @@ export function DashboardActivityTable({
   transactions,
   className,
 }: DashboardActivityTableProps) {
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
   let t: (key: string, params?: Record<string, unknown>) => string;
   try {
     const hookT = useTranslations("stitch.dashboard");
@@ -94,8 +96,8 @@ export function DashboardActivityTable({
                   <th className="py-3 px-4 font-semibold text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border dark:divide-white/[0.04]">
-                {items.map((row) => (
+              <tbody className="divide-y divide-border">
+                {items.slice((page - 1) * pageSize, page * pageSize).map((row) => (
                   <ActivityRow key={row.id} row={row} />
                 ))}
               </tbody>
@@ -103,26 +105,28 @@ export function DashboardActivityTable({
           </div>
 
           {/* Footer */}
-          <div className="p-3.5 bg-muted/20 dark:bg-white/[0.01] flex items-center justify-between border-t border-border dark:border-white/[0.06] text-xs font-mono text-muted-foreground">
+          <div className="p-3.5 bg-muted/20 flex items-center justify-between border-t border-border text-xs font-mono text-muted-foreground">
             <span>
               {t("recentTransactions.showing", {
-                from: 1,
-                to: items.length,
+                from: items.length === 0 ? 0 : (page - 1) * pageSize + 1,
+                to: Math.min(page * pageSize, items.length),
                 total: items.length,
               })}
             </span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                disabled
-                className="px-2.5 py-1 rounded bg-muted dark:bg-white/[0.03] border border-border dark:border-white/[0.06] text-muted-foreground text-xs disabled:opacity-50 cursor-not-allowed"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="px-2.5 py-1 rounded bg-muted border border-border text-foreground hover:text-primary text-xs disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
               <button
                 type="button"
-                disabled={items.length <= 10}
-                className="px-2.5 py-1 rounded bg-muted dark:bg-white/[0.03] border border-border dark:border-white/[0.06] text-foreground dark:text-slate-400 hover:text-primary dark:hover:text-white text-xs disabled:opacity-50"
+                disabled={page * pageSize >= items.length}
+                onClick={() => setPage((p) => p + 1)}
+                className="px-2.5 py-1 rounded bg-muted border border-border text-foreground hover:text-primary text-xs disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
