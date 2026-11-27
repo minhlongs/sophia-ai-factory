@@ -9,6 +9,11 @@ import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
 import { resolveOrgId } from '@/seed/auth/workspace-access';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
+import { getWorkspaceROI, getTopROIChannels, type ROIAggregate } from '@/tree/roi';
+import { aggregateRevenueAttribution } from '@/forest/analytics/queries/revenue-attribution';
+import { getDynamicMultiplier } from '@/land/billing/dynamic-pricing-config';
+import { VIDEO_MCU_COSTS } from '@/land/billing/video-mcu-cost-config';
 import { SummaryCards } from './summary-cards';
 import { ChannelTable } from './channel-table';
 
@@ -52,7 +57,7 @@ export default async function MonetizationPage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <p className="text-sm text-rose-600">{t('loading')}</p>
+        <p role="alert" className="text-sm text-destructive">{t('loading')}</p>
       </div>
     );
   }
@@ -61,7 +66,7 @@ export default async function MonetizationPage() {
   if (!db) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <p className="text-sm text-rose-600">Database unavailable</p>
+        <p role="alert" className="text-sm text-destructive">{t('loading')}</p>
       </div>
     );
   }
@@ -80,15 +85,51 @@ export default async function MonetizationPage() {
   let error: string | null = null;
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/monetization?workspaceId=${encodeURIComponent(workspaceId)}`, {
-      cache: 'no-store',
-    });
-    if (res.ok) {
-      data = (await res.json()) as MonetizationData;
-    } else {
-      error = `API ${res.status}`;
-    }
+    const [roi, topChannels, revenueAttribution, tier] = await Promise.all([
+      getWorkspaceROI(workspaceId),
+      getTopROIChannels(workspaceId, 5),
+      aggregateRevenueAttribution(workspaceId),
+      resolveUserTier(user.id),
+    ]);
+
+    const roiData: ROIAggregate = roi ?? {
+      workspaceId,
+      totalRevenueCents: 0,
+      totalCostCents: 0,
+      roi: 0,
+      unitCount: 0,
+      avgRevenuePerUnit: 0,
+      avgCostPerUnit: 0,
+    };
+
+    const multiplier = getDynamicMultiplier(tier, roiData.unitCount);
+    const baseCostMCU = VIDEO_MCU_COSTS.VIDEO_CREATE;
+    const adjustedCostMCU = Math.round(baseCostMCU * multiplier);
+
+    data = {
+      aggregate: {
+        totalRevenueCents: roiData.totalRevenueCents,
+        totalCostCents: roiData.totalCostCents,
+        roi: roiData.roi,
+        unitCount: roiData.unitCount,
+        avgRevenuePerUnit: roiData.avgRevenuePerUnit,
+        avgCostPerUnit: roiData.avgCostPerUnit,
+      },
+      topChannels: topChannels.map((c) => ({
+        channel: c.channel ?? null,
+        totalRevenueCents: c.totalRevenueCents,
+        totalCostCents: c.totalCostCents,
+        roi: c.roi,
+        unitCount: c.unitCount,
+      })),
+      revenueAttribution,
+      dynamicPricing: {
+        tier,
+        baseCostMCU,
+        adjustedCostMCU,
+        multiplier,
+      },
+    };
   } catch {
     error = 'Failed to fetch monetization data';
   }
@@ -101,7 +142,10 @@ export default async function MonetizationPage() {
       </header>
 
       {error ? (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+        <div
+          role="alert"
+          className="rounded-2xl border border-destructive/35 bg-[var(--error-container)] p-4 text-sm text-[var(--on-error-container)]"
+        >
           {error}
         </div>
       ) : !data ? (
