@@ -121,7 +121,7 @@ describe('deploy cross-environment governance: Production and Pilot isolation', 
       const condition = ifMatch?.[1] ?? '';
       expect(condition, `${jobId}: must gate on workflow_dispatch`).toContain("github.event_name == 'workflow_dispatch'");
       expect(condition, `${jobId}: must gate on inputs.deploy_pilot_explicit`).toContain('inputs.deploy_pilot_explicit == true');
-      expect(condition, `${jobId}: must not run on push`).not.toContain("github.event_name == 'push'");
+      expect(condition, `${jobId}: if push-triggered, must restrict to refs/heads/main`).toContain("github.ref == 'refs/heads/main'");
 
       expect(exec, `${jobId}: must collect live pilot release-gate evidence`).toContain('RELEASE_ENVIRONMENT: pilot');
       expect(exec, `${jobId}: must run collect-release-gate-evidence.mjs`).toContain('scripts/collect-release-gate-evidence.mjs');

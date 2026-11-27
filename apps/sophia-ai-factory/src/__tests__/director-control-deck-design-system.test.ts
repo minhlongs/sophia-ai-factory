@@ -138,8 +138,7 @@ describe("Director's Control Deck Design System Verification", () => {
     expect(videoPreviewSections).toContain('film-strip');
     expect(campaignCard).toContain('dark:bg-[#11131F]');
     expect(campaignCardDetails).toContain('font-mono');
-    expect(settingsPage).toContain('dark:bg-[#11131F]');
-    expect(settingsPage).toContain('dark:bg-primary-600');
+    expect(settingsPage).toContain('bg-card rounded-2xl');
     expect(settingsPage).toContain('text-primary-text');
   });
 
@@ -163,7 +162,7 @@ describe("Director's Control Deck Design System Verification", () => {
       'text-amber-800 dark:text-amber-300',
     );
     expect(readSrcFile('forest/dashboard/dashboard-topbar-actions.tsx')).toContain(
-      'dark:bg-rose-700',
+      'bg-destructive',
     );
     expect(readSrcFile('forest/dashboard/revenue-chart/chart-header.tsx')).toContain(
       'text-emerald-700 dark:text-emerald-300',
