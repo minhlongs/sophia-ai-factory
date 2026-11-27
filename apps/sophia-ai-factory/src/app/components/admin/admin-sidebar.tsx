@@ -27,15 +27,12 @@ const navigation = [
   { name: "Enterprise Deals", href: "/admin/deals", icon: Briefcase },
   { name: "Growth Analytics", href: "/admin/growth-analytics", icon: TrendingUp },
   { name: "Unit Economics", href: "/admin/unit-economics", icon: Calculator },
-  { name: "Analytics", href: "/admin/analytics/usage", icon: BarChart3 },
-  { name: "Users", href: "/admin/users", icon: Users },
-  { name: "Promo Codes", href: "/admin/promo-codes", icon: Tag },
-  { name: "Licenses", href: "/admin/licenses", icon: Key },
+  { name: "System Health", href: "/dashboard/system-health", icon: BarChart3 },
   { name: "Key Rotation", href: "/dashboard/admin/byok-rotation", icon: KeyRound },
-  { name: "Payouts", href: "/admin/payouts", icon: Wallet },
-  { name: "Feature Flags", href: "/admin/features", icon: Flag },
-  { name: "Affiliates", href: "/admin/affiliates", icon: ExternalLink },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
+  { name: "Monitoring", href: "/dashboard/admin/monitoring", icon: Flag },
+  { name: "SOP Reviews", href: "/dashboard/admin/sop-reviews", icon: Key },
+  { name: "Handover Console", href: "/admin/handover", icon: ExternalLink },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 export function AdminSidebar() {
@@ -80,9 +77,13 @@ export function AdminSidebar() {
       {/* Footer */}
       <div className="p-4 border-t border-border">
         <button
+          type="button"
           onClick={() => {
-            // Clear auth and reload
-            window.location.href = "/";
+            void import("@/seed/auth/better-auth-client")
+              .then(({ authClient }) => authClient.signOut())
+              .finally(() => {
+                window.location.href = "/login";
+              });
           }}
           className="flex items-center gap-3 px-4 py-3 w-full text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all"
         >

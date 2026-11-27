@@ -2,6 +2,7 @@
 // i18n-namespace: stitch.campaigns
 
 import React from 'react';
+import { Link } from '@/navigation';
 import type { Campaign } from './campaigns-page-types';
 import { CampaignScriptReview } from './campaign-script-review';
 
@@ -57,12 +58,12 @@ export function CampaignCardDetails({
         <span className="text-[11px] font-mono text-muted-foreground">
           {t('lastPublished') + ' ' + campaign.lastPublished}
         </span>
-        <button
-          type="button"
-          className="text-primary text-[11px] font-bold hover:underline transition-colors"
+        <Link
+          href={`/dashboard/campaigns/${campaign.id}`}
+          className="text-primary-text text-[11px] font-bold hover:underline transition-colors"
         >
           {t('actions.' + campaign.actionLabel)}
-        </button>
+        </Link>
       </div>
     </>
   );
