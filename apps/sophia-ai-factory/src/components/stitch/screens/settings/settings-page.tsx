@@ -42,11 +42,11 @@ export default function SettingsPage({
   const [activeTab, setActiveTab] = useState(initialTab);
 
   return (
-    <div className="min-h-screen bg-background dark:bg-[#090A10] text-foreground dark:text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border dark:border-white/[0.08] pb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-6">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-foreground dark:text-white">
+            <h1 className="text-3xl font-black tracking-tight text-foreground">
               Account & Workspace Settings
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
@@ -62,7 +62,7 @@ export default function SettingsPage({
           </Link>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border dark:border-white/[0.08] custom-scrollbar">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border custom-scrollbar">
           {NAV_TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -73,8 +73,8 @@ export default function SettingsPage({
                 className={cn(
                   'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap',
                   isActive
-                    ? 'bg-primary text-primary-foreground dark:bg-primary-600 dark:text-white shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/[0.06]',
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted',
                 )}
               >
                 <Icon className="w-4 h-4" />
@@ -89,15 +89,15 @@ export default function SettingsPage({
           {activeTab === 'security' && <SettingsSecuritySection />}
           {activeTab === 'apiKeys' && <ApiKeysManager />}
           {activeTab === 'storage' && (
-            <div className="bg-card dark:bg-[#11131F] rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-white/[0.08]">
+            <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border">
               <StorageSettingsForm />
             </div>
           )}
           {activeTab === 'usage' && (
-            <div className="bg-card dark:bg-[#11131F] rounded-2xl p-8 shadow-sm border border-border dark:border-white/[0.08] text-center space-y-4">
+            <div className="bg-card rounded-2xl p-8 shadow-sm border border-border text-center space-y-4">
               <BarChart3 className="w-10 h-10 text-primary mx-auto" />
               <div className="max-w-md mx-auto space-y-2">
-                <h3 className="text-lg font-bold text-foreground dark:text-white">Transparent Consumption Ledger</h3>
+                <h3 className="text-lg font-bold text-foreground">Transparent Consumption Ledger</h3>
                 <p className="text-xs text-muted-foreground">
                   Inspect granular video generation minutes, ElevenLabs synthesis, fal.ai diffusion calls, and LLM tokens.
                 </p>

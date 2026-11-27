@@ -20,25 +20,32 @@ export function ProvenanceChainClient({ workspaceId: _workspaceId }: { workspace
   const [derivatives, setDerivatives] = useState<ProvenanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [traced, setTraced] = useState(false);
+  const [traceError, setTraceError] = useState<string | null>(null);
 
   async function trace(e: React.FormEvent) {
     e.preventDefault();
     if (!assetId.trim()) return;
     setLoading(true);
     setTraced(true);
+    setTraceError(null);
     try {
       const url = new URL('/api/provenance', window.location.origin);
       url.searchParams.set('assetId', assetId.trim());
       url.searchParams.set('includeDerivatives', 'true');
       const res = await fetch(url);
-      const data = (await res.json()) as {
+      const data = (await res.json().catch(() => ({}))) as {
         chain?: ProvenanceRecord[];
         derivatives?: ProvenanceRecord[];
+        error?: string;
       };
       if (res.ok) {
         setRecords(data.chain ?? []);
         setDerivatives(data.derivatives ?? []);
+      } else {
+        setTraceError(data.error ?? `HTTP ${res.status}`);
       }
+    } catch (err) {
+      setTraceError(err instanceof Error ? err.message : 'Network error');
     } finally {
       setLoading(false);
     }
@@ -62,11 +69,16 @@ export function ProvenanceChainClient({ workspaceId: _workspaceId }: { workspace
               onChange={(e) => setAssetId(e.target.value)}
             />
           </div>
-          <Button type="submit" variant="primary">
+          <Button type="submit" variant="primary" disabled={loading}>
             <Search className="h-4 w-4" />
-            {t('create.submit')}
+            {loading ? '...' : t('create.submit')}
           </Button>
         </form>
+        {traceError ? (
+          <p role="alert" className="mt-3 text-xs font-medium text-destructive">
+            {traceError}
+          </p>
+        ) : null}
       </Card>
 
       <ProvenanceRecordsTable

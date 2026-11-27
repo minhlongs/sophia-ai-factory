@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/navigation';
 import type { SignupUser } from './admin-page-types';
 import { TIER_BADGE_STYLES } from './admin-page-types';
 
@@ -12,12 +13,12 @@ export function AdminSignupsTable({ signups }: { signups: SignupUser[] }) {
     <section aria-label={t('aria.recentSignups')} className="bg-surface-container border border-outline-variant rounded-2xl p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-bold text-on-surface">{t('users.title')}</h3>
-        <button
-          type="button"
+        <Link
+          href="/dashboard/admin/byok-rotation"
           className="text-xs font-bold text-primary hover:underline transition-colors"
         >
           {t('users.viewAll')}
-        </button>
+        </Link>
       </div>
 
       <div className="overflow-hidden">
