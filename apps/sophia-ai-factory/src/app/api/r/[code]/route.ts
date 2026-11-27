@@ -15,6 +15,7 @@ import { logClick } from '@/land/affiliate-shortlink/click-logger';
 import { createServerClient, getD1 } from '@/seed/db/client';
 import { evaluateAsnClickFraud } from '@/seed/security/asn-click-fraud-shield';
 import { isPreviewOrCrawlerBot } from '@/seed/security/bot-user-agent';
+import { encodeTamperEvidentSubId } from '@/seed/affiliate/subid-watermark-encoder';
 import {
   isPilotInviteOnlyEnabled,
   resolvePilotRefererOrigin,
@@ -123,7 +124,20 @@ export async function GET(
   }
 
   const clickId = crypto.randomUUID();
-  const tid = clickId.replace(/-/g, '').slice(0, 24);
+  const fallbackTid = clickId.replace(/-/g, '').slice(0, 24);
+  const hmacSecret = process.env.SUBID_HMAC_SECRET || process.env.BETTER_AUTH_SECRET || '';
+  const sanitizeSeg = (v: string | null | undefined, fb: string) =>
+    (v || fb).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 24) || fb;
+  const tid = hmacSecret
+    ? encodeTamperEvidentSubId(
+        {
+          campaignId: sanitizeSeg(offer.campaign_id, 'cmp'),
+          creatorId: sanitizeSeg(offer.user_id, 'usr'),
+          variantId: sanitizeSeg(code, fallbackTid.slice(0, 12)),
+        },
+        hmacSecret,
+      )
+    : fallbackTid;
   const subParam = getSubIdParam(offer.network || 'clickbank');
 
   let affiliateUrl: URL;
