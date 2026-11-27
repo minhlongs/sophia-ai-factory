@@ -6,10 +6,12 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const simpleModeCount = SOPHIA_STUDIO_CAPABILITIES.filter((c) => c.simpleModeVisible).length;
   const inspectorOnlyCount = SOPHIA_STUDIO_CAPABILITIES.length - simpleModeCount;
+  const rounds = SOPHIA_STUDIO_CAPABILITIES.map((c) => c.round);
+  const roundsCovered = `${Math.min(...rounds)}-${Math.max(...rounds)}`;
 
   return NextResponse.json({
     ok: true,
-    roundsCovered: '1-19',
+    roundsCovered,
     totalEngines: SOPHIA_STUDIO_CAPABILITIES.length,
     simpleModeCount,
     inspectorOnlyCount,
@@ -19,7 +21,6 @@ export async function GET() {
       category: c.category,
       status: c.status,
       simpleModeVisible: c.simpleModeVisible,
-      modulePath: c.modulePath,
     })),
   });
 }

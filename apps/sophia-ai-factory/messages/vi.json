@@ -7584,9 +7584,9 @@
         "signIn": "Đăng nhập",
         "startFree": "Dùng thử miễn phí",
         "getStarted": "Bắt Đầu",
-        "guide": "Guide",
-        "login": "Login",
-        "brand": "Brand"
+        "guide": "Hướng dẫn",
+        "login": "Đăng nhập",
+        "brand": "Thương hiệu"
       },
       "cta": {
         "startFree": "Chạy Thử Pilot Ngay",
@@ -7596,11 +7596,11 @@
         "readySubtitle": "Tạo workspace, kết nối khóa API BYOK của riêng bạn và chuẩn bị chiến dịch trước khi xuất bản. Mức giá gói và chi phí nhà cung cấp được hiển thị minh bạch trước khi bạn cam kết."
       },
       "trustBar": {
-        "label": "Cam kết kiến trúc",
-        "creators": "Chuỗi Bằng Chứng 7 Cấp Độ",
-        "videos": "Khóa Phê Duyệt SHA-256 • Sổ Cái Domain B 0% Phí",
-        "controlContent": "Control Content",
-        "controlCost": "Control Cost"
+        "label": "Cam kết minh bạch",
+        "creators": "Không cam kết lợi nhuận ảo",
+        "videos": "BYOK • Cổng phê duyệt trước khi đăng • Sổ cái minh bạch",
+        "controlContent": "Kiểm soát nội dung",
+        "controlCost": "Kiểm soát chi phí"
       },
       "footer": {
         "copyright": "© 2026 Sophia AI Factory. Tất cả quyền được bảo lưu.",
@@ -7622,11 +7622,11 @@
           "description": "Kết nối 10+ mạng lưới affiliate. Sophia tự động theo dõi hoa hồng."
         }
       },
-      "pricing": "Pricing",
-      "guide": "Guide",
-      "affiliates": "Affiliates",
-      "logIn": "Log In",
-      "getStarted": "Get Started",
+      "pricing": "Bảng giá",
+      "guide": "Hướng dẫn",
+      "affiliates": "Đối tác",
+      "logIn": "Đăng nhập",
+      "getStarted": "Bắt đầu ngay",
       "assemblyLine": {
         "title": "Dây Chuyền Sản Xuất Sáng Tạo Sophia",
         "subtitleIllustration": "Mô hình kiến trúc Isometric 5 trạm tương tác — chọn từng trạm để kiểm tra cơ chế quản trị & đối soát",
@@ -7697,6 +7697,30 @@
         "chatSophia2": "Đã khóa bản nháp ($0.00 phí) → Xác thực chữ ký SHA-256 → Đưa vào hàng đợi ElevenLabs + HeyGen & sổ cái Domain B 0% phí.",
         "ecosystemKicker": "03 / DÂY CHUYỀN 5 TRẠM & CHUỖI BẰNG CHỨNG 7 CẤP ĐỘ",
         "joinKicker": "04 / KHỞI TẠO WORKSPACE CỦA BẠN"
+      },
+      "videoShowcase": {
+        "kicker": "XEM DEMO THỰC TẾ",
+        "title": "Xem Sophia AI Factory vận hành trong 60 giây",
+        "subtitle": "Ba góc nhìn thực tế giúp CEO không rành kỹ thuật biến ý tưởng thành dây chuyền video AI tự động.",
+        "tablistLabel": "Chọn video demo Sophia AI Factory",
+        "cta": "Khởi tạo miễn phí",
+        "tabs": {
+          "glean-agents": {
+            "label": "Luồng Đa Agent",
+            "title": "Một lệnh điều hành — mở rộng thành luồng đa agent tự động",
+            "description": "Từ một ý tưởng đầu vào, Sophia tự động phân rã thành kịch bản, giọng đọc, dựng video và đối soát đa kênh."
+          },
+          "bolt-skills": {
+            "label": "Kỹ Năng Tái Dùng",
+            "title": "Biến quy trình lặp lại thành Skill dùng lại cho cả đội ngũ",
+            "description": "Đóng gói chuẩn thương hiệu, kịch bản và màu sắc thành mẫu cố định để gọi lại chỉ bằng một lệnh."
+          },
+          "voice-input": {
+            "label": "Ra Lệnh Giọng Nói",
+            "title": "Nói tự nhiên ý tưởng của bạn — Sophia lo phần còn lại",
+            "description": "Thiết kế cho CEO bận rộn: ra lệnh trực tiếp qua Telegram hoặc Web, không cần biết kỹ thuật."
+          }
+        }
       }
     },
     "settingsPage": {

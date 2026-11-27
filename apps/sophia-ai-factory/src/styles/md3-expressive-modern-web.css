@@ -11,8 +11,10 @@
  * - `font-variant-numeric: tabular-nums` for financial/EPC metrics
  */
 
-@view-transition {
-  navigation: auto;
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
 }
 
 :root {
@@ -88,11 +90,11 @@
 
 .md3-pill-button:hover:not(:disabled),
 .md3-nav-pill:hover {
-  background-color: var(--md-sys-state-hover);
+  background-image: linear-gradient(var(--md-sys-state-hover), var(--md-sys-state-hover));
 }
 
 .md3-pill-button:active:not(:disabled) {
-  background-color: var(--md-sys-state-pressed);
+  background-image: linear-gradient(var(--md-sys-state-pressed), var(--md-sys-state-pressed));
   transform: scale(0.97);
 }
 
@@ -111,5 +113,9 @@
   .md3-pill-button,
   .md3-nav-pill {
     transition: none;
+  }
+
+  .md3-pill-button:active:not(:disabled) {
+    transform: none;
   }
 }

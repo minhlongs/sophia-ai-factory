@@ -40,7 +40,7 @@ export function DashboardAdminNavLinks({
             onClick={onCloseMobile}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "md3-nav-pill relative flex items-center gap-3 px-4 py-2 text-xs border",
+              "md3-nav-pill relative flex items-center gap-3 px-4 py-2.5 min-h-[44px] text-xs border",
               active
                 ? "text-foreground dark:text-white bg-[var(--md-sys-color-primary-container)] border-primary/35 font-semibold"
                 : "text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/60 border-transparent",

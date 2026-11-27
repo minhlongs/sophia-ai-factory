@@ -4,7 +4,7 @@
  * Tab 2 — Media & Slide Studio (Carousel SVG Live Preview & Browser TTS Chunks).
  */
 
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { renderCarouselSlideSvg } from '@/seed/video/carousel-svg-builder';
 import { splitTextForTtsWorker } from '@/seed/video/browser-tts-device-probe';
 
@@ -18,20 +18,31 @@ export function WorkbenchTabMediaSlide({ locale }: { readonly locale: 'vi' | 'en
       : 'Never put raw links in TikTok captions. Use delayed first comments and edge ASN bot filtering.',
   );
 
+  const deferredHeadline = useDeferredValue(headline);
+  const deferredBody = useDeferredValue(body);
+
   const svgMarkup = useMemo(
     () =>
       renderCarouselSlideSvg({
         slideNumber: 1,
         totalSlides: 5,
-        headline,
-        body,
+        headline: deferredHeadline,
+        body: deferredBody,
         footerUrl: 'sophia.agencyos.network/r/demo',
         disclosureTag: '#ad #affiliate',
       }),
-    [headline, body],
+    [deferredHeadline, deferredBody],
   );
 
-  const ttsChunks = useMemo(() => splitTextForTtsWorker(`${headline}. ${body}`, 120), [headline, body]);
+  const svgDataUri = useMemo(
+    () => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`,
+    [svgMarkup],
+  );
+
+  const ttsChunks = useMemo(
+    () => splitTextForTtsWorker(`${deferredHeadline}. ${deferredBody}`, 120),
+    [deferredHeadline, deferredBody],
+  );
 
   function handleDownloadSvg() {
     const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
@@ -40,51 +51,53 @@ export function WorkbenchTabMediaSlide({ locale }: { readonly locale: 'vi' | 'en
     a.href = url;
     a.download = 'sophia-carousel-slide-1.svg';
     a.click();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <div className="space-y-3">
-        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
+        <label className="block text-xs font-medium text-muted-foreground">
           {locale === 'vi' ? 'Tiêu đề Slide Carousel' : 'Carousel Slide Headline'}
           <input
             type="text"
             value={headline}
             onChange={(e) => setHeadline(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
           />
         </label>
-        <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
+        <label className="block text-xs font-medium text-muted-foreground">
           {locale === 'vi' ? 'Nội dung chính' : 'Slide Body Copy'}
           <textarea
             rows={3}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
           />
         </label>
 
-        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 text-xs dark:border-slate-800 dark:bg-slate-900">
-          <span className="text-slate-500">
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card p-3 text-xs">
+          <span className="text-muted-foreground">
             {locale === 'vi'
-              ? `Browser TTS $0 GPU: ${ttsChunks.length} đoạn giọng đọc sẵn sàng`
-              : `Browser TTS $0 GPU: ${ttsChunks.length} voice chunks ready`}
+              ? `Giọng đọc trình duyệt $0: ${ttsChunks.length} đoạn sẵn sàng`
+              : `Browser Voiceover $0: ${ttsChunks.length} segments ready`}
           </span>
           <button
             type="button"
             onClick={handleDownloadSvg}
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 font-medium text-white hover:bg-indigo-700"
+            className="md3-pill-button min-h-[40px] bg-primary px-4 py-1.5 font-medium text-primary-foreground"
           >
-            {locale === 'vi' ? 'Tải Slide SVG' : 'Download SVG'}
+            {locale === 'vi' ? 'Tải Slide' : 'Download Slide'}
           </button>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-950 p-3 dark:border-slate-800">
-        <div
-          className="mx-auto aspect-[4/5] max-h-[340px] w-full [&>svg]:h-full [&>svg]:w-full"
-          dangerouslySetInnerHTML={{ __html: svgMarkup }}
+      <div className="overflow-hidden rounded-xl border border-border bg-card p-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={svgDataUri}
+          alt={locale === 'vi' ? 'Xem trước slide Carousel' : 'Carousel slide preview'}
+          className="mx-auto aspect-[4/5] max-h-[340px] w-full object-contain"
         />
       </div>
     </div>

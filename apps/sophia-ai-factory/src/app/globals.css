@@ -217,7 +217,7 @@
   --accent-foreground: #090A10;
 
   /* ── Feedback ─────────────────────────────────────────────────────────── */
-  --destructive: #F43F5E;
+  --destructive: #E11D48;
   --success: #10B981;
   --warning: #F59E0B;
   --info: #22D3EE;
@@ -897,7 +897,7 @@ html {
 }
 
 .focus-ring {
-  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/60;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

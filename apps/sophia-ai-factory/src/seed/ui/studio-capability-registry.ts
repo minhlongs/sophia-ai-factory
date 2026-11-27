@@ -60,7 +60,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     },
     kpiLabel: { vi: 'Ma trận luật', en: 'Rule Matrix' },
     kpiValue: '4-Axis',
-    routeHref: '/dashboard/pilot-studio',
+    routeHref: '/dashboard/engines',
     modulePath: 'seed/compliance/policy-preflight-engine.ts',
     inspectorFields: [
       { key: 'scope', label: { vi: 'Phạm vi', en: 'Coverage' }, value: 'FTC / FCA / MiCA / VN', tone: 'success' },
@@ -81,7 +81,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     },
     kpiLabel: { vi: 'Chi phí GPU', en: 'GPU COGS' },
     kpiValue: '$0',
-    routeHref: '/dashboard/pilot-studio',
+    routeHref: '/dashboard/engines',
     modulePath: 'seed/video/webcodecs-timeline-spec.ts',
     inspectorFields: [
       { key: 'fps', label: { vi: 'Khung hình', en: 'Framerate' }, value: '30 fps / 1080x1920', tone: 'success' },
@@ -102,7 +102,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     },
     kpiLabel: { vi: 'Ngưỡng đạt', en: 'Pass Threshold' },
     kpiValue: '75/100',
-    routeHref: '/dashboard/pilot-studio',
+    routeHref: '/dashboard/engines',
     modulePath: 'seed/ai/hook-beat-evaluator.ts',
     inspectorFields: [
       { key: 'window', label: { vi: 'Khung đo', en: 'Window' }, value: '0.0s – 3.0s', tone: 'neutral' },
@@ -123,7 +123,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     },
     kpiLabel: { vi: 'Thuật toán', en: 'Algorithm' },
     kpiValue: 'Beta-Bernoulli',
-    routeHref: '/dashboard/analytics',
+    routeHref: '/dashboard/engines',
     modulePath: 'seed/ai/thompson-bandit-engine.ts',
     inspectorFields: [
       { key: 'objective', label: { vi: 'Mục tiêu', en: 'Objective' }, value: 'Maximize EPC', tone: 'success' },
@@ -202,7 +202,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     },
     kpiLabel: { vi: 'Kênh xuất', en: 'Channels' },
     kpiValue: '5+ Formats',
-    routeHref: '/dashboard/pilot-studio',
+    routeHref: '/dashboard/engines',
     modulePath: 'seed/ai/content-atomizer.ts',
     inspectorFields: [
       { key: 'pack', label: { vi: 'Đầu ra', en: 'Output' }, value: 'CapCut + Social Pack', tone: 'success' },
@@ -222,7 +222,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     },
     kpiLabel: { vi: 'Khám phá AI', en: 'Agent Discovery' },
     kpiValue: 'agent.json',
-    routeHref: '/dashboard/pilot-studio',
+    routeHref: '/dashboard/engines',
     modulePath: 'seed/aeo/autogeo-citation-rules.ts',
     inspectorFields: [
       { key: 'agent', label: { vi: 'Manifest', en: 'Manifest' }, value: '/.well-known/agent.json', tone: 'success' },
@@ -395,7 +395,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     },
     kpiLabel: { vi: 'Độ nhạy', en: 'Sensitivity' },
     kpiValue: 'Z ≤ -2.0',
-    routeHref: '/dashboard/analytics',
+    routeHref: '/dashboard/engines',
     modulePath: 'seed/analytics/epc-anomaly-detector.ts',
     inspectorFields: [
       { key: 'signal', label: { vi: 'Tín hiệu', en: 'Signal' }, value: 'Rolling EPC Z-Score', tone: 'warning' },

@@ -5,7 +5,7 @@
  * Calls pure Round 1–19 `seed/*` engines directly in-browser (0ms, $0 COGS).
  */
 
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import {
   runPolicyPreflight,
   type ComplianceJurisdiction,
@@ -21,20 +21,21 @@ export function WorkbenchTabScriptPolicy({ locale }: { readonly locale: 'vi' | '
   const [script, setScript] = useState(DEFAULT_SCRIPT);
   const [platform, setPlatform] = useState<CompliancePlatform>('tiktok');
   const [jurisdiction, setJurisdiction] = useState<ComplianceJurisdiction>('VN');
+  const deferredScript = useDeferredValue(script);
 
   const result = useMemo(() => {
     const policy = runPolicyPreflight({
-      text: script,
+      text: deferredScript,
       platform,
       jurisdiction,
       vertical: 'crypto',
       provider: 'browser_mp4',
     });
-    const hook = evaluateHookAndBeatPacing(script);
-    const sentences = script.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean);
+    const hook = evaluateHookAndBeatPacing(deferredScript);
+    const sentences = deferredScript.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean);
     const atomized = atomizeScriptForOmnichannel({
       script: {
-        title: sentences[0] ?? script.slice(0, 60),
+        title: sentences[0] ?? deferredScript.slice(0, 60),
         total_duration: Math.max(15, sentences.length * 5),
         scenes: sentences.map((narration, index) => ({
           scene_number: index + 1,
@@ -45,20 +46,20 @@ export function WorkbenchTabScriptPolicy({ locale }: { readonly locale: 'vi' | '
       },
       ctaText: locale === 'vi' ? 'Xem link ở bình luận đầu tiên' : 'Link in first comment',
       shortUrl: 'https://sophia.agencyos.network/r/demo',
-      disclosureTag: locale === 'vi' ? '#ad #affiliate' : '#ad #affiliate',
+      disclosureTag: '#ad #affiliate',
     });
     return { policy, hook, atomized };
-  }, [script, platform, jurisdiction, locale]);
+  }, [deferredScript, platform, jurisdiction, locale]);
 
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           {locale === 'vi' ? 'Nền tảng phát hành' : 'Target Platform'}
           <select
             value={platform}
             onChange={(e) => setPlatform(e.target.value as CompliancePlatform)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
           >
             <option value="tiktok">TikTok</option>
             <option value="youtube_shorts">YouTube Shorts</option>
@@ -66,12 +67,12 @@ export function WorkbenchTabScriptPolicy({ locale }: { readonly locale: 'vi' | '
             <option value="facebook_reels">Facebook Reels</option>
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+        <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
           {locale === 'vi' ? 'Thị trường pháp lý' : 'Legal Market'}
           <select
             value={jurisdiction}
             onChange={(e) => setJurisdiction(e.target.value as ComplianceJurisdiction)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
           >
             <option value="VN">Vietnam (VN)</option>
             <option value="US">United States (FTC)</option>
@@ -86,45 +87,46 @@ export function WorkbenchTabScriptPolicy({ locale }: { readonly locale: 'vi' | '
         rows={4}
         value={script}
         onChange={(e) => setScript(e.target.value)}
-        className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+        aria-label={locale === 'vi' ? 'Kịch bản video cần kiểm tra' : 'Video script to check'}
+        className="w-full rounded-xl border border-border bg-background p-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         placeholder={locale === 'vi' ? 'Dán kịch bản video vào đây...' : 'Paste your video script here...'}
       />
 
       <div className="grid gap-3 md:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <div className="text-xs font-medium text-slate-500">
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="text-xs font-medium text-muted-foreground">
             {locale === 'vi' ? 'Kiểm duyệt Luật 4-Axis' : '4-Axis Policy Preflight'}
           </div>
-          <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
+          <div className="mt-1 text-lg font-semibold text-foreground">
             {result.policy.warnings.length === 0 ? 'PASS' : `${result.policy.warnings.length} WARNINGS`}
           </div>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             {locale === 'vi'
               ? `Tự chuẩn hóa ${result.policy.replacedCount} cụm từ • ${result.policy.appliedRules.length} luật áp dụng`
               : `Sanitized ${result.policy.replacedCount} phrases • ${result.policy.appliedRules.length} rules applied`}
           </p>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <div className="text-xs font-medium text-slate-500">
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="text-xs font-medium text-muted-foreground">
             {locale === 'vi' ? 'Điểm 3 Giây Mở Đầu (Hook)' : '3-Second Hook Score'}
           </div>
-          <div className="mt-1 text-lg font-semibold text-indigo-600 dark:text-indigo-400">
+          <div className="md3-tabular-nums mt-1 text-lg font-semibold text-primary-text">
             {result.hook.weightedScore100}/100 ({result.hook.estimatedHookSec.toFixed(1)}s)
           </div>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             {locale === 'vi' ? 'Trigger:' : 'Trigger:'} <span className="font-mono">{result.hook.detectedTrigger}</span>
           </p>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <div className="text-xs font-medium text-slate-500">
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="text-xs font-medium text-muted-foreground">
             {locale === 'vi' ? 'Tách Đa Kênh (Atomizer)' : 'Omnichannel Atomizer'}
           </div>
-          <div className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+          <div className="md3-tabular-nums mt-1 text-lg font-semibold text-emerald-700 dark:text-emerald-400">
             {result.atomized.xThread.length} X posts + TG + Reddit
           </div>
-          <p className="mt-1 line-clamp-2 text-xs text-slate-500">
+          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
             {result.atomized.telegramPost}
           </p>
         </div>

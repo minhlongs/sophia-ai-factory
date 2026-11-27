@@ -47,11 +47,11 @@ export function Md3MetricTile({
 }) {
   const valueClass =
     tone === 'primary'
-      ? 'text-primary'
+      ? 'text-primary-text'
       : tone === 'success'
-        ? 'text-emerald-500'
+        ? 'text-emerald-700 dark:text-emerald-400'
         : tone === 'warning'
-          ? 'text-amber-500'
+          ? 'text-amber-700 dark:text-amber-400'
           : 'text-foreground';
 
   return (
@@ -85,7 +85,7 @@ export function Md3SegmentedGroup<T extends string>({
   return (
     <nav
       aria-label={ariaLabel}
-      className="flex flex-wrap gap-2 rounded-[24px] bg-[var(--md-sys-color-surface-container-lowest)] p-1.5 border border-border"
+      className="flex flex-wrap gap-2 rounded-[var(--md-sys-shape-corner-extra-large)] bg-[var(--md-sys-color-surface-container-lowest)] p-1.5 border border-border"
     >
       {options.map((opt) => {
         const active = opt.id === value;
@@ -96,7 +96,7 @@ export function Md3SegmentedGroup<T extends string>({
             aria-current={active ? 'step' : undefined}
             onClick={() => onChange(opt.id)}
             className={cn(
-              'md3-pill-button inline-flex flex-1 min-w-[140px] items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold',
+              'md3-pill-button inline-flex flex-1 min-w-[140px] min-h-[44px] items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold',
               active
                 ? 'bg-[var(--md-sys-color-primary-container)] text-foreground border border-primary/40 shadow-sm'
                 : 'text-muted-foreground hover:text-foreground border border-transparent',
