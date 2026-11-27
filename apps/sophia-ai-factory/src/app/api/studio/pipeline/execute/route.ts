@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getD1 } from '@/seed/db/client';
+import { resolveOrgId } from '@/seed/auth/workspace-access';
+import { getWorkspaceROI } from '@/tree/roi';
 import {
   DEFAULT_LIVE_PIPELINE_INPUT,
   runAll34EnginesSnapshot,
@@ -56,12 +60,32 @@ export async function POST(request: Request) {
     );
   }
 
+  // Hydrate grossUsd from real D1 workspace ROI when authenticated and not explicitly overridden
+  let liveGrossUsd: number | undefined;
+  let telemetrySource: 'live_d1' | 'default_sample' = 'default_sample';
+  if (parsed.data.grossUsd === undefined) {
+    try {
+      const user = await getCurrentUser();
+      const db = user ? await getD1() : null;
+      const workspaceId = user && db ? await resolveOrgId(user.id, db) : null;
+      if (workspaceId) {
+        const roi = await getWorkspaceROI(workspaceId);
+        if (roi && roi.totalRevenueCents > 0) {
+          liveGrossUsd = Math.round((roi.totalRevenueCents / 100) * 100) / 100;
+          telemetrySource = 'live_d1';
+        }
+      }
+    } catch {
+      // Graceful fallback to sample input when unauthenticated or D1 unavailable
+    }
+  }
+
   const input: LivePipelineInput = {
     script: parsed.data.script ?? DEFAULT_LIVE_PIPELINE_INPUT.script,
     platform: parsed.data.platform ?? DEFAULT_LIVE_PIPELINE_INPUT.platform,
     jurisdiction: parsed.data.jurisdiction ?? DEFAULT_LIVE_PIPELINE_INPUT.jurisdiction,
     country: parsed.data.country ?? DEFAULT_LIVE_PIPELINE_INPUT.country,
-    grossUsd: parsed.data.grossUsd ?? DEFAULT_LIVE_PIPELINE_INPUT.grossUsd,
+    grossUsd: parsed.data.grossUsd ?? liveGrossUsd ?? DEFAULT_LIVE_PIPELINE_INPUT.grossUsd,
     postsToday: parsed.data.postsToday ?? DEFAULT_LIVE_PIPELINE_INPUT.postsToday,
   };
 
@@ -194,6 +218,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     executedAt: new Date().toISOString(),
+    telemetrySource,
     totalEngines: results.length,
     results,
   });
