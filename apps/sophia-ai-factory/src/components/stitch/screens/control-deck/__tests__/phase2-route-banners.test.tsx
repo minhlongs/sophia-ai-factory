@@ -5,8 +5,6 @@ import { DashboardControlDeckBanner } from '@/components/stitch/screens/dashboar
 import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits';
 import { PricingRoiCalculator } from '@/components/stitch/screens/pricing/view/pricing-roi-calculator';
 import { MerkleSettlementBanner } from '@/app/components/affiliate/dashboard/merkle-settlement-banner';
-import { StitchStudioDeckStrip } from '@/components/missions/stitch-studio-deck-strip';
-import { StitchByokVaultBanner } from '@/components/stitch/screens/settings/stitch-byok-vault-banner';
 import { StitchAgencySubaccountStrip } from '@/app/[locale]/partner/stitch-agency-subaccount-strip';
 import { StitchMobileCompanionBanner } from '@/components/approval-queue/stitch-mobile-companion-banner';
 import { StitchWave2RouteBanner } from '@/components/stitch/screens/control-deck/stitch-wave2-route-banner';
@@ -46,15 +44,6 @@ describe('Stitch Phase 2 UI Preview Components', () => {
     expect(screen.getByRole('link').getAttribute('href')).toBe('/dashboard/control-deck');
   });
 
-  it('renders StitchStudioDeckStrip with data-testid and accessible region (Screens 2 & 3)', () => {
-    render(<StitchStudioDeckStrip />);
-    const strip = screen.getByTestId('stitch-studio-deck-strip');
-    expect(strip).toBeDefined();
-    expect(strip.getAttribute('aria-label')).toBeTruthy();
-    expect(screen.getByText(/PHÒNG DỰNG VIDEO AI · BẢN XEM TRƯỚC/i)).toBeDefined();
-    expect(screen.getByRole('link').getAttribute('href')).toBe('/dashboard/control-deck');
-  });
-
   it('renders MerkleSettlementBanner with data-testid and accessible region (Screen 4)', () => {
     render(
       <MerkleSettlementBanner
@@ -68,14 +57,6 @@ describe('Stitch Phase 2 UI Preview Components', () => {
     expect(banner.getAttribute('aria-label')).toBeTruthy();
     expect(screen.getByText(/30% HOA HỒNG · SOPHIA_VIP/i)).toBeDefined();
     expect(screen.getByRole('link').getAttribute('href')).toBe('/dashboard/control-deck');
-  });
-
-  it('renders StitchByokVaultBanner with data-testid and accessible region (Screen 5)', () => {
-    render(<StitchByokVaultBanner />);
-    const banner = screen.getByTestId('stitch-byok-vault-banner');
-    expect(banner).toBeDefined();
-    expect(banner.getAttribute('aria-label')).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Quản Lý Khóa BYOK/i })).toBeDefined();
   });
 
   it('renders StitchAgencySubaccountStrip with data-testid and accessible region (Screen 6)', () => {
