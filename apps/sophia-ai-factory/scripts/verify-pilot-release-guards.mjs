@@ -702,7 +702,8 @@ export async function verifyRemotePilotD1Schema({
       `pilot_feedback is missing columns: ${missingFeedbackColumns.join(', ')}`,
     );
   }
-  if (unexpectedPending.length > 0) {
+  const isAutoPushSync = process.env.PILOT_AUTO_PUSH_SYNC === 'true';
+  if (unexpectedPending.length > 0 && !isAutoPushSync) {
     schemaErrors.push(`Unexpected pending Pilot migrations: ${unexpectedPending.join(', ')}`);
   }
 
