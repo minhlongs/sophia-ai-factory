@@ -49,6 +49,12 @@ export function PilotWorkspaceShell({ email, isVi, children }: PilotWorkspaceShe
             aria-label={isVi ? 'Điều hướng nhanh' : 'Top utility navigation'}
             className="flex items-center gap-3 text-xs"
           >
+            <Link
+              href="/dashboard/engines"
+              className="rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+            >
+              {isVi ? '⚡ Xưởng 19 Động Cơ' : '⚡ 19 Engines Workbench'}
+            </Link>
             <Link href="/privacy" className="hidden text-muted-foreground hover:text-foreground sm:inline">
               {isVi ? 'Bảo mật' : 'Privacy'}
             </Link>
