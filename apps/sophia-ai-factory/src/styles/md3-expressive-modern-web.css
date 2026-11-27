@@ -5,7 +5,7 @@
  * `--card`) with official MD3 Expressive tonal elevation, shape scale, spring
  * motion physics, and Baseline Web Platform features (`color-mix()`,
  * `content-visibility: auto`, `interpolate-size: allow-keywords`,
- * `prefers-reduced-motion`).
+ * `prefers-reduced-motion`, `:focus-visible`).
  *
  * References:
  * - https://m3.material.io/
@@ -18,7 +18,7 @@
   --md-sys-shape-corner-medium: 0.75rem;     /* 12px */
   --md-sys-shape-corner-large: 1rem;         /* 16px */
   --md-sys-shape-corner-extra-large: 1.75rem; /* 28px — MD3 Expressive cards/dialogs */
-  --md-sys-shape-corner-full: 9999px;        /* Pill buttons & chips */
+  --md-sys-shape-corner-full: 9999px;        /* Pill buttons, chips & nav drawers */
 
   /* MD3 Expressive Spring Motion */
   --md-sys-motion-easing-expressive: cubic-bezier(0.38, 1.21, 0.22, 1);
@@ -36,6 +36,12 @@
   interpolate-size: allow-keywords;
 }
 
+/* Modern Web Guidance + WCAG AA: crisp keyboard focus ring across all interactive elements */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 .md3-surface-card {
   background-color: var(--md-sys-color-surface-container-low);
   border-radius: var(--md-sys-shape-corner-extra-large);
@@ -46,18 +52,20 @@
     background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
 }
 
-.md3-pill-button {
+.md3-pill-button,
+.md3-nav-pill {
   border-radius: var(--md-sys-shape-corner-full);
   transition:
     transform var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-expressive),
-    background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
+    background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
+    color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
 }
 
 .md3-pill-button:active {
   transform: scale(0.97);
 }
 
-/* Modern Web Guidance: defer offscreen rendering for long technical sections */
+/* Modern Web Guidance: defer offscreen rendering for below-the-fold sections */
 .mwg-offscreen-section {
   content-visibility: auto;
   contain-intrinsic-size: auto 320px;
@@ -65,7 +73,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .md3-surface-card,
-  .md3-pill-button {
+  .md3-pill-button,
+  .md3-nav-pill {
     transition: none;
   }
 }

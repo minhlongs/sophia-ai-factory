@@ -34,7 +34,11 @@ export default async function Home({
 
   return (
     <LandingHero
-      beforeFooterSlot={<DualReadPageSection payload={aeoPayload} />}
+      beforeFooterSlot={
+        <div className="mwg-offscreen-section">
+          <DualReadPageSection payload={aeoPayload} />
+        </div>
+      }
     />
   );
 }
