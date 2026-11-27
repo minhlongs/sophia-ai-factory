@@ -8,6 +8,7 @@
 
 import React from "react";
 import { Bell, Globe } from "lucide-react";
+import { Link } from "@/navigation";
 import { ThemeToggle } from "@/forest/components/theme-toggle";
 
 export interface DashboardTopBarActionsProps {
@@ -47,43 +48,44 @@ export function DashboardTopBarActions({
       <ThemeToggle />
 
       {/* Notification Bell with Unread Badge */}
-      <button
-        type="button"
-        className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/60 dark:hover:bg-white/[0.05] border border-transparent hover:border-border dark:hover:border-white/[0.08] transition-all"
+      <Link
+        href="/dashboard/first-value"
+        className="relative inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 border border-transparent hover:border-border transition-colors"
         aria-label="Notifications"
         data-testid="notification-button"
       >
         <Bell className="w-4 h-4" />
         {unreadNotificationCount > 0 && (
           <span
-            className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive dark:bg-rose-700 text-[9px] font-mono font-bold text-white shadow-sm ring-2 ring-background"
+            className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[9px] font-mono font-bold text-destructive-foreground shadow-sm ring-2 ring-background"
             data-testid="unread-notification-badge"
           >
             {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
           </span>
         )}
-      </button>
+      </Link>
 
       {/* Divider */}
-      <div className="h-6 w-[1px] bg-border dark:bg-white/[0.08] hidden sm:block" />
+      <div className="h-6 w-[1px] bg-border hidden sm:block" />
 
       {/* High-Contrast User Profile Header */}
-      <div
-        className="flex items-center gap-3 pl-1 sm:pl-2"
+      <Link
+        href="/dashboard/settings"
+        className="flex items-center gap-3 pl-1 sm:pl-2 rounded-full hover:opacity-90 transition-opacity"
         data-testid="topbar-user-profile"
       >
         <div className="text-right hidden sm:block">
-          <p className="text-xs font-semibold text-foreground dark:text-white leading-tight">
+          <p className="text-xs font-semibold text-foreground leading-tight">
             {userName}
           </p>
           <span className="inline-block text-[9px] font-mono font-bold uppercase tracking-wider text-primary-text px-1.5 py-0.2 bg-primary/10 rounded border border-primary/20">
             {userRole}
           </span>
         </div>
-        <div className="w-8 h-8 rounded-full bg-primary/20 text-primary-text border border-primary/30 flex items-center justify-center font-bold text-xs ring-1 ring-border dark:ring-white/10 shrink-0">
+        <div className="w-8 h-8 rounded-full bg-primary/20 text-primary-text border border-primary/30 flex items-center justify-center font-bold text-xs ring-1 ring-border shrink-0">
           {userInitials}
         </div>
-      </div>
+      </Link>
     </div>
   );
 }

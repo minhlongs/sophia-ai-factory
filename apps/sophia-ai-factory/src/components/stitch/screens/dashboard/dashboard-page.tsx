@@ -79,14 +79,14 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <Button
             variant="outline"
-            href="/dashboard/campaigns"
+            href="/dashboard/first-value"
             iconLeft={<Download className="w-4 h-4 shrink-0" />}
             className="whitespace-nowrap"
           >
             {t('actions.exportData')}
           </Button>
           <Button
-            href="/dashboard/affiliates"
+            href="/dashboard/monetization"
             iconLeft={<Plus className="w-4 h-4 shrink-0" />}
             className="whitespace-nowrap"
           >

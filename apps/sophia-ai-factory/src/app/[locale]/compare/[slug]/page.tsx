@@ -181,7 +181,7 @@ export default async function ProgrammaticComparisonPage({
 
         <div className="flex flex-wrap gap-3 pt-2">
           <Link
-            href="/?tab=signup"
+            href="/register"
             className="md3-pill-button bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm"
           >
             {isVi ? 'Chạy Thử Pilot Ngay ($0 RaaS)' : 'Launch Free Pilot Now ($0 RaaS)'}

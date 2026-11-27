@@ -34,7 +34,7 @@ export function MarketingFooterLinkColumns() {
             </Link>
           </li>
           <li>
-            <Link href="/affiliates" className="text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors">
+            <Link href="/affiliate" className="text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors">
               {tNav('affiliates')}
             </Link>
           </li>

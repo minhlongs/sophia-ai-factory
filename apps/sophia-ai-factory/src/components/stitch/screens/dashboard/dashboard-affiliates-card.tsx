@@ -22,7 +22,7 @@ export function DashboardAffiliatesCard({ affiliates }: DashboardAffiliatesCardP
             {t('topAffiliates.title')}
           </h4>
           {affiliates.length > 0 && (
-            <Link href="/affiliates">
+            <Link href="/dashboard/monetization">
               <Button variant="ghost" size="sm" className="text-primary">
                 {t('topAffiliates.viewAll')}
               </Button>
@@ -42,7 +42,7 @@ export function DashboardAffiliatesCard({ affiliates }: DashboardAffiliatesCardP
             <p className="text-xs text-muted-foreground max-w-xs mb-lg">
               {t('topAffiliates.emptyDesc')}
             </p>
-            <Link href="/affiliates">
+            <Link href="/dashboard/monetization">
               <Button size="sm" variant="outline" iconLeft={<Compass className="w-4 h-4" />}>
                 {t('topAffiliates.discover')}
               </Button>
@@ -70,7 +70,7 @@ export function DashboardAffiliatesCard({ affiliates }: DashboardAffiliatesCardP
               ))}
             </div>
             <div className="mt-lg pt-lg border-t border-border dark:border-white/[0.08]">
-              <Link href="/affiliates">
+              <Link href="/dashboard/monetization">
                 <Button variant="outline" fullWidth>
                   {t('topAffiliates.invite')}
                 </Button>
