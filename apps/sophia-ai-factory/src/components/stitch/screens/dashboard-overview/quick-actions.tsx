@@ -9,33 +9,36 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/navigation';
 
 export function QuickActions() {
   const t = useTranslations('stitch.dashboardOverview');
 
   return (
     <section aria-label={t('aria.quickActions')} className="space-y-4">
-      <h3 className="text-lg font-bold text-white mb-4 px-1">
+      <h3 className="text-lg font-bold text-foreground mb-4 px-1">
         {t('quickActions.title')}
       </h3>
 
-      <button
+      <Link
+        href="/dashboard/first-value"
         className="w-full flex items-center justify-between p-4 bg-primary/10 border border-primary/20 rounded-xl hover:bg-primary/20 transition-all group text-left"
         aria-label={t('quickActions.createCampaign')}
       >
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-            <PlusCircle className="w-5 h-5 text-white" aria-hidden="true" />
+            <PlusCircle className="w-5 h-5 text-primary-foreground" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-white font-bold">{t('quickActions.createCampaign')}</p>
-            <p className="text-xs text-primary/80">{t('quickActions.createCampaignDesc')}</p>
+            <p className="text-foreground font-bold">{t('quickActions.createCampaign')}</p>
+            <p className="text-xs text-primary-text">{t('quickActions.createCampaignDesc')}</p>
           </div>
         </div>
         <ChevronRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" aria-hidden="true" />
-      </button>
+      </Link>
 
-      <button
+      <Link
+        href="/dashboard/engines"
         className="w-full flex items-center justify-between p-4 bg-surface-container border border-outline-variant/10 rounded-xl hover:bg-surface-container-high transition-all group text-left"
         aria-label={t('quickActions.viewAnalytics')}
       >
@@ -44,14 +47,15 @@ export function QuickActions() {
             <BarChart className="w-5 h-5 text-on-surface-variant" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-white font-bold">{t('quickActions.viewAnalytics')}</p>
+            <p className="text-foreground font-bold">{t('quickActions.viewAnalytics')}</p>
             <p className="text-xs text-on-surface-variant">{t('quickActions.viewAnalyticsDesc')}</p>
           </div>
         </div>
         <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:translate-x-1 transition-transform" aria-hidden="true" />
-      </button>
+      </Link>
 
-      <button
+      <Link
+        href="/dashboard/monetization"
         className="w-full flex items-center justify-between p-4 bg-surface-container border border-outline-variant/10 rounded-xl hover:bg-surface-container-high transition-all group text-left"
         aria-label={t('quickActions.generateReport')}
       >
@@ -60,14 +64,15 @@ export function QuickActions() {
             <FileText className="w-5 h-5 text-on-surface-variant" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-white font-bold">{t('quickActions.generateReport')}</p>
+            <p className="text-foreground font-bold">{t('quickActions.generateReport')}</p>
             <p className="text-xs text-on-surface-variant">{t('quickActions.generateReportDesc')}</p>
           </div>
         </div>
         <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:translate-x-1 transition-transform" aria-hidden="true" />
-      </button>
+      </Link>
 
-      <button
+      <Link
+        href="/dashboard/settings"
         className="w-full flex items-center justify-between p-4 bg-surface-container border border-outline-variant/10 rounded-xl hover:bg-surface-container-high transition-all group text-left"
         aria-label={t('quickActions.inviteTeam')}
       >
@@ -76,12 +81,12 @@ export function QuickActions() {
             <UserPlus className="w-5 h-5 text-on-surface-variant" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-white font-bold">{t('quickActions.inviteTeam')}</p>
+            <p className="text-foreground font-bold">{t('quickActions.inviteTeam')}</p>
             <p className="text-xs text-on-surface-variant">{t('quickActions.inviteTeamDesc')}</p>
           </div>
         </div>
         <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:translate-x-1 transition-transform" aria-hidden="true" />
-      </button>
+      </Link>
 
       {/* Storage Usage */}
       <div className="mt-8 p-6 bg-surface-container-low border border-outline-variant/5 rounded-2xl">
