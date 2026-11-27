@@ -64,6 +64,7 @@ function isIntrospectAuthorized(request: NextRequest, env: CloudflareEnv): boole
 // staleness signal for the typical caller (uptime probes + load balancers).
 const PUBLIC_CACHE_HEADERS = {
   "Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=120",
+  "Vary": "Authorization",
 } as const;
 
 export async function GET(request: NextRequest): Promise<Response> {
@@ -80,7 +81,9 @@ export async function GET(request: NextRequest): Promise<Response> {
       commitSha,
       branch: env.DEPLOY_BRANCH ?? "unknown",
     };
-    return NextResponse.json(fullBody);
+    return NextResponse.json(fullBody, {
+      headers: { "Cache-Control": "no-store", "Vary": "Authorization" },
+    });
   }
 
   // Anonymous path — bypass `caches.default` in OpenNext Workers runtime.

@@ -19,7 +19,7 @@ export interface LandingPreflightReport {
 }
 
 const DISCLOSURE_REGEX =
-  /\b(?:affiliate\s+disclosure|paid\s+partnership|commission\s+at\s+no\s+extra\s+cost|#ad|#affiliate|liên\s+kết\s+tiếp\s+thị|hoa\s+hồng\s+tiếp\s+thị)\b/i;
+  /(?<![\p{L}\p{N}_])(?:affiliate\s+disclosure|paid\s+partnership|commission\s+at\s+no\s+extra\s+cost|#ad|#affiliate|liên\s+kết\s+tiếp\s+thị|hoa\s+hồng\s+tiếp\s+thị)(?![\p{L}\p{N}_])/iu;
 
 export function lintAffiliateLandingHtml(html: string): LandingPreflightReport {
   const findings: string[] = [];
@@ -43,7 +43,11 @@ export function lintAffiliateLandingHtml(html: string): LandingPreflightReport {
     findings.push('Missing Schema.org JSON-LD structured data');
   }
 
-  const hasBlockingScriptInHead = /<head[\s\S]*?<script(?![^>]*(?:async|defer|type=["']application\/ld\+json["']))[^>]*src=/i.test(html);
+  const headContent = html.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i)?.[1] ?? '';
+  const hasBlockingScriptInHead =
+    /<script(?![^>]*(?:async|defer|type=["'](?:application\/ld\+json|module)["']))[^>]*\bsrc=/i.test(
+      headContent,
+    );
   if (hasBlockingScriptInHead) {
     score -= 15;
     findings.push('Render-blocking <script src> detected inside <head>');

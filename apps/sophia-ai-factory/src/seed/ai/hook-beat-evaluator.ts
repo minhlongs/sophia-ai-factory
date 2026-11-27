@@ -34,12 +34,12 @@ export interface HookBeatEvaluation {
 const WORDS_PER_SECOND_165_WPM = 165 / 60; // 2.75 words/sec
 
 const TRIGGER_PATTERNS: ReadonlyArray<readonly [EmotionalHookTrigger, RegExp]> = [
-  ['stat_data', /\b\d+%|\$\d+|\b\d+x\b|\b\d+\s*(?:minutes|seconds|days|giây|phút|ngày)\b/i],
-  ['contrast_enemy', /\b(?:stop|don't|never|mistake|trap|đừng|sai lầm|bỏ ngay|đang mất)\b/i],
-  ['curiosity', /\b(?:secret|why|how|what if|nobody tells|bí mật|tại sao|ít ai biết)\b/i],
-  ['fomo_urgency', /\b(?:today|now|2026|before|limited|ngay hôm nay|trước khi|kẻo lỡ)\b/i],
-  ['call_out', /\b(?:if you|traders|founders|creators|nếu bạn|dành cho|anh em)\b/i],
-  ['story_result', /\b(?:i tested|after|switched|result|mình đã thử|sau khi|kết quả)\b/i],
+  ['stat_data', /(?<![\p{L}\p{N}_])\d+%|\$\d+|(?<![\p{L}\p{N}_])\d+x(?![\p{L}\p{N}_])|(?<![\p{L}\p{N}_])\d+\s*(?:minutes|seconds|days|giây|phút|ngày)(?![\p{L}\p{N}_])/iu],
+  ['contrast_enemy', /(?<![\p{L}\p{N}_])(?:stop|don't|never|mistake|trap|đừng|sai lầm|bỏ ngay|đang mất)(?![\p{L}\p{N}_])/iu],
+  ['curiosity', /(?<![\p{L}\p{N}_])(?:secret|why|how|what if|nobody tells|bí mật|tại sao|ít ai biết)(?![\p{L}\p{N}_])/iu],
+  ['fomo_urgency', /(?<![\p{L}\p{N}_])(?:today|now|2026|before|limited|ngay hôm nay|trước khi|kẻo lỡ)(?![\p{L}\p{N}_])/iu],
+  ['call_out', /(?<![\p{L}\p{N}_])(?:if you|traders|founders|creators|nếu bạn|dành cho|anh em)(?![\p{L}\p{N}_])/iu],
+  ['story_result', /(?<![\p{L}\p{N}_])(?:i tested|after|switched|result|mình đã thử|sau khi|kết quả)(?![\p{L}\p{N}_])/iu],
 ];
 
 export function evaluateHookAndBeatPacing(scriptText: string): HookBeatEvaluation {
@@ -68,11 +68,13 @@ export function evaluateHookAndBeatPacing(scriptText: string): HookBeatEvaluatio
     warnings.push('HOOK_MISSING_EMOTIONAL_TRIGGER');
   }
 
-  // Weighted 8-dimension heuristic floor score (max 100)
-  let score = 55;
+  // Weighted 8-dimension heuristic floor score (max 100); empty script scores 0
+  let score = hookWordCount === 0 ? 0 : 55;
   if (hookWordCount >= 4 && !hookExceeds3s) score += 20;
   if (detectedTrigger !== 'unclassified') score += 15;
-  if (/\b(?:link|bio|comment|bình luận|nhấn|thử|xem)\b/i.test(clean)) score += 10;
+  if (/(?<![\p{L}\p{N}_])(?:link|bio|comment|bình luận|nhấn|thử|xem)(?![\p{L}\p{N}_])/iu.test(clean)) {
+    score += 10;
+  }
 
   return {
     hookWordCount,

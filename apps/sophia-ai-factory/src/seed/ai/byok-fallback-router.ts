@@ -62,6 +62,7 @@ export function routeByokLlmWithBudgetGuard(args: {
   }
 
   const totalTokens = estimateTokensRough(args.promptText) + args.expectedOutputTokens;
+  let budgetRejectedDecision: BudgetRoutingDecision | null = null;
 
   for (const p of args.providers) {
     if (!p.hasKey || p.authInvalid || p.circuitOpen) continue;
@@ -69,14 +70,15 @@ export function routeByokLlmWithBudgetGuard(args: {
 
     const estCents = Math.max(1, Math.ceil((totalTokens * p.costPerMillionTokensCents) / 1_000_000));
 
-    // Inverted fail-closed check prevents NaN/Infinity bypass
+    // Inverted fail-closed check prevents NaN/Infinity bypass; try cheaper fallback providers before rejecting
     if (!(args.dailySpentCents + estCents <= args.dailyCapCents)) {
-      return {
+      budgetRejectedDecision ??= {
         allowed: false,
         selectedProvider: null,
         estimatedCostCents: estCents,
         reason: `Daily BYOK budget cap exceeded (${args.dailySpentCents + estCents}c > ${args.dailyCapCents}c)`,
       };
+      continue;
     }
 
     return {
@@ -85,6 +87,10 @@ export function routeByokLlmWithBudgetGuard(args: {
       estimatedCostCents: estCents,
       reason: `Routed to ${p.provider} (~${totalTokens} tokens, ~${estCents}c)`,
     };
+  }
+
+  if (budgetRejectedDecision) {
+    return budgetRejectedDecision;
   }
 
   return {

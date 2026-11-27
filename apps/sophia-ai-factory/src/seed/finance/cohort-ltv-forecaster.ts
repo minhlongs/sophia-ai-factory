@@ -34,12 +34,16 @@ export function forecastAffiliateCohortLtv(input: CohortLtvInput): CohortLtvFore
   if (input.monthlyCommissionCents < 0n || input.cacCents < 0n) {
     throw new Error('monthlyCommissionCents and cacCents must be non-negative');
   }
+  if (!Number.isFinite(input.horizonMonths) || !Number.isFinite(input.monthlyRetentionBps)) {
+    throw new Error('horizonMonths and monthlyRetentionBps must be finite numbers');
+  }
   const months = Math.max(1, Math.min(36, Math.floor(input.horizonMonths)));
   const retentionBps = BigInt(Math.max(0, Math.min(10_000, Math.round(input.monthlyRetentionBps))));
 
   let survivalBps = 10_000n;
   let cumulativeLtvCents = 0n;
-  let paybackMonth: number | null = input.cacCents === 0n ? 1 : null;
+  let paybackMonth: number | null =
+    input.cacCents === 0n && input.monthlyCommissionCents > 0n ? 1 : null;
 
   for (let m = 1; m <= months; m += 1) {
     const periodRev = (input.monthlyCommissionCents * survivalBps) / 10_000n;

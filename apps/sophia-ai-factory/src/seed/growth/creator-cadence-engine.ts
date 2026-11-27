@@ -36,22 +36,28 @@ export function evaluateCreatorCadence(input: CadenceInput): CadenceDecision {
     };
   }
 
-  const safeCap = Math.max(1, Math.min(10, Math.round(input.dailyCap)));
-  const remaining = Math.max(0, safeCap - Math.max(0, input.postsToday));
+  const rawCap = Number.isFinite(input.dailyCap) ? Math.round(input.dailyCap) : 1;
+  const safeCap = Math.max(1, Math.min(10, rawCap));
+  const safePostsToday = Number.isFinite(input.postsToday)
+    ? Math.max(0, Math.floor(input.postsToday))
+    : safeCap;
+  const remaining = Math.max(0, safeCap - safePostsToday);
 
   if (remaining === 0) {
     return {
       status: 'defer_burst',
       remainingSlotsToday: 0,
-      burnoutRisk: input.postsToday >= 5 ? 'high' : 'medium',
+      burnoutRisk: safePostsToday >= 5 ? 'high' : 'medium',
       recommendation: 'Daily cadence cap reached. Defer extra drafts to tomorrow’s optimal window.',
     };
   }
 
+  const safeStreak = Number.isFinite(input.currentStreakDays) ? Math.max(0, input.currentStreakDays) : 0;
+  const safeGrace = Number.isFinite(input.graceTokensRemaining) ? Math.max(0, input.graceTokensRemaining) : 0;
   const burnoutRisk =
-    input.currentStreakDays >= 14 && input.graceTokensRemaining === 0
+    safeStreak >= 14 && safeGrace <= 0
       ? 'high'
-      : input.currentStreakDays >= 7
+      : safeStreak >= 7
         ? 'medium'
         : 'low';
 

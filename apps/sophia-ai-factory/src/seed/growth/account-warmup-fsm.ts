@@ -31,7 +31,7 @@ export interface AccountWarmupStatus {
 
 export function evaluateAccountWarmupHealth(input: AccountWarmupInput): AccountWarmupStatus {
   const now = input.nowMs ?? Date.now();
-  const age = Math.max(0, Math.floor(input.accountAgeDays));
+  const age = Number.isFinite(input.accountAgeDays) ? Math.max(0, Math.floor(input.accountAgeDays)) : 0;
   const maxDailyPostsAllowed = age <= 3 ? 1 : age <= 7 ? 2 : age <= 14 ? 3 : 4;
 
   if (input.cooldownUntilMs !== null && now < input.cooldownUntilMs) {
@@ -43,13 +43,17 @@ export function evaluateAccountWarmupHealth(input: AccountWarmupInput): AccountW
     };
   }
 
+  const safeBaseline =
+    Number.isFinite(input.baselineMedianViews) && input.baselineMedianViews > 0
+      ? input.baselineMedianViews
+      : 0;
   const recentAvg =
     input.recentVideoViews.length > 0
-      ? input.recentVideoViews.reduce((a, b) => a + Math.max(0, b), 0) / input.recentVideoViews.length
-      : input.baselineMedianViews;
+      ? input.recentVideoViews.reduce((a, b) => a + (Number.isFinite(b) ? Math.max(0, b) : 0), 0) /
+        input.recentVideoViews.length
+      : safeBaseline;
 
-  const reachRatio =
-    input.baselineMedianViews > 0 ? Number((recentAvg / input.baselineMedianViews).toFixed(2)) : 1;
+  const reachRatio = safeBaseline > 0 ? Number((recentAvg / safeBaseline).toFixed(2)) : 1;
 
   if (input.recentVideoViews.length >= 3 && reachRatio <= 0.15) {
     return {

@@ -44,7 +44,12 @@ export function resolveGeoFailoverOffer(
   for (const offer of offerChain) {
     const isGeoBlocked = offer.blockedCountries.some((c) => c.toUpperCase() === country);
     if (isGeoBlocked) continue;
-    if (offer.breakerState === 'open' || offer.consecutiveHardFailures >= 2) continue;
+    if (
+      offer.breakerState === 'open' ||
+      (offer.breakerState === 'closed' && offer.consecutiveHardFailures >= 2)
+    ) {
+      continue;
+    }
 
     return {
       selectedOfferId: offer.id,

@@ -31,6 +31,9 @@ export function computeCrossBorderPayoutTax(input: PayoutTaxInput): PayoutTaxBre
   if (input.grossMinorUnits < 0n) {
     throw new Error('grossMinorUnits must be non-negative');
   }
+  if (!Number.isFinite(input.withholdingTaxBps)) {
+    throw new Error('withholdingTaxBps must be a finite number');
+  }
   const safeBps = Math.max(0, Math.min(5000, Math.round(input.withholdingTaxBps)));
   // Half-up integer rounding for tax withholding
   const taxWithheldMinorUnits = (input.grossMinorUnits * BigInt(safeBps) + 5000n) / 10_000n;

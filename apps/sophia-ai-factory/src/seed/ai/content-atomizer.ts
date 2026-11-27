@@ -31,7 +31,9 @@ export function splitIntoXThread(
   return cleanParts.map((text, idx) => {
     const prefix = `${idx + 1}/${total} `;
     const budget = Math.max(20, maxChars - prefix.length);
-    const body = text.length > budget ? `${text.slice(0, budget - 1).trimEnd()}…` : text;
+    const codePoints = Array.from(text);
+    const body =
+      codePoints.length > budget ? `${codePoints.slice(0, budget - 1).join('').trimEnd()}…` : text;
     return `${prefix}${body}`;
   });
 }
