@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       logger.error('Failed to fetch user audit logs', toError(error))
       return NextResponse.json(
-        { error: 'Failed to fetch audit logs', details: error.message },
+        { error: 'Failed to fetch audit logs' },
         { status: 500 }
       )
     }

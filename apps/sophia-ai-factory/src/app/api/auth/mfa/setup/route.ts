@@ -36,9 +36,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const existing = await db
     .from('mfa_secrets')
-    .select('user_id')
+    .select('user_id, totp_enabled')
     .eq('user_id', user.id)
     .single();
+
+  if (existing.data?.totp_enabled === 1) {
+    return NextResponse.json(
+      { error: 'MFA is already active. Disable MFA first.' },
+      { status: 409 },
+    );
+  }
 
   if (existing.data) {
     await db
