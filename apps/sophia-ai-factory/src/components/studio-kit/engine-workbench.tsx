@@ -10,6 +10,7 @@
  */
 
 import { useState } from 'react';
+import { Md3SegmentedGroup, Md3SurfaceCard } from '@/components/md3/md3-primitives';
 import { WorkbenchTabScriptPolicy } from './workbench-tab-script-policy';
 import { WorkbenchTabMediaSlide } from './workbench-tab-media-slide';
 import { WorkbenchTabRevenueGrowth } from './workbench-tab-revenue-growth';
@@ -100,37 +101,16 @@ export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
         </p>
       </header>
 
-      {/* Clean 5-Step Horizontal Stepper */}
-      <nav aria-label={locale === 'vi' ? 'Các bước vận hành' : 'Workflow steps'} className="grid grid-cols-2 gap-2.5 lg:grid-cols-5">
-        {STEPS.map((step) => {
-          const isCurrent = step.id === activeStep;
-          return (
-            <button
-              key={step.id}
-              type="button"
-              aria-current={isCurrent ? 'step' : undefined}
-              onClick={() => setActiveStep(step.id)}
-              className={`md3-pill-button flex items-center gap-3 border px-4 py-3 text-left ${
-                isCurrent
-                  ? 'border-primary bg-[var(--md-sys-color-primary-container)] text-foreground shadow-sm'
-                  : 'border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground'
-              }`}
-            >
-              <span
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                  isCurrent ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                }`}
-              >
-                {step.num}
-              </span>
-              <span className="text-sm font-semibold leading-tight">{step.title[locale]}</span>
-            </button>
-          );
-        })}
-      </nav>
+      {/* Connected MD3 Expressive Segmented Stepper */}
+      <Md3SegmentedGroup
+        ariaLabel={locale === 'vi' ? 'Các bước vận hành' : 'Workflow steps'}
+        value={activeStep}
+        onChange={setActiveStep}
+        options={STEPS.map((s) => ({ id: s.id, badge: s.num, label: s.title[locale] }))}
+      />
 
       {/* Transparent Purpose Banner for Active Step */}
-      <div className="flex flex-col justify-between gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center">
+      <div className="md3-surface-tonal flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center">
         <div className="space-y-0.5">
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">
             {locale === 'vi' ? `Bước ${current.num}: ${current.title.vi}` : `Step ${current.num}: ${current.title.en}`}
@@ -141,21 +121,21 @@ export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
           <button
             type="button"
             onClick={() => setActiveStep(nextStep.id)}
-            className="shrink-0 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition hover:opacity-90"
+            className="md3-pill-button shrink-0 bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground shadow-sm"
           >
             {locale === 'vi' ? `Sang Bước ${nextStep.num} →` : `Next: Step ${nextStep.num} →`}
           </button>
         ) : null}
       </div>
 
-      {/* Active Step Workspace (MD3 Expressive Tonal Surface) */}
-      <div className="md3-surface-card p-6">
+      {/* Active Step Workspace (MD3 Expressive Tonal Surface + Container Query) */}
+      <Md3SurfaceCard className="md3-container">
         {activeStep === 'script' ? <WorkbenchTabScriptPolicy locale={locale} /> : null}
         {activeStep === 'media' ? <WorkbenchTabMediaSlide locale={locale} /> : null}
         {activeStep === 'revenue' ? <WorkbenchTabRevenueGrowth locale={locale} /> : null}
         {activeStep === 'security' ? <WorkbenchTabSecurityRbac locale={locale} /> : null}
         {activeStep === 'scale' ? <WorkbenchTabR21R25Engines locale={locale} /> : null}
-      </div>
+      </Md3SurfaceCard>
 
       {/* Collapsed R&D Technical Registry (Modern Web Guidance content-visibility) */}
       <details className="mwg-offscreen-section rounded-2xl border border-border bg-card/60 p-4">
