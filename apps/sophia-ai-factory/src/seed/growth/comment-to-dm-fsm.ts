@@ -34,6 +34,7 @@ function normalizeText(raw: string): string {
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
+    .replace(/đ/g, 'd')
     .trim();
 }
 
@@ -47,10 +48,18 @@ export function evaluateCommentToDmTrigger(input: CommentTriggerInput): CommentT
   if (!matched) {
     return { state: 'IGNORED', matchedKeyword: null, reason: 'No trigger keyword matched' };
   }
-  if (input.hoursSinceComment > META_MESSAGING_WINDOW_HOURS) {
+  if (
+    !Number.isFinite(input.hoursSinceComment) ||
+    input.hoursSinceComment < 0 ||
+    input.hoursSinceComment > META_MESSAGING_WINDOW_HOURS
+  ) {
     return { state: 'EXPIRED_24H', matchedKeyword: matched, reason: 'Outside Meta 24-hour messaging window' };
   }
-  if (input.repliesSentLastHour >= META_HOURLY_PRIVATE_REPLY_CAP) {
+  if (
+    !Number.isFinite(input.repliesSentLastHour) ||
+    input.repliesSentLastHour < 0 ||
+    input.repliesSentLastHour >= META_HOURLY_PRIVATE_REPLY_CAP
+  ) {
     return { state: 'DEFERRED_RATE_LIMIT', matchedKeyword: matched, reason: 'Reached 750/hr private-reply cap; queued for next hour' };
   }
 

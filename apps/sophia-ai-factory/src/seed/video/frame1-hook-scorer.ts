@@ -75,6 +75,8 @@ export function computeWcagContrastRatio(fgHex: string, bgHex: string): number {
 export function scoreFrame1VisualHook(input: Frame1HookInput): Frame1HookReport {
   const m = PLATFORM_SAFE_MARGINS[input.platform];
   const safeZoneClear =
+    input.textBox.width > 0 &&
+    input.textBox.height > 0 &&
     input.textBox.x >= m.left &&
     input.textBox.y >= m.top &&
     input.textBox.x + input.textBox.width <= 1080 - m.right &&

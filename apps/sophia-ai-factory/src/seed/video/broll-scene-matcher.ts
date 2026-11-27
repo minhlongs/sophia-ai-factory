@@ -37,6 +37,7 @@ export function extractSceneKeywords(sceneNarration: string, maxTerms: number = 
   const tokens = sceneNarration
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
+    .replace(/[đĐ]/g, 'd')
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)

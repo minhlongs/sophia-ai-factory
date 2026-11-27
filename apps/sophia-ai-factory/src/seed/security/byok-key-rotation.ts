@@ -27,7 +27,7 @@ export interface KeyRotationPlan {
 }
 
 const SECRET_TOKEN_REGEX =
-  /\b(?:sk-[a-zA-Z0-9_-]{12,}|sk-or-v1-[a-zA-Z0-9]{16,}|ghp_[a-zA-Z0-9]{20,}|AKIA[0-9A-Z]{16})\b/g;
+  /(?:(?<=Bearer\s+)[A-Za-z0-9._-]{16,}|\b(?:sk-[a-zA-Z0-9_-]{12,}|sk-or-v1-[a-zA-Z0-9]{16,}|ghp_[a-zA-Z0-9]{20,}|AKIA[0-9A-Z]{16}|\d{8,10}:[A-Za-z0-9_-]{35}|eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,})\b)/g;
 
 export function redactSecretsInText(raw: string): string {
   return raw.replace(SECRET_TOKEN_REGEX, '[REDACTED_SECRET]');

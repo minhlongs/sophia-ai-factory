@@ -47,6 +47,11 @@ export function allocateIntegerCentWaterfall(
   if (totalCents < 0n) {
     throw new Error('totalCents must be non-negative');
   }
+  for (const s of shares) {
+    if (!Number.isInteger(s.basisPoints) || s.basisPoints < 0) {
+      throw new Error(`Invalid basisPoints for ${s.participantId}: must be a non-negative integer`);
+    }
+  }
   const active = shares.filter((s) => s.basisPoints > 0);
   const totalBps = active.reduce((acc, s) => acc + s.basisPoints, 0);
   if (totalBps !== 10_000) {

@@ -61,6 +61,9 @@ export function computeMultiTouchAttribution(
   model: AttributionModel,
 ): readonly AttributionCredit[] {
   if (touchpoints.length === 0) return [];
+  if (touchpoints.some((t) => !Number.isFinite(t.timestampMs))) {
+    throw new Error('All touchpoints must have a finite timestampMs');
+  }
   const sorted = [...touchpoints].sort((a, b) => a.timestampMs - b.timestampMs);
   const n = sorted.length;
 
@@ -75,7 +78,12 @@ export function computeMultiTouchAttribution(
   }
   if (model === 'linear') {
     const share = Number((1 / n).toFixed(4));
-    return sorted.map((t) => ({ clickId: t.clickId, channel: t.channel, weight: share }));
+    const lastShare = Number((1 - share * (n - 1)).toFixed(4));
+    return sorted.map((t, i) => ({
+      clickId: t.clickId,
+      channel: t.channel,
+      weight: i === n - 1 ? lastShare : share,
+    }));
   }
 
   // position_40_20_40 (U-shaped)
@@ -85,10 +93,12 @@ export function computeMultiTouchAttribution(
       { clickId: sorted[1].clickId, channel: sorted[1].channel, weight: 0.5 },
     ];
   }
-  const middleShare = Number((0.2 / (n - 2)).toFixed(4));
+  const middleCount = n - 2;
+  const middleShare = Number((0.2 / middleCount).toFixed(4));
+  const lastMiddleShare = Number((0.2 - middleShare * (middleCount - 1)).toFixed(4));
   return sorted.map((t, i) => ({
     clickId: t.clickId,
     channel: t.channel,
-    weight: i === 0 || i === n - 1 ? 0.4 : middleShare,
+    weight: i === 0 || i === n - 1 ? 0.4 : i === n - 2 ? lastMiddleShare : middleShare,
   }));
 }
