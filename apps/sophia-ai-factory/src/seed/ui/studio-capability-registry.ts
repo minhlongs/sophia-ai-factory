@@ -136,7 +136,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 3,
     category: 'security',
     status: 'guarded',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Lọc Bot Preview Link Rút Gọn', en: 'Shortlink Bot-UA Filter' },
     summary: {
       vi: 'Loại bỏ crawler xem trước từ Telegram, X, Meta để không làm nhiễu số liệu click affiliate.',
@@ -155,7 +155,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 3,
     category: 'compliance',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Tự Sửa JSON Kịch Bản (SAP)', en: 'Schema-Aligned JSON Repair' },
     summary: {
       vi: 'Tự làm sạch markdown fence & lỗi cú pháp JSON từ LLM giúp tiết kiệm 30–50% credit BYOK.',
@@ -174,7 +174,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 4,
     category: 'affiliate',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Gắn Link Affiliate Bình Luận Đầu', en: 'Delayed First-Comment Plug' },
     summary: {
       vi: 'Tự động thả link affiliate ở bình luận đầu tiên sau khi đăng để tránh bị X/TikTok bóp reach.',
@@ -194,7 +194,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 7,
     category: 'video',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Tách 1 Kịch Bản Thành Đa Kênh', en: 'Omnichannel Content Atomizer' },
     summary: {
       vi: 'Biến 1 chiến dịch gốc thành gói TikTok, Reels, YouTube Shorts, X Thread và Telegram đồng bộ.',
@@ -214,7 +214,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 7,
     category: 'affiliate',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Tối Ưu Trích Dẫn AI (AutoGEO)', en: 'AutoGEO Citation & x402 Contract' },
     summary: {
       vi: 'Chuẩn hóa trang so sánh và hợp đồng x402 để AI Search (Perplexity/ChatGPT) ưu tiên trích dẫn.',
@@ -235,7 +235,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 8,
     category: 'security',
     status: 'guarded',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Khiên Lọc Click Ảo Datacenter ASN', en: 'ASN Click-Fraud Shield' },
     summary: {
       vi: 'Chặn datacenter ASN trực tiếp từ Cloudflare request.cf.asn để bảo vệ số liệu EPC.',
@@ -254,7 +254,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 9,
     category: 'video',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Đồng Bộ Phụ Đề SRT Chuẩn Khung', en: 'Timeline-Isolated SRT Builder' },
     summary: {
       vi: 'Sinh phụ đề SRT khớp từng phân cảnh giúp xuất CapCut và WebCodecs không lệch tiếng.',
@@ -273,7 +273,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 9,
     category: 'compliance',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Kiểm Tra Quy Chuẩn YouTube Shorts', en: 'YouTube Preflight Validator' },
     summary: {
       vi: 'Kiểm tra tỷ lệ 9:16, thời lượng ≤60s và metadata trước khi đẩy lên YouTube.',
@@ -292,7 +292,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 10,
     category: 'security',
     status: 'guarded',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Xác Thực Chữ Ký CAPI & Webhook', en: 'HMAC CAPI & Webhook Verifier' },
     summary: {
       vi: 'Xác thực chữ ký HMAC constant-time kèm cửa sổ chống replay 300 giây cho postback.',
@@ -311,7 +311,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 11,
     category: 'affiliate',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Media Kit Ký Số Xác Minh Doanh Thu', en: 'Verified JWS Media Kit' },
     summary: {
       vi: 'Cấp chứng nhận hiệu suất affiliate ký HS256 JWS để đàm phán hoa hồng cao với sàn.',
@@ -330,7 +330,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 12,
     category: 'affiliate',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Phễu Hội Thoại Telegram & Discord', en: 'Telegram & Discord Concierge FSM' },
     summary: {
       vi: 'Tự động dẫn dắt khách high-ticket qua hội thoại Telegram/Discord đến đúng offer phù hợp.',
@@ -349,7 +349,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 13,
     category: 'video',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Sinh Slide Carousel SVG Tự Động', en: 'Carousel SVG Slide Builder' },
     summary: {
       vi: 'Tạo bộ slide carousel sắc nét không cần Figma/Canva cho LinkedIn, TikTok Photo và X.',
@@ -368,7 +368,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 16,
     category: 'analytics',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Khai Thác Nỗi Đau Từ Bình Luận', en: 'Comment Pain-Point Miner' },
     summary: {
       vi: 'Gom nhóm câu hỏi và nỗi đau lặp lại trong bình luận thành ý tưởng hook chuyển đổi cao.',
@@ -387,7 +387,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 18,
     category: 'analytics',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Cảnh Báo Tụt EPC Bất Thường', en: 'EPC Anomaly Detector' },
     summary: {
       vi: 'Phát hiện sụt giảm tỷ lệ chuyển đổi hoặc link affiliate chết theo Z-score thời gian thực.',
@@ -408,7 +408,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 19,
     category: 'security',
     status: 'guarded',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Phân Quyền VA Khóa Link Affiliate', en: 'Creator-VA Fail-Closed RBAC' },
     summary: {
       vi: 'Cho phép VA sửa kịch bản và dựng video nhưng khóa cứng URL affiliate & payout của chủ sở hữu.',
@@ -428,7 +428,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 21,
     category: 'analytics',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Đo Lường Không Cookie & Postback S2S', en: 'Cookieless First-Party Attribution' },
     summary: {
       vi: 'Truyền click_id trực tiếp qua URL không cần cookie bên thứ 3 và chia điểm đa chạm 40/20/40.',
@@ -447,7 +447,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 22,
     category: 'video',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Kiểm Tra Vùng An Toàn Khung Hình Đầu', en: 'Frame-1 Safe-Zone & WCAG Scorer' },
     summary: {
       vi: 'Kiểm tra chữ không bị che bởi nút TikTok/Shorts/Reels và độ tương phản WCAG 2.2 ở 0ms.',
@@ -466,7 +466,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 23,
     category: 'affiliate',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Chuyển Hướng Quốc Gia & Tự Đổi Link Chết', en: 'Edge Geo-Routing & Offer Failover' },
     summary: {
       vi: 'Tự đổi sang offer dự phòng khi khách ở quốc gia bị chặn (US/UK) hoặc link đích lỗi 404/5xx.',
@@ -485,7 +485,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 24,
     category: 'analytics',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Nhịp Đăng Bài Chống Spam & Burnout', en: 'Creator Cadence & Anti-Burnout' },
     summary: {
       vi: 'Giới hạn số bài/ngày chống bóp reach, dời bài dư sang ngày mai và ngắt mạch khi sàn cảnh báo.',
@@ -504,7 +504,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 25,
     category: 'affiliate',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Sổ Cái Chia Hoa Hồng 70/20/10 (0 Sai Số)', en: 'Integer-Cent Revenue Split Waterfall' },
     summary: {
       vi: 'Chia hoa hồng Creator/VA/Agency bằng số nguyên BigInt từng cent, tuyệt đối không lệch số lẻ.',
@@ -523,7 +523,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 26,
     category: 'video',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Phụ Đề Karaoke Chạy Theo Từng Từ', en: 'Word-Level Kinetic Captions' },
     summary: {
       vi: 'Tách phụ đề 2–4 từ/nhịp theo dấu câu và khoảng lặng, xuất thẻ ASS karaoke ở 0ms.',
@@ -542,7 +542,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 27,
     category: 'affiliate',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Giám Sát Giảm Hoa Hồng & Tắt Offer', en: 'Offer Commission Drift Monitor' },
     summary: {
       vi: 'Cảnh báo ngay khi sàn cắt % hoa hồng (30%→15%), rút ngắn cookie hoặc tắt chương trình.',
@@ -561,7 +561,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 28,
     category: 'affiliate',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Tự Động Gửi DM Từ Từ Khóa Bình Luận', en: 'Comment-to-DM Keyword FSM' },
     summary: {
       vi: 'Khớp từ khóa tiếng Việt/Anh không dấu, tuân thủ ngưỡng 750 DM/giờ và cửa sổ 24h của Meta.',
@@ -580,7 +580,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 29,
     category: 'security',
     status: 'guarded',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Xoay Vòng Khóa BYOK & Ẩn Mật Khẩu', en: 'Zero-Downtime BYOK Key Rotation' },
     summary: {
       vi: 'Lập kế hoạch xoay vòng khóa KEK không gián đoạn và tự ẩn sạch API key trước khi ghi log.',
@@ -599,7 +599,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 30,
     category: 'affiliate',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Đối Soát Thanh Toán & Thuế Xuyên Biên Giới', en: 'Cross-Border Payout & Tax Ledger' },
     summary: {
       vi: 'Tính khấu trừ thuế và số thực nhận bằng số nguyên BigInt cho NOWPayments USDT, PayOS VND, USD.',
@@ -618,7 +618,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 31,
     category: 'video',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Ghép Cảnh B-Roll Dọc 9:16 ($0 AI)', en: 'Zero-GPU 9:16 B-Roll Scene Matcher' },
     summary: {
       vi: 'Tự rút từ khóa phân cảnh và chọn clip B-roll dọc thương mại (Pexels/Pixabay/Coverr) ở 0ms.',
@@ -637,7 +637,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 32,
     category: 'compliance',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Kiểm Tra Trang Đích CRO & Luật FTC/DSA', en: 'Landing CRO & FTC/DSA Preflight Linter' },
     summary: {
       vi: 'Chấm điểm A–F cho trang đích affiliate: kiểm tra công bố FTC/DSA, JSON-LD và script chặn tải.',
@@ -656,7 +656,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 33,
     category: 'analytics',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Nuôi Kênh Mới 14 Ngày & Chống Shadowban', en: 'Account Warm-Up & Shadowban Guard' },
     summary: {
       vi: 'Tự tăng dần nhịp đăng cho kênh mới 1–14 ngày và bật cooldown 48h khi phát hiện tụt view bất thường.',
@@ -675,7 +675,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 34,
     category: 'security',
     status: 'guarded',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Điều Phối Đa Hãng LLM BYOK & Trần Chi Phí', en: 'BYOK LLM Fallback & Budget Guard' },
     summary: {
       vi: 'Tự chuyển giữa OpenRouter/OpenAI/Anthropic/Gemini khi gặp 429/5xx và khóa trần chi tiêu ngày.',
@@ -694,7 +694,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 35,
     category: 'affiliate',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Dự Báo LTV Hoa Hồng Định Kỳ & Hoàn Vốn CAC', en: 'Cohort LTV & CAC Payback Forecaster' },
     summary: {
       vi: 'Dự báo doanh thu tích lũy SaaS/CEX theo đường cong giữ chân và tháng hoàn vốn CAC bằng BigInt.',
@@ -713,7 +713,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 36,
     category: 'video',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Chuẩn Hóa Âm Lượng -14 LUFS & Chống Rè Đỉnh', en: 'Audio Loudness Normalizer (-14 LUFS)' },
     summary: {
       vi: 'Tự tính mức khuếch đại giọng đọc & giảm nhạc nền chuẩn TikTok/YouTube Shorts (-14 LUFS, đỉnh <= -1.0 dBTP).',
@@ -733,7 +733,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 37,
     category: 'affiliate',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Mã Hóa SubID Chống Giả Mạo S2S', en: 'Tamper-Evident SubID Watermark Encoder' },
     summary: {
       vi: 'Đóng gói SubID chiến dịch kèm mã kiểm tra FNV-1a chống sửa link hoặc làm giả postback từ mạng affiliate.',
@@ -753,7 +753,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 38,
     category: 'analytics',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Chọn Khung Giờ Vàng Đăng Bài Đa Múi Giờ', en: 'Multi-Timezone Peak Publish Scheduler' },
     summary: {
       vi: 'Tự tính khung giờ giữ chân cao nhất theo múi giờ khán giả (VN UTC+7, US, EU, UK) tránh khung giờ chết.',
@@ -773,7 +773,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 39,
     category: 'compliance',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Tự Động Chèn Khuyến Cáo FTC / MiCA / VN', en: 'Auto-Localized FTC/MiCA/VN Disclosure Injector' },
     summary: {
       vi: 'Tự động chèn đúng câu công bố affiliate & rủi ro tài chính theo từng quốc gia mà không vượt giới hạn ký tự.',
@@ -793,7 +793,7 @@ export const SOPHIA_STUDIO_CAPABILITIES: readonly StudioCapabilitySpec[] = [
     round: 40,
     category: 'affiliate',
     status: 'live',
-    simpleModeVisible: false,
+    simpleModeVisible: true,
     title: { vi: 'Đối Soát 3 Chiều Hoa Hồng & Quỹ Dự Phòng Hoàn Tiền', en: 'Three-Way Payout Reconciler & Clawback Guard' },
     summary: {
       vi: 'Đối soát 3 chiều (Postback mạng ↔ Sổ cái ↔ Tiền về ngân hàng/USDT) bằng số nguyên BigInt, phát hiện lệch từng cent.',

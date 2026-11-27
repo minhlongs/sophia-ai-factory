@@ -58,10 +58,10 @@ export function ApiKeysManager() {
   };
 
   return (
-    <section className="bg-card dark:bg-[#11131F] rounded-2xl p-6 shadow-sm border border-border dark:border-white/[0.08]">
+    <section className="md3-surface-card p-6 shadow-sm border border-border">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h3 className="text-lg font-bold text-foreground dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Key className="w-5 h-5 text-primary" /> AI Provider Credentials (BYOK)
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -71,7 +71,9 @@ export function ApiKeysManager() {
       </div>
 
       {statusMessage && (
-        <div className={`mb-4 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 ${
+        <div
+          role={statusMessage.type === 'error' ? 'alert' : 'status'}
+          className={`mb-4 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 ${
           statusMessage.type === 'success' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
         }`}>
           {statusMessage.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}

@@ -67,7 +67,7 @@ export function DashboardNavItems({
   const primaryFallbacks: Record<string, { en: string; vi: string }> = {
     today: { en: "Today · Overview", vi: "Hôm nay · Tổng Quan" },
     firstValue: { en: "First Value Studio", vi: "Xưởng Chiến Dịch" },
-    engines: { en: "AI Workbench (34 Engines)", vi: "Xưởng AI (34 Động Cơ)" },
+    engines: { en: "AI Workbench (39 Engines)", vi: "Xưởng AI (39 Động Cơ)" },
     offers: { en: "Offers · Affiliate Hub", vi: "Offers · Affiliate Hub" },
     campaigns: { en: "Campaigns", vi: "Chiến dịch" },
     approvals: { en: "Needs approval", vi: "Cần duyệt" },
