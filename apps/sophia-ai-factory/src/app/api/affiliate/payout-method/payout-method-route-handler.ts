@@ -65,7 +65,7 @@ export async function handleCreatePayoutMethod(request: NextRequest) {
     if (errMsg.includes('UNIQUE')) {
       return NextResponse.json({ error: 'Address already registered for this method' }, { status: 409 });
     }
-    throw err;
+    return NextResponse.json({ error: 'Failed to save payout method' }, { status: 500 });
   }
 
   return NextResponse.json({ id, method, displayLabel, isDefault: setDefault, verified: false }, { status: 201 });

@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get('limit') ?? '50', 10);
   const offset = parseInt(searchParams.get('offset') ?? '0', 10);
 
-  if (Number.isNaN(limit) || Number.isNaN(offset) || limit < 1 || offset < 0) {
-    return NextResponse.json({ error: 'Invalid limit/offset' }, { status: 400 });
+  if (Number.isNaN(limit) || Number.isNaN(offset) || limit < 1 || limit > 200 || offset < 0) {
+    return NextResponse.json({ error: 'Invalid limit/offset (limit must be 1-200)' }, { status: 400 });
   }
 
   // Wrap data fetch so a missing affiliate table or empty-user state returns
