@@ -15,6 +15,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { ScriptOutput } from '@/seed/ai/script-generator';
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 import {
   buildCapCutPublishCopy,
   buildNarrationTextFromScript,
@@ -99,7 +100,6 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
       const voiceOption =
         VOICE_OPTIONS.find((v) => v.id === selectedVoiceId) ?? VOICE_OPTIONS[0];
       const text = buildNarrationTextFromScript(props.script, props.ctaText);
-      const { getCsrfHeaders } = await import('@/seed/security/use-csrf-token');
       const response = await fetch('/api/first-value/voice', {
         method: 'POST',
         credentials: 'include',

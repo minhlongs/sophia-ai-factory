@@ -133,7 +133,7 @@ describe("SignupForm", () => {
       name: "Test User",
       email: "test@example.com",
       password: "password123",
-      callbackURL: "/dashboard/onboarding",
+      callbackURL: "/dashboard/first-value",
     });
   });
 
@@ -150,7 +150,7 @@ describe("SignupForm", () => {
     expect(screen.getByText(T.success_title)).toBeDefined();
   });
 
-  it("redirects to /dashboard/onboarding after 1200ms on success", async () => {
+  it("redirects to /dashboard/first-value after 1200ms on success", async () => {
     render(<SignupForm t={T} />);
     fillForm();
 
@@ -164,7 +164,7 @@ describe("SignupForm", () => {
       await vi.advanceTimersByTimeAsync(1200);
     });
 
-    expect(mockPush).toHaveBeenCalledWith("/dashboard/onboarding");
+    expect(mockPush).toHaveBeenCalledWith("/dashboard/first-value");
     expect(mockRefresh).toHaveBeenCalled();
   });
 

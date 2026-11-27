@@ -16,8 +16,15 @@ import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '@/seed/security/csrf'
  * Returns undefined when running server-side or cookie is absent.
  */
 function readCookie(name: string): string | undefined {
-  if (typeof document === 'undefined' || !document.cookie) return undefined
-  const match = document.cookie
+  if (typeof document === 'undefined') return undefined
+  let cookieStr = ''
+  try {
+    cookieStr = document.cookie || ''
+  } catch {
+    return undefined
+  }
+  if (!cookieStr) return undefined
+  const match = cookieStr
     .split(';')
     .map((row) => row.trim())
     .find((row) => row.startsWith(`${name}=`))
