@@ -37,6 +37,6 @@ describe('campaign card completed-script entry', () => {
     expect(screen.queryByRole('button', { name: /View and review script/ })).toBeNull();
     expect(screen.queryByText('Completed')).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'actions.viewDetails' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'actions.viewDetails' })).toBeTruthy();
   });
 });
