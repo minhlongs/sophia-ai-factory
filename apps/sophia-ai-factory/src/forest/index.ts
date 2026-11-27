@@ -54,7 +54,6 @@ export * from './tracking';
 export * from './video';
 export * from './voice';
 export * from './webhooks';
-export * from './worker';
 export * from './youtube';
 
 // Disambiguate symbol collisions across domain barrels
