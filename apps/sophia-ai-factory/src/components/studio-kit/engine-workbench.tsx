@@ -137,17 +137,8 @@ export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
         {activeStep === 'scale' ? <WorkbenchTabR21R25Engines locale={locale} /> : null}
       </Md3SurfaceCard>
 
-      {/* Collapsed R&D Technical Registry (Modern Web Guidance content-visibility) */}
-      <details className="mwg-offscreen-section rounded-2xl border border-border bg-card/60 p-4">
-        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground">
-          {locale === 'vi'
-            ? 'Danh mục kỹ thuật 19 động cơ AI (Dành cho R&D — bấm để mở rộng)'
-            : 'Technical Registry: 19 AI Engines (For R&D — click to expand)'}
-        </summary>
-        <div className="mt-4">
-          <StudioCommandPalette locale={locale} />
-        </div>
-      </details>
+      {/* Always-Visible MD3 34-Engine Catalog (Zero Hidden Features) */}
+      <StudioCommandPalette locale={locale} />
     </div>
   );
 }
