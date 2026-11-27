@@ -13,6 +13,42 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req?: Request) {
   try {
+    let env: Record<string, unknown> | undefined;
+    try {
+      const { getCloudflareContext } = await import('@opennextjs/cloudflare');
+      env = (await getCloudflareContext({ async: true })).env as Record<string, unknown> | undefined;
+    } catch { env = undefined; }
+
+    const healthToken = (env?.HEALTH_TOKEN as string | undefined) ?? process.env.HEALTH_TOKEN;
+    const isAuthorized = verifyHealthToken(req, healthToken);
+
+    // Public mode: run only minimal DB + circuit-breaker probes (no KV/R2/RealityLoop amplification)
+    if (!isAuthorized) {
+      const [database, circuitBreaker] = await Promise.all([
+        checkDatabase(),
+        checkCircuitBreaker(),
+      ]);
+      const publicStatus: 'healthy' | 'degraded' | 'unhealthy' =
+        database.status === 'error'
+          ? 'unhealthy'
+          : circuitBreaker.status === 'degraded'
+            ? 'degraded'
+            : 'healthy';
+      const publicBody: HealthResponse = {
+        status: publicStatus,
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV ?? 'unknown',
+      };
+      return new Response(JSON.stringify(publicBody), {
+        status: publicStatus === 'unhealthy' ? 503 : 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Vary': 'Authorization',
+        },
+      });
+    }
+
     const [database, kv, r2, circuitBreaker, realityLoop] = await Promise.all([
       checkDatabase(), probeBinding('kv'), probeBinding('r2'), checkCircuitBreaker(), checkRealityLoop(),
     ]);
@@ -28,37 +64,26 @@ export async function GET(req?: Request) {
     const build = getBuildMetadata();
     const shortSha = build.sha?.slice(0, 8) ?? 'unknown';
 
-    let env: Record<string, unknown> | undefined;
-    try {
-      const { getCloudflareContext } = await import('@opennextjs/cloudflare');
-      env = (await getCloudflareContext()).env as Record<string, unknown> | undefined;
-    } catch { env = undefined; }
-
-    const healthToken = (env?.HEALTH_TOKEN as string | undefined) ?? process.env.HEALTH_TOKEN;
-    const isAuthorized = verifyHealthToken(req, healthToken);
-
-    if (healthToken?.trim() && !isAuthorized) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache, no-store, must-revalidate' },
-      });
-    }
-
-    const body: HealthResponse = { status, timestamp: new Date().toISOString(), environment: process.env.NODE_ENV ?? 'unknown' };
-
-    if (isAuthorized) {
-      body.version = { shortSha, commitSha: build.sha ?? shortSha, deployedAt: build.deployedAt };
-      body.checks = { database: database.status === 'ok' ? 'ok' : 'degraded', kv: kv.status === 'ok' ? 'ok' : 'degraded' };
-      body.components = { database, kv, r2, circuitBreaker, realityLoop };
-    }
+    const body: HealthResponse = {
+      status,
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV ?? 'unknown',
+      version: { shortSha, commitSha: build.sha ?? shortSha, deployedAt: build.deployedAt },
+      checks: { database: database.status === 'ok' ? 'ok' : 'degraded', kv: kv.status === 'ok' ? 'ok' : 'degraded' },
+      components: { database, kv, r2, circuitBreaker, realityLoop },
+    };
 
     return new Response(JSON.stringify(body), {
       status: status === 'unhealthy' ? 503 : 200,
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache, no-store, must-revalidate' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Vary': 'Authorization',
+      },
     });
   } catch {
     return new Response(JSON.stringify({ status: 'unhealthy', error: 'Service temporarily unavailable' }), {
-      status: 503, headers: { 'Content-Type': 'application/json' },
+      status: 503, headers: { 'Content-Type': 'application/json', 'Vary': 'Authorization' },
     });
   }
 }

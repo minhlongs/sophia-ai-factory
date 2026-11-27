@@ -174,14 +174,18 @@ describe('/api/health route specification', () => {
     expect(data.checks?.database).toBe('ok');
   });
 
-  it('rejects unauthenticated requests with 401 when HEALTH_TOKEN is set', async () => {
+  it('returns redacted public 200 without diagnostics when HEALTH_TOKEN is set and request is unauthenticated', async () => {
     process.env.HEALTH_TOKEN = 'ops-secret-token';
     const { GET } = await importRoute();
     const req = new Request('http://localhost/api/health');
 
     const res = await GET(req);
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('vary')).toBe('Authorization');
     const data = (await res.json()) as TestHealthBody;
-    expect(data.error).toBe('Unauthorized');
+    expect(data.status).toBe('healthy');
+    expect(data.version).toBeUndefined();
+    expect(data.checks).toBeUndefined();
+    expect(data.components).toBeUndefined();
   });
 });

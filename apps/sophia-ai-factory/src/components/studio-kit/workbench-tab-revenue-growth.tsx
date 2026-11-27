@@ -48,12 +48,18 @@ export function WorkbenchTabRevenueGrowth({ locale }: { readonly locale: 'vi' | 
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+        <span className="inline-flex items-center rounded-full border border-border bg-muted/50 px-2.5 py-0.5 font-medium text-foreground">
+          {locale === 'vi' ? 'Mô Phỏng Tương Tác (Dữ Liệu Mẫu)' : 'Interactive Simulator (Sample Data)'}
+        </span>
+      </div>
+
       <div className="grid gap-3 md:grid-cols-2">
-        <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <div className="text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
-            Thompson Bandit A/B (100 clicks/arm)
+        <div className="space-y-2 rounded-xl border border-border bg-card p-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-primary-text">
+            {locale === 'vi' ? 'So Sánh A/B Tự Động (100 lượt nhấp/mẫu)' : 'Thompson Bandit A/B (100 clicks/arm)'}
           </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
             <label className="flex flex-col gap-1">
               Hook A ({armAConv} conv)
               <input
@@ -75,20 +81,20 @@ export function WorkbenchTabRevenueGrowth({ locale }: { readonly locale: 'vi' | 
               />
             </label>
           </div>
-          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+          <p className="text-sm font-medium text-foreground">
             {locale === 'vi' ? 'Biến thể thắng:' : 'Winning Arm:'}{' '}
-            <span className="font-mono text-emerald-600 dark:text-emerald-400">
+            <span className="font-mono text-emerald-700 dark:text-emerald-400">
               {analytics.winnerId ?? 'hook-A'}
             </span>
           </p>
         </div>
 
-        <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <div className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-            EPC Anomaly Detector (Baseline ~$1.20)
+        <div className="space-y-2 rounded-xl border border-border bg-card p-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+            {locale === 'vi' ? 'Cảnh Báo Tụt Doanh Thu/Click (Mức chuẩn ~$1.20)' : 'EPC Anomaly Detector (Baseline ~$1.20)'}
           </div>
-          <label className="flex flex-col gap-1 text-xs">
-            {locale === 'vi' ? `EPC hiện tại: $${latestEpc.toFixed(2)}` : `Current EPC: $${latestEpc.toFixed(2)}`}
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            {locale === 'vi' ? `EPC mô phỏng: $${latestEpc.toFixed(2)}` : `Simulated EPC: $${latestEpc.toFixed(2)}`}
             <input
               type="range"
               min={0.1}
@@ -98,7 +104,7 @@ export function WorkbenchTabRevenueGrowth({ locale }: { readonly locale: 'vi' | 
               onChange={(e) => setLatestEpc(Number(e.target.value))}
             />
           </label>
-          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+          <p className="md3-tabular-nums text-sm font-medium text-foreground">
             {analytics.epcAlert.anomalyDetected
               ? locale === 'vi'
                 ? `⚠️ CẢNH BÁO TỤT EPC (Z = ${analytics.epcAlert.zScore.toFixed(2)})`
@@ -110,17 +116,18 @@ export function WorkbenchTabRevenueGrowth({ locale }: { readonly locale: 'vi' | 
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          {locale === 'vi' ? 'Khai Thác Nỗi Đau Bình Luận (Pain-Point Miner)' : 'Comment Pain-Point Miner'}
-        </div>
+      <div className="rounded-xl border border-border bg-card p-4">
+        <label htmlFor="sophia-pain-point-comments" className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {locale === 'vi' ? 'Khai Thác Nỗi Đau Bình Luận' : 'Comment Pain-Point Miner'}
+        </label>
         <textarea
+          id="sophia-pain-point-comments"
           rows={3}
           value={commentsRaw}
           onChange={(e) => setCommentsRaw(e.target.value)}
-          className="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+          className="mt-2 w-full rounded-lg border border-border bg-background p-2.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
-        <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400">
+        <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-400">
           {locale === 'vi'
             ? `Đã lọc & gom ${analytics.painChunks.length} cụm bình luận chứa nỗi đau thực (loại bỏ spam ngắn).`
             : `Filtered & grouped ${analytics.painChunks.length} high-signal pain-point comment chunks.`}
