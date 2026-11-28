@@ -89,12 +89,12 @@ describe('Private Media Resolver + Provider SHA-256 Parity + Media Approval Bind
       resolvePrivateMediaFromR2({ uri: canonicalUri, expectedUserId: 'user-2', r2 }),
     ).rejects.toThrow(/Cross-user/);
     await expect(
-      resolvePrivateMediaFromR2({ uri: canonicalUri, expectedOrgId: 'org-beta', r2 }),
+      resolvePrivateMediaFromR2({ uri: canonicalUri, expectedUserId: 'user-1', expectedOrgId: 'org-beta', r2 }),
     ).rejects.toThrow(/Cross-workspace/);
 
     // Missing MEDIA_BUCKET fail-closed
     await expect(
-      resolvePrivateMediaFromR2({ uri: canonicalUri, r2: null }),
+      resolvePrivateMediaFromR2({ uri: canonicalUri, expectedUserId: 'user-1', r2: null }),
     ).rejects.toThrow(/MEDIA_BUCKET binding unavailable/);
 
     // Provider adapter parity: YouTube resumable upload receives exact persisted bytes
@@ -125,7 +125,8 @@ describe('Private Media Resolver + Provider SHA-256 Parity + Media Approval Bind
       hashtags: ['sophia', 'fixture'],
       title: 'Fixture Test Video',
       containsSyntheticMedia: true,
-    });
+      ownerUserId: 'user-1',
+    } as Parameters<typeof performResumableYouTubeUpload>[2]);
 
     expect(ytId).toBe('yt_fixture_video_001');
     expect(uploadedSha256).toBe(expectedHash);
@@ -144,7 +145,7 @@ describe('Private Media Resolver + Provider SHA-256 Parity + Media Approval Bind
     } as unknown as R2Bucket;
 
     await expect(
-      resolvePrivateMediaFromR2({ uri: `r2://${objectKey}`, r2 }),
+      resolvePrivateMediaFromR2({ uri: `r2://${objectKey}`, expectedUserId: 'user-1', r2 }),
     ).rejects.toThrow(/Media integrity mismatch/);
   });
 

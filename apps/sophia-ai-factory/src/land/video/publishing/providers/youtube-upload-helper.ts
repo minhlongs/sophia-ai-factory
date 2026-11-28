@@ -92,7 +92,13 @@ export async function performResumableYouTubeUpload(
   let contentType: string;
 
   if (isCanonicalPrivateR2Uri(videoUrl)) {
-    const resolved = await resolvePrivateMediaFromR2({ uri: videoUrl });
+    const ownerUserId = (meta as PublishMeta & { ownerUserId?: string; ownerOrgId?: string }).ownerUserId ?? '';
+    const ownerOrgId = (meta as PublishMeta & { ownerUserId?: string; ownerOrgId?: string }).ownerOrgId;
+    const resolved = await resolvePrivateMediaFromR2({
+      uri: videoUrl,
+      expectedUserId: ownerUserId,
+      ...(ownerOrgId ? { expectedOrgId: ownerOrgId } : {}),
+    });
     videoBlob = new Blob([resolved.bytes as BlobPart], { type: resolved.contentType });
     contentType = resolved.contentType;
   } else {

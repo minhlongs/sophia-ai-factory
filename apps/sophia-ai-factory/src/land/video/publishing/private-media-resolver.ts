@@ -93,7 +93,7 @@ async function sha256HexOfBytes(bytes: Uint8Array): Promise<string> {
  */
 export async function resolvePrivateMediaFromR2(args: {
   readonly uri: string;
-  readonly expectedUserId?: string;
+  readonly expectedUserId: string;
   readonly expectedOrgId?: string;
   readonly r2?: R2Bucket | null;
 }): Promise<ResolvedPrivateMedia> {
@@ -102,7 +102,7 @@ export async function resolvePrivateMediaFromR2(args: {
     throw new Error('[privateMediaResolver] Invalid or non-canonical private R2 URI');
   }
 
-  if (args.expectedUserId && parsed.userId !== args.expectedUserId) {
+  if (!args.expectedUserId || parsed.userId !== args.expectedUserId) {
     throw new Error('[privateMediaResolver] Cross-user private media access denied');
   }
   if (args.expectedOrgId && parsed.orgId !== args.expectedOrgId) {
@@ -117,6 +117,10 @@ export async function resolvePrivateMediaFromR2(args: {
   const obj = await bucket.get(parsed.objectKey);
   if (!obj) {
     throw new Error('[privateMediaResolver] Private media object not found in MEDIA_BUCKET');
+  }
+
+  if (typeof obj.size === 'number' && (obj.size === 0 || obj.size > MAX_RESOLVED_PRIVATE_MEDIA_BYTES)) {
+    throw new Error(`[privateMediaResolver] Media object size out of bounds (${obj.size} bytes)`);
   }
 
   const buf = await obj.arrayBuffer();

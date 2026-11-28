@@ -54,7 +54,8 @@ export async function uploadToProvider(
         ? { containsSyntheticMedia: compliance.containsSyntheticMedia }
         : {}),
       ...(provenance ? { provenance } : {}),
-    });
+      ...(userId ? { ownerUserId: userId } : {}),
+    } as Parameters<typeof pub.upload>[1]);
     return { externalPostId, shouldRetry: false };
   } catch (uploadErr) {
     const errorMsg = sanitizeError(uploadErr);
