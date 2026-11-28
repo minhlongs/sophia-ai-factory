@@ -75,13 +75,13 @@ export function DashboardTopBar({
   return (
     <header
       className={cn(
-        "sticky top-0 h-16 z-20 bg-background/85 backdrop-blur-xl border-b border-border px-4 md:px-8 flex items-center justify-between transition-colors motion-reduce:transition-none select-none",
+        "sticky top-0 h-16 z-20 bg-background/85 backdrop-blur-xl border-b border-border px-2.5 sm:px-4 md:px-8 flex items-center justify-between gap-2 transition-colors motion-reduce:transition-none select-none",
         className
       )}
       data-testid="dashboard-topbar"
     >
       {/* Left: Mobile Trigger & Search Input */}
-      <div className="flex items-center gap-3 w-full max-w-md">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 max-w-md">
         <button
           type="button"
           onClick={onOpenMobileDrawer}
@@ -92,9 +92,9 @@ export function DashboardTopBar({
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="relative w-full">
+        <div className="relative min-w-0 flex-1">
           <Search
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
+            className="absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
             aria-hidden="true"
           />
           <input
@@ -102,7 +102,7 @@ export function DashboardTopBar({
             placeholder={resolvedSearchPlaceholder}
             aria-label={resolvedSearchPlaceholder}
             onFocus={onOpenCmdK}
-            className="w-full pl-10 pr-14 py-2 text-xs md:text-sm rounded-full bg-[var(--md-sys-color-surface-container-low)] border border-border text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring transition-colors font-sans"
+            className="min-w-0 w-full pl-9 sm:pl-10 pr-3 sm:pr-14 py-2 text-xs md:text-sm rounded-full bg-[var(--md-sys-color-surface-container-low)] border border-border text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring transition-colors font-sans"
             data-testid="dashboard-search-input"
           />
           {onOpenCmdK && (

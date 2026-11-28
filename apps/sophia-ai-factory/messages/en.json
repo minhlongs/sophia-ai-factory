@@ -7773,6 +7773,24 @@
         "deleteDesc": "Permanently remove your account and all associated data.",
         "irreversible": "This action is irreversible.",
         "deleteButton": "Delete Account"
+      },
+      "title": "Account & Workspace Settings",
+      "subtitle": "Manage personal identity, Passkeys, live AI provider credentials, usage telemetry, and team ownership.",
+      "viewBillingMetering": "View Billing Metering",
+      "tabs": {
+        "account": "Profile",
+        "security": "Security (Passkeys & 2FA)",
+        "apiKeys": "API Keys (BYOK)",
+        "storage": "Storage (R2 BYOS)",
+        "usage": "Live Metering",
+        "team": "Team & Ownership",
+        "openCore": "Open-Core & Portability",
+        "preferences": "Preferences"
+      },
+      "usagePanel": {
+        "title": "Transparent Consumption Ledger",
+        "description": "Inspect granular video generation minutes, ElevenLabs synthesis, fal.ai diffusion calls, and LLM tokens.",
+        "cta": "Open Real-Time Metering Portal"
       }
     },
     "campaigns": {
@@ -8265,7 +8283,10 @@
     "adjustedCostMCU": "Adjusted Cost / MCU",
     "multiplier": "Multiplier",
     "noData": "No revenue data yet. Start creating content to track performance.",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "dependencyUnavailable": "Monetization data service is temporarily unavailable. Please try again shortly.",
+    "workspaceUnavailable": "Workspace is not yet initialized for monetization reporting. Complete workspace setup to view analytics.",
+    "fetchError": "Failed to load monetization data right now. Please try again."
   },
   "creativeEconomy": {
     "pageTitle": "Creative Economy",

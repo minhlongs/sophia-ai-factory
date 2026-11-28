@@ -7774,6 +7774,24 @@
         "deleteDesc": "Xóa vĩnh viễn tài khoản và tất cả dữ liệu liên quan.",
         "irreversible": "Hành động này không thể hoàn tác.",
         "deleteButton": "Xóa tài khoản"
+      },
+      "title": "Cài đặt tài khoản và không gian làm việc",
+      "subtitle": "Quản lý danh tính cá nhân, Passkeys, khóa API nhà cung cấp AI (BYOK), đo lường mức sử dụng và quyền sở hữu đội ngũ.",
+      "viewBillingMetering": "Xem đo lường cước phí",
+      "tabs": {
+        "account": "Hồ sơ",
+        "security": "Bảo mật (Passkeys & 2FA)",
+        "apiKeys": "Khóa API (BYOK)",
+        "storage": "Lưu trữ (R2 BYOS)",
+        "usage": "Đo lường trực tiếp",
+        "team": "Đội ngũ & Quyền sở hữu",
+        "openCore": "Open-Core & Di chuyển dữ liệu",
+        "preferences": "Tùy chọn"
+      },
+      "usagePanel": {
+        "title": "Sổ cái tiêu thụ minh bạch",
+        "description": "Kiểm tra chi tiết số phút dựng video, tổng hợp giọng đọc ElevenLabs, lượt gọi fal.ai và token LLM.",
+        "cta": "Mở cổng đo lường thời gian thực"
       }
     },
     "campaigns": {
@@ -8266,7 +8284,10 @@
     "adjustedCostMCU": "Chi phí điều chỉnh / MCU",
     "multiplier": "Hệ số",
     "noData": "Chưa có dữ liệu doanh thu. Hãy bắt đầu tạo nội dung để theo dõi.",
-    "loading": "Đang tải..."
+    "loading": "Đang tải...",
+    "dependencyUnavailable": "Cơ sở dữ liệu kiếm tiền hiện tạm thời chưa sẵn sàng. Vui lòng thử lại sau.",
+    "workspaceUnavailable": "Không gian làm việc chưa được khởi tạo đầy đủ cho báo cáo kiếm tiền. Hãy hoàn tất thiết lập ban đầu.",
+    "fetchError": "Không thể tải dữ liệu kiếm tiền lúc này. Vui lòng thử lại."
   },
   "creativeEconomy": {
     "pageTitle": "Kinh tế Sáng tạo",

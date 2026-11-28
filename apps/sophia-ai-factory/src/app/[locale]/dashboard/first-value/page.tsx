@@ -59,7 +59,7 @@ export default async function FirstValueDashboardPage({ params }: PageProps) {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 pt-8 pb-72 sm:px-6 sm:pb-40">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 pt-8 pb-72 sm:px-6 sm:pb-40">
       <div className="flex flex-col gap-2">
         {!isPilot && (
           <Link
@@ -79,6 +79,6 @@ export default async function FirstValueDashboardPage({ params }: PageProps) {
       </div>
 
       <FirstValueJourneyClient orgId={orgId} initialPilotMode={isPilot} />
-    </main>
+    </div>
   );
 }
