@@ -135,4 +135,77 @@ describe('Wave C.4 Lane B: /api/first-value/voice durable auth, workspace, conse
     expect(rOk.headers.get('X-Sophia-Voice')).toBe('nova');
     expect(mockClearLock).toHaveBeenCalledTimes(1);
   });
+
+  it('handles kill-switch, cost controls, financing disabled, storage unavailable, and upstream failure branches', async () => {
+    mockGetCurrentUser.mockResolvedValue({ id: 'u-voice-3', email: 'v@example.test' });
+    mockVerifyCsrfToken.mockReturnValue(true);
+    mockVerifyWorkspaceAccess.mockResolvedValue(true);
+    mockGetPilotConsent.mockResolvedValue({ policyVersion: PILOT_POLICY_VERSION });
+    mockLookupUserApiKey.mockResolvedValue({ status: 'FOUND', key: 'sk-or-v1-test-key-123456' });
+    mockReserveSlot.mockResolvedValue({ outcome: 'reserved', lockUntilMs: Date.now() + 60_000 });
+
+    process.env.PILOT_LIVE_INFERENCE_ENABLED = 'false';
+    const rDisabled = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory' }),
+    }));
+    expect(rDisabled.status).toBe(403);
+
+    process.env.PILOT_LIVE_INFERENCE_ENABLED = 'true';
+    delete process.env.PILOT_MAX_GENERATIONS;
+    const rNoCost = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory' }),
+    }));
+    expect(rNoCost.status).toBe(503);
+
+    process.env.PILOT_MAX_GENERATIONS = '5';
+    process.env.PILOT_FINANCING_MODE = 'DISABLED';
+    const rFinDisabled = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory' }),
+    }));
+    expect(rFinDisabled.status).toBe(503);
+
+    process.env.PILOT_FINANCING_MODE = 'CUSTOMER_BYOK';
+    mockGetD1.mockResolvedValueOnce(null);
+    const rNoD1 = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory' }),
+    }));
+    expect(rNoD1.status).toBe(503);
+
+    // Upstream 401 -> refunds slot and returns 422
+    globalThis.fetch = vi.fn(async () => new Response('unauthorized', { status: 401 })) as unknown as typeof fetch;
+    const r401 = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory' }),
+    }));
+    expect(r401.status).toBe(422);
+    expect(mockReleaseSlot).toHaveBeenCalledTimes(1);
+
+    // Upstream 500 -> clears lock only (no refund) and returns 502
+    globalThis.fetch = vi.fn(async () => new Response('err', { status: 500 })) as unknown as typeof fetch;
+    const r500 = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory' }),
+    }));
+    expect(r500.status).toBe(502);
+
+    // Upstream network error -> clears lock only and returns 502
+    globalThis.fetch = vi.fn(async () => { throw new Error('network'); }) as unknown as typeof fetch;
+    const rNet = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory' }),
+    }));
+    expect(rNet.status).toBe(502);
+
+    // Empty audio -> 502
+    globalThis.fetch = vi.fn(async () => new Response(new Uint8Array(0), { status: 200 })) as unknown as typeof fetch;
+    const rEmpty = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory' }),
+    }));
+    expect(rEmpty.status).toBe(502);
+  });
 });
