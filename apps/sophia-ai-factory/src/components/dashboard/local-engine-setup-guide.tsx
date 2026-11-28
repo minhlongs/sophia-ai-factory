@@ -103,9 +103,10 @@ export function LocalEngineSetupGuide() {
               <div className="flex items-center justify-between w-full">
                 <span className="text-gray-400">No active connection key</span>
                 <button
+                  type="button"
                   onClick={generateNewKey}
                   disabled={isGeneratingKey}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-sans text-xs transition-colors disabled:opacity-50"
+                  className="md3-pill-button inline-flex min-h-[44px] items-center gap-1.5 bg-primary px-4 font-sans text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   {isGeneratingKey ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
