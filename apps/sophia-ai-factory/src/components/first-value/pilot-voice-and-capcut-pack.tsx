@@ -24,7 +24,10 @@ import {
   triggerTextFileDownload,
   type RepurposedShortClip,
 } from './pilot-capcut-pack-helpers';
-import { renderAndDownloadPilotMp4 } from './pilot-browser-mp4-renderer';
+import {
+  renderAndDownloadPilotMp4,
+  renderNarratedPilotMp4Blob,
+} from './pilot-browser-mp4-renderer';
 
 export interface PilotVoiceAndCapCutPackProps {
   readonly artifactId: string;
@@ -49,6 +52,10 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
   const [voiceLoading, setVoiceLoading] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [narratedLoading, setNarratedLoading] = useState(false);
+  const [narratedError, setNarratedError] = useState<string | null>(null);
+  const [narratedVideoUrl, setNarratedVideoUrl] = useState<string | null>(null);
   const [copiedPack, setCopiedPack] = useState(false);
   const [renderingClipIdx, setRenderingClipIdx] = useState<number | null>(null);
   const repurposedClips = extractThreeShortClipsFromLongScript(props.script);
@@ -75,6 +82,21 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
       if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
   }, [audioUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (narratedVideoUrl) URL.revokeObjectURL(narratedVideoUrl);
+    };
+  }, [narratedVideoUrl]);
+
+  const scriptFingerprint = `${props.artifactId}:${props.script.title}:${props.script.scenes.map((s) => s.narration).join('|')}`;
+  useEffect(() => {
+    setAudioBlob(null);
+    setAudioUrl(null);
+    setNarratedVideoUrl(null);
+    setNarratedError(null);
+    setVoiceError(null);
+  }, [scriptFingerprint]);
 
   function handleSelectImages(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -119,11 +141,43 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
       const blob = await response.blob();
       if (audioUrl) URL.revokeObjectURL(audioUrl);
       const nextUrl = URL.createObjectURL(blob);
+      setAudioBlob(blob);
       setAudioUrl(nextUrl);
+      setNarratedVideoUrl(null);
+      setNarratedError(null);
     } catch {
       setVoiceError(t('pilotVoiceError'));
     } finally {
       setVoiceLoading(false);
+    }
+  }
+
+  async function handleRenderNarratedMp4() {
+    if (!audioBlob || narratedLoading) return;
+    setNarratedLoading(true);
+    setNarratedError(null);
+    try {
+      const audioBytes = await audioBlob.arrayBuffer();
+      const { blob } = await renderNarratedPilotMp4Blob({
+        artifactId: props.artifactId,
+        script: props.script,
+        ctaText: props.ctaText,
+        shortUrl: props.shortUrl,
+        disclosureTag: props.disclosureTag,
+        productImageUrls: props.productImageUrls,
+        aspectRatio: '9:16',
+        audioBytes,
+      });
+      if (narratedVideoUrl) URL.revokeObjectURL(narratedVideoUrl);
+      setNarratedVideoUrl(URL.createObjectURL(blob));
+    } catch (err) {
+      setNarratedError(
+        err instanceof Error
+          ? err.message
+          : 'Không thể ghép giọng đọc vào MP4. Không tự động hạ cấp sang video không tiếng.',
+      );
+    } finally {
+      setNarratedLoading(false);
     }
   }
 
@@ -223,18 +277,50 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
             {voiceLoading ? t('loading') : t('pilotGenerateVoiceBtn')}
           </button>
           {audioUrl && (
-            <a
-              href={audioUrl}
-              download={`sophia-voice-${props.artifactId}.mp3`}
-              className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:opacity-90"
-            >
-              {t('pilotDownloadVoiceBtn')}
-            </a>
+            <>
+              <a
+                href={audioUrl}
+                download={`sophia-voice-${props.artifactId}.mp3`}
+                className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:opacity-90"
+              >
+                {t('pilotDownloadVoiceBtn')}
+              </a>
+              <button
+                type="button"
+                data-testid="pilot-render-narrated-mp4-btn"
+                disabled={props.busy || narratedLoading}
+                onClick={() => void handleRenderNarratedMp4()}
+                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+              >
+                {narratedLoading ? t('loading') : 'Xuất MP4 có giọng đọc'}
+              </button>
+            </>
           )}
         </div>
-        {voiceError && <p className="mt-1 text-xs text-destructive">{voiceError}</p>}
+        {voiceError && <p role="alert" className="mt-1 text-xs text-destructive">{voiceError}</p>}
+        {narratedError && <p role="alert" className="mt-1 text-xs text-destructive">{narratedError}</p>}
         {audioUrl && (
           <audio controls src={audioUrl} className="mt-2 h-9 w-full max-w-md" />
+        )}
+        {narratedVideoUrl && (
+          <div className="mt-3 space-y-2">
+            <video
+              controls
+              data-testid="pilot-narrated-video-player"
+              src={narratedVideoUrl}
+              className="max-h-72 w-auto rounded-lg border border-border bg-black"
+            />
+            <div>
+              <a
+                href={narratedVideoUrl}
+                data-testid="pilot-download-narrated-mp4-btn"
+                download={`sophia-narrated-${props.artifactId}.mp4`}
+                className="inline-flex rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-semibold text-foreground hover:opacity-90"
+              >
+                Tải MP4 có giọng đọc (.mp4)
+              </a>
+            </div>
+          </div>
         )}
       </div>
 
