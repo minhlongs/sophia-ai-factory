@@ -63,6 +63,11 @@ test.describe('MD3 Phase 2 Wave A — Authenticated Semantic Landmark, i18n & Re
     expect(signUp.status()).toBe(200);
 
     for (const theme of THEMES) {
+      // Configure ZenThemeProvider's real storageKey before navigation so next-themes hydrates to the requested theme
+      await page.evaluate((th) => {
+        window.localStorage.setItem('sophia-zen-theme', th);
+      }, theme);
+
       for (const rt of ROUTES) {
         for (const [w, h] of VIEWPORTS) {
           await page.setViewportSize({ width: w, height: h });
@@ -71,11 +76,7 @@ test.describe('MD3 Phase 2 Wave A — Authenticated Semantic Landmark, i18n & Re
           expect(resp?.status()).toBe(200);
           expect(new URL(page.url()).pathname).toBe(rt.path);
 
-          await page.evaluate((th) => {
-            document.documentElement.classList.toggle('dark', th === 'dark');
-            document.documentElement.classList.toggle('light', th === 'light');
-          }, theme);
-
+          await expect(page.locator('html')).toHaveClass(new RegExp(`\\b${theme}\\b`), { timeout: 8000 });
           await expect(page.locator('main')).toHaveCount(1, { timeout: 8000 });
           await expect(page.locator('main main')).toHaveCount(0);
           await expect(page.locator('h1')).toHaveCount(1, { timeout: 8000 });

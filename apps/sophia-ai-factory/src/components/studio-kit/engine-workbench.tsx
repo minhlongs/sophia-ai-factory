@@ -11,8 +11,9 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import type { ComplianceJurisdiction, CompliancePlatform } from '@/seed/compliance/policy-preflight-engine';
 import { Md3SegmentedGroup, Md3SurfaceCard } from '@/components/md3/md3-primitives';
-import { WorkbenchTabScriptPolicy } from './workbench-tab-script-policy';
+import { DEFAULT_WORKBENCH_SCRIPT, WorkbenchTabScriptPolicy } from './workbench-tab-script-policy';
 import { StudioCommandPalette } from './studio-command-palette';
 
 const TabSkeleton = () => (
@@ -100,6 +101,9 @@ const STEPS: readonly StepMeta[] = [
 
 export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
   const [activeStep, setActiveStep] = useState<StepId>('script');
+  const [scriptDraft, setScriptDraft] = useState<string>(DEFAULT_WORKBENCH_SCRIPT);
+  const [platformDraft, setPlatformDraft] = useState<CompliancePlatform>('tiktok');
+  const [jurisdictionDraft, setJurisdictionDraft] = useState<ComplianceJurisdiction>('VN');
   const current = STEPS.find((s) => s.id === activeStep) ?? STEPS[0];
   const nextStep = current.nextId ? STEPS.find((s) => s.id === current.nextId) : undefined;
 
@@ -148,7 +152,17 @@ export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
 
       {/* Active Step Workspace (MD3 Expressive Tonal Surface + Container Query) */}
       <Md3SurfaceCard className="md3-container">
-        {activeStep === 'script' ? <WorkbenchTabScriptPolicy locale={locale} /> : null}
+        {activeStep === 'script' ? (
+          <WorkbenchTabScriptPolicy
+            locale={locale}
+            script={scriptDraft}
+            onScriptChange={setScriptDraft}
+            platform={platformDraft}
+            onPlatformChange={setPlatformDraft}
+            jurisdiction={jurisdictionDraft}
+            onJurisdictionChange={setJurisdictionDraft}
+          />
+        ) : null}
         {activeStep === 'media' ? <WorkbenchTabMediaSlide locale={locale} /> : null}
         {activeStep === 'revenue' ? <WorkbenchTabRevenueGrowth locale={locale} /> : null}
         {activeStep === 'security' ? <WorkbenchTabSecurityRbac locale={locale} /> : null}

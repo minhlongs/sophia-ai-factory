@@ -14,13 +14,38 @@ import {
 import { evaluateHookAndBeatPacing } from '@/seed/ai/hook-beat-evaluator';
 import { atomizeScriptForOmnichannel } from '@/seed/ai/content-atomizer';
 
-const DEFAULT_SCRIPT =
+export const DEFAULT_WORKBENCH_SCRIPT =
   'Stop losing 40% on crypto exchange fees. Here is how top traders cut fees legally in 30 seconds. Step 1: compare maker rebates. Step 2: verify your tier. Not financial advice — link in first comment.';
 
-export function WorkbenchTabScriptPolicy({ locale }: { readonly locale: 'vi' | 'en' }) {
-  const [script, setScript] = useState(DEFAULT_SCRIPT);
-  const [platform, setPlatform] = useState<CompliancePlatform>('tiktok');
-  const [jurisdiction, setJurisdiction] = useState<ComplianceJurisdiction>('VN');
+export interface WorkbenchTabScriptPolicyProps {
+  readonly locale: 'vi' | 'en';
+  readonly script?: string;
+  readonly onScriptChange?: (value: string) => void;
+  readonly platform?: CompliancePlatform;
+  readonly onPlatformChange?: (value: CompliancePlatform) => void;
+  readonly jurisdiction?: ComplianceJurisdiction;
+  readonly onJurisdictionChange?: (value: ComplianceJurisdiction) => void;
+}
+
+export function WorkbenchTabScriptPolicy({
+  locale,
+  script: controlledScript,
+  onScriptChange,
+  platform: controlledPlatform,
+  onPlatformChange,
+  jurisdiction: controlledJurisdiction,
+  onJurisdictionChange,
+}: WorkbenchTabScriptPolicyProps) {
+  const [localScript, setLocalScript] = useState(DEFAULT_WORKBENCH_SCRIPT);
+  const [localPlatform, setLocalPlatform] = useState<CompliancePlatform>('tiktok');
+  const [localJurisdiction, setLocalJurisdiction] = useState<ComplianceJurisdiction>('VN');
+
+  const script = controlledScript ?? localScript;
+  const setScript = onScriptChange ?? setLocalScript;
+  const platform = controlledPlatform ?? localPlatform;
+  const setPlatform = onPlatformChange ?? setLocalPlatform;
+  const jurisdiction = controlledJurisdiction ?? localJurisdiction;
+  const setJurisdiction = onJurisdictionChange ?? setLocalJurisdiction;
   const deferredScript = useDeferredValue(script);
 
   const result = useMemo(() => {
