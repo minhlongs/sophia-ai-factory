@@ -17,24 +17,24 @@ export function MarketingFooterLinkColumns() {
         <h4 className="text-xs font-bold uppercase tracking-wider text-foreground dark:text-slate-300">
           {tFooter('product')}
         </h4>
-        <ul className="space-y-2.5 text-sm">
+        <ul className="space-y-1 text-sm">
           <li>
-            <Link href="/features" className="text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors">
+            <Link href="/features" className="md3-touch-target text-muted-foreground hover:text-foreground transition-colors">
               {tNav('features')}
             </Link>
           </li>
           <li>
-            <Link href="/pricing" className="text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors">
+            <Link href="/pricing" className="md3-touch-target text-muted-foreground hover:text-foreground transition-colors">
               {tNav('pricing')}
             </Link>
           </li>
           <li>
-            <Link href="/guide" className="text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors">
+            <Link href="/guide" className="md3-touch-target text-muted-foreground hover:text-foreground transition-colors">
               {tNav('guide')}
             </Link>
           </li>
           <li>
-            <Link href="/affiliate" className="text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors">
+            <Link href="/affiliate" className="md3-touch-target text-muted-foreground hover:text-foreground transition-colors">
               {tNav('affiliates')}
             </Link>
           </li>
