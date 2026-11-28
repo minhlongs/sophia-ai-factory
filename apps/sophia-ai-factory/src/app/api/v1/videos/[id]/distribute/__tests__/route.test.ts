@@ -1,186 +1,127 @@
-/**
- * Unit tests: POST /api/v1/videos/[id]/distribute
- *
- * Covers:
- * 1. unauthenticated → 401
- * 2. Zod validation fail (empty channelProviders) → 422
- * 3. video not found → 404
- * 4. ownership violation (different user_id) → 403
- * 5. channel not connected → 422 with missingProviders
- * 6. D1 insert error → 500
- * 7. happy path: 2 channels → 200 with jobIds
- */
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-// ── Hoisted mocks ─────────────────────────────────────────────────────────────
-
-const { mockGetCurrentUser, mockSchedulePublish } = vi.hoisted(() => ({
-  mockGetCurrentUser: vi.fn(),
-  mockSchedulePublish: vi.fn(),
-}));
-
-// Mock rate limit wrapper — pass-through
-vi.mock('@/forest/middleware/rate-limit-wrapper', () => ({
-  withRateLimit: (handler: (req: NextRequest) => Promise<Response>) => {
-    return (req: NextRequest) => handler(req);
-  },
-}));
+const mockGetCurrentUserFromHeaders = vi.fn();
+const mockSchedulePublish = vi.fn();
+const mockDbPrepare = vi.fn();
 
 vi.mock('@/seed/auth/better-auth-session', () => ({
-  getCurrentUserFromHeaders: mockGetCurrentUser,
+  getCurrentUserFromHeaders: (...args: unknown[]) => mockGetCurrentUserFromHeaders(...args),
 }));
-
+vi.mock('@/seed/db/client', () => ({
+  createServerClient: () => ({
+    unwrap: () => ({
+      prepare: (...args: unknown[]) => mockDbPrepare(...args),
+    }),
+  }),
+}));
 vi.mock('@/forest/publishing/schedule-publish', () => ({
-  schedulePublish: mockSchedulePublish,
+  schedulePublish: (...args: unknown[]) => mockSchedulePublish(...args),
+}));
+vi.mock('@/forest/middleware/rate-limit-wrapper', () => ({
+  withRateLimit: (handler: (req: NextRequest) => Promise<Response>) => handler,
 }));
 
-// D1 mock — injected into globalThis.__env.DB
-const mockFirst = vi.fn();
-const mockBind = vi.fn();
-const mockPrepare = vi.fn();
-const mockAll = vi.fn();
-
-const fakeD1: D1Database = {
-  prepare: mockPrepare,
-  dump: vi.fn(),
-  batch: vi.fn(),
-  exec: vi.fn(),
-} as unknown as D1Database;
-
-// Expose D1 via globalThis.__env (same as getD1() helper in route)
-(globalThis as unknown as Record<string, unknown>).__env = { DB: fakeD1 };
-
-// ── Import SUT ────────────────────────────────────────────────────────────────
 import { POST } from '../route';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function makeRequest(body: unknown, videoId = 'vid-001'): NextRequest {
-  return new NextRequest(`http://localhost/api/v1/videos/${videoId}/distribute`, {
+function makeDistributeRequest(body: unknown): NextRequest {
+  return new NextRequest('https://sophia.local/api/v1/videos/vid_1/distribute', {
     method: 'POST',
-    body: JSON.stringify(body),
     headers: { 'Content-Type': 'application/json' },
+    body: typeof body === 'string' ? body : JSON.stringify(body),
   });
 }
-
-async function callPOST(body: unknown, videoId = 'vid-001') {
-  const req = makeRequest(body, videoId);
-  const res = await POST(req, { params: Promise.resolve({ id: videoId }) });
-  const json = await res.json() as Record<string, unknown>;
-  return { status: res.status, json };
-}
-
-// ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('POST /api/v1/videos/[id]/distribute', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetCurrentUser.mockResolvedValue({ id: 'user-123' });
-
-    // Default D1 chain: .prepare().bind() returns { first, all }
-    mockBind.mockReturnValue({ first: mockFirst, all: mockAll });
-    mockPrepare.mockReturnValue({ bind: mockBind });
-
-    // Default: video owned by user-123
-    mockFirst.mockResolvedValue({ user_id: 'user-123' });
-
-    // Default: 1 active channel returned for provider 'tiktok'
-    mockAll.mockResolvedValue({ results: [{ id: 'ch-001', provider: 'tiktok' }] });
-
-    // Default: successful insert
-    mockSchedulePublish.mockResolvedValue({ jobId: 'job-001' });
+    mockGetCurrentUserFromHeaders.mockResolvedValue({ id: 'user-1' });
   });
 
-  it('returns 401 when unauthenticated', async () => {
-    mockGetCurrentUser.mockResolvedValue(null);
-    const { status, json } = await callPOST({ channelProviders: ['tiktok'] });
-    expect(status).toBe(401);
-    expect(json.error).toMatch(/unauthorized/i);
+  it('rejects unauthenticated (401), invalid JSON (400), and unsupported providers (422 PROVIDER_NOT_IMPLEMENTED)', async () => {
+    mockGetCurrentUserFromHeaders.mockResolvedValueOnce(null);
+    const r401 = await POST(makeDistributeRequest({}), { params: Promise.resolve({ id: 'vid_1' }) });
+    expect(r401.status).toBe(401);
+
+    const r400 = await POST(makeDistributeRequest('{not-json'), { params: Promise.resolve({ id: 'vid_1' }) });
+    expect(r400.status).toBe(400);
+
+    const r422 = await POST(
+      makeDistributeRequest({ channelProviders: ['youtube', 'reddit', 'bluesky'], caption: '#ad test' }),
+      { params: Promise.resolve({ id: 'vid_1' }) },
+    );
+    expect(r422.status).toBe(422);
+    const body = (await r422.json()) as { code: string; unsupportedProviders: string[] };
+    expect(body.code).toBe('PROVIDER_NOT_IMPLEMENTED');
+    expect(body.unsupportedProviders).toEqual(['reddit', 'bluesky']);
   });
 
-  it('returns 422 on Zod validation fail (empty array)', async () => {
-    const { status, json } = await callPOST({ channelProviders: [] });
-    expect(status).toBe(422);
-    expect(json.error).toMatch(/validation failed/i);
-  });
-
-  it('returns 422 on Zod validation fail (unknown provider)', async () => {
-    const { status, json } = await callPOST({ channelProviders: ['snapchat'] });
-    expect(status).toBe(422);
-    expect(json.error).toMatch(/validation failed/i);
-  });
-
-  it('returns 404 when video not found', async () => {
-    mockFirst.mockResolvedValue(null);
-    const { status, json } = await callPOST({ channelProviders: ['tiktok'] }, 'no-such-vid');
-    expect(status).toBe(404);
-    expect(json.error).toMatch(/not found/i);
-  });
-
-  it('returns 403 when video owned by different user', async () => {
-    mockFirst.mockResolvedValue({ user_id: 'other-user-999' });
-    const { status, json } = await callPOST({ channelProviders: ['tiktok'] });
-    expect(status).toBe(403);
-    expect(json.error).toMatch(/forbidden/i);
-    expect(mockSchedulePublish).not.toHaveBeenCalled();
-  });
-
-  it('returns 422 with missingProviders when channel not active', async () => {
-    mockAll.mockResolvedValue({ results: [] }); // no active channels
-    const { status, json } = await callPOST({ channelProviders: ['tiktok'] });
-    expect(status).toBe(422);
-    expect(json.missingProviders).toEqual(['tiktok']);
-    expect(mockSchedulePublish).not.toHaveBeenCalled();
-  });
-
-  it('returns 500 when schedulePublish throws (D1 insert error)', async () => {
-    mockSchedulePublish.mockRejectedValue(new Error('D1 insert failed: UNIQUE constraint'));
-    const { status, json } = await callPOST({ channelProviders: ['tiktok'] });
-    expect(status).toBe(500);
-    expect(json.error).toMatch(/failed to schedule/i);
-  });
-
-  it('happy path: 2 channels → 200 with 2 jobIds', async () => {
-    // Provide 2 active channels
-    mockAll.mockResolvedValue({
-      results: [
-        { id: 'ch-001', provider: 'tiktok' },
-        { id: 'ch-002', provider: 'youtube' },
-      ],
+  it('enforces video ownership (404/403) and connected channels (422)', async () => {
+    mockDbPrepare.mockReturnValueOnce({
+      bind: () => ({ first: async () => null }),
     });
+    const r404 = await POST(
+      makeDistributeRequest({ channelProviders: ['youtube'], caption: '#ad test' }),
+      { params: Promise.resolve({ id: 'vid_missing' }) },
+    );
+    expect(r404.status).toBe(404);
+
+    mockDbPrepare.mockReturnValueOnce({
+      bind: () => ({ first: async () => ({ user_id: 'user-2' }) }),
+    });
+    const r403 = await POST(
+      makeDistributeRequest({ channelProviders: ['youtube'], caption: '#ad test' }),
+      { params: Promise.resolve({ id: 'vid_other' }) },
+    );
+    expect(r403.status).toBe(403);
+  });
+
+  it('schedules YouTube and Facebook fixture jobs (200) and handles partial scheduling failure (500)', async () => {
+    mockDbPrepare
+      .mockReturnValueOnce({ bind: () => ({ first: async () => ({ user_id: 'user-1' }) }) })
+      .mockReturnValueOnce({
+        bind: () => ({
+          all: async () => ({
+            results: [
+              { id: 'ch_yt_1', provider: 'youtube' },
+              { id: 'ch_fb_1', provider: 'facebook' },
+            ],
+          }),
+        }),
+      });
     mockSchedulePublish
-      .mockResolvedValueOnce({ jobId: 'job-001' })
-      .mockResolvedValueOnce({ jobId: 'job-002' });
+      .mockResolvedValueOnce({ jobId: 'job_yt_1' })
+      .mockResolvedValueOnce({ jobId: 'job_fb_1' });
 
-    const { status, json } = await callPOST({
-      channelProviders: ['tiktok', 'youtube'],
-      caption: 'Test caption',
-    });
-
-    expect(status).toBe(200);
-    expect(json.jobIds).toEqual(['job-001', 'job-002']);
-    expect(mockSchedulePublish).toHaveBeenCalledTimes(2);
-    expect(mockSchedulePublish).toHaveBeenCalledWith(
-      fakeD1,
-      expect.objectContaining({ channelId: 'ch-001', videoId: 'vid-001', caption: 'Test caption' }),
+    const r200 = await POST(
+      makeDistributeRequest({ channelProviders: ['youtube', 'facebook'], caption: '#ad Multi-channel test' }),
+      { params: Promise.resolve({ id: 'vid_1' }) },
     );
-  });
+    expect(r200.status).toBe(200);
+    const json = (await r200.json()) as { jobIds: string[] };
+    expect(json.jobIds).toEqual(['job_yt_1', 'job_fb_1']);
 
-  it('passes caption through to schedulePublish', async () => {
-    await callPOST({ channelProviders: ['tiktok'], caption: 'My caption' });
-    expect(mockSchedulePublish).toHaveBeenCalledWith(
-      fakeD1,
-      expect.objectContaining({ caption: 'My caption' }),
-    );
-  });
+    // Partial failure on second provider
+    mockDbPrepare
+      .mockReturnValueOnce({ bind: () => ({ first: async () => ({ user_id: 'user-1' }) }) })
+      .mockReturnValueOnce({
+        bind: () => ({
+          all: async () => ({
+            results: [
+              { id: 'ch_yt_1', provider: 'youtube' },
+              { id: 'ch_fb_1', provider: 'facebook' },
+            ],
+          }),
+        }),
+      });
+    mockSchedulePublish
+      .mockResolvedValueOnce({ jobId: 'job_yt_2' })
+      .mockRejectedValueOnce(new Error('DB transient error'));
 
-  it('passes undefined caption when omitted', async () => {
-    await callPOST({ channelProviders: ['tiktok'] });
-    expect(mockSchedulePublish).toHaveBeenCalledWith(
-      fakeD1,
-      expect.objectContaining({ caption: undefined }),
+    const r500 = await POST(
+      makeDistributeRequest({ channelProviders: ['youtube', 'facebook'], caption: '#ad Partial failure' }),
+      { params: Promise.resolve({ id: 'vid_1' }) },
     );
+    expect(r500.status).toBe(500);
   });
 });

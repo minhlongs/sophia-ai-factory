@@ -10,6 +10,10 @@ import {
   assertYouTubeProvenanceAllowed,
   resolveSyntheticMediaDisclosure,
 } from '@/tree/publishing/synthetic-media-disclosure';
+import {
+  isCanonicalPrivateR2Uri,
+  resolvePrivateMediaFromR2,
+} from '../private-media-resolver';
 
 export const YOUTUBE_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
 
@@ -84,10 +88,19 @@ export async function performResumableYouTubeUpload(
 ): Promise<string> {
   const metadata = resolvedMetadata ?? buildYouTubeMetadata(meta);
 
-  const videoRes = await fetch(videoUrl);
-  if (!videoRes.ok) throw new Error(`Failed to fetch video: ${videoRes.status}`);
-  const videoBlob = await videoRes.blob();
-  const contentType = videoRes.headers.get('content-type') ?? 'video/mp4';
+  let videoBlob: Blob;
+  let contentType: string;
+
+  if (isCanonicalPrivateR2Uri(videoUrl)) {
+    const resolved = await resolvePrivateMediaFromR2({ uri: videoUrl });
+    videoBlob = new Blob([resolved.bytes as BlobPart], { type: resolved.contentType });
+    contentType = resolved.contentType;
+  } else {
+    const videoRes = await fetch(videoUrl);
+    if (!videoRes.ok) throw new Error(`Failed to fetch video: ${videoRes.status}`);
+    videoBlob = await videoRes.blob();
+    contentType = videoRes.headers.get('content-type') ?? 'video/mp4';
+  }
 
   const initRes = await fetch(
     'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status',

@@ -10,6 +10,7 @@ import {
   VideoUnauthorizedError,
 } from '@/land/video/storage/get-canonical-video-url';
 import { logger } from '@/seed/utils/logger-utility';
+import { isCanonicalPrivateR2Uri } from './private-media-resolver';
 
 export function sanitizeError(err: unknown): string {
   const raw = err instanceof Error ? err.message : String(err);
@@ -23,6 +24,9 @@ export function sanitizeError(err: unknown): string {
 export function assertSafeVideoUrl(url: string): void {
   if (typeof url !== 'string' || url.length === 0) {
     throw new Error('[publishExecute] Malformed video URL: empty or non-string');
+  }
+  if (isCanonicalPrivateR2Uri(url)) {
+    return;
   }
   let parsed: URL;
   try {

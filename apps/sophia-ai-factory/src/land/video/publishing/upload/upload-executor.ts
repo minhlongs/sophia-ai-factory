@@ -12,8 +12,18 @@ const MAX_RETRIES = 5;
 function isNonRetriableUploadError(err: unknown): boolean {
   if (isProvenanceBlockedError(err)) return true;
   if (!err || typeof err !== 'object') return false;
-  const candidate = err as { nonRetriable?: boolean; name?: string; statusCode?: number };
+  const candidate = err as { nonRetriable?: boolean; name?: string; code?: string; statusCode?: number; message?: string };
   if (candidate.nonRetriable === true || candidate.name === 'NonRetriableError') return true;
+  // Never blindly retry ambiguous publication timeouts (provider may have already accepted the post).
+  if (
+    candidate.name === 'AbortError' ||
+    candidate.name === 'TimeoutError' ||
+    candidate.code === 'ETIMEDOUT' ||
+    candidate.statusCode === 504 ||
+    (typeof candidate.message === 'string' && /timed?\s*out|timeout|ambiguous/i.test(candidate.message))
+  ) {
+    return true;
+  }
   if (typeof candidate.statusCode === 'number' && candidate.statusCode >= 400 && candidate.statusCode < 500) {
     return candidate.statusCode !== 429 && candidate.statusCode !== 408;
   }

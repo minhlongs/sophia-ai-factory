@@ -16,7 +16,8 @@
 import type { D1Database, R2Bucket } from '@cloudflare/workers-types';
 import { getReviewById } from '@/tree/first-value/first-value-review-repo';
 
-export const MAX_DISTRIBUTION_MP4_BYTES = 50 * 1024 * 1024;
+/** Safe prototype cap for Cloudflare Workers 128 MB isolate memory budget. */
+export const MAX_DISTRIBUTION_MP4_BYTES = 25 * 1024 * 1024;
 export const MIN_DISTRIBUTION_MP4_BYTES = 128;
 
 export interface SaveDistributionAssetInput {
@@ -131,6 +132,7 @@ export async function saveApprovedMp4ForDistribution(
 
   if (createdNewObject) {
     await r2.put(r2ObjectKey, input.mp4Bytes, {
+      onlyIf: { etagDoesNotMatch: '*' },
       httpMetadata: { contentType: 'video/mp4' },
       customMetadata: {
         orgId: input.orgId,
