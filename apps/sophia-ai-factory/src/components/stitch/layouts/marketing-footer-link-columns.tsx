@@ -60,7 +60,7 @@ export function MarketingFooterLinkColumns() {
             <span>ElevenLabs & D-ID</span>
           </li>
           <li>
-            <Link href="/setup" className="text-primary-text hover:opacity-80 transition-opacity inline-flex items-center gap-1 font-medium">
+            <Link href="/setup" className="md3-touch-target text-primary-text hover:opacity-80 transition-opacity gap-1 font-medium">
               <span>Setup Wizard</span>
               <ArrowUpRight className="w-3 h-3" />
             </Link>
@@ -73,19 +73,19 @@ export function MarketingFooterLinkColumns() {
         <h4 className="text-xs font-bold uppercase tracking-wider text-foreground dark:text-slate-300">
           {tFooter('legal')}
         </h4>
-        <ul className="space-y-2.5 text-sm">
+        <ul className="space-y-1 text-sm">
           <li>
-            <Link href="/privacy" className="text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors">
+            <Link href="/privacy" className="md3-touch-target text-muted-foreground hover:text-foreground transition-colors">
               {t('footer.privacy')}
             </Link>
           </li>
           <li>
-            <Link href="/terms" className="text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors">
+            <Link href="/terms" className="md3-touch-target text-muted-foreground hover:text-foreground transition-colors">
               {t('footer.terms')}
             </Link>
           </li>
           <li>
-            <Link href="/contact" className="text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors">
+            <Link href="/contact" className="md3-touch-target text-muted-foreground hover:text-foreground transition-colors">
               {t('footer.contact')}
             </Link>
           </li>

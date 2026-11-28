@@ -19,8 +19,8 @@ export default async function PrivacyPage() {
   const isVi = locale === 'vi';
 
   return (
-    <main className="min-h-screen bg-background px-4 py-12 text-foreground">
-      <article className="mx-auto max-w-3xl space-y-8">
+    <main className="min-h-screen bg-background py-12 text-foreground">
+      <article className="md3-article-container space-y-8">
         <header className="space-y-3 border-b border-border pb-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="rounded-full bg-primary/15 px-3 py-1 font-mono text-xs font-semibold text-primary">
