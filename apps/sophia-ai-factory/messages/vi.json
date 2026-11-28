@@ -1116,7 +1116,7 @@
   "dashboard": {
     "opcNav": {
       "today": "Hôm nay",
-      "engines": "Xưởng AI (34 Động Cơ)",
+      "engines": "Xưởng AI (39 Động Cơ)",
       "offers": "Sản Phẩm Hoa Hồng",
       "campaigns": "Chiến dịch",
       "approvals": "Cần duyệt",
@@ -1125,7 +1125,8 @@
       "referSophia": "Giới Thiệu Nhận Thưởng",
       "workspace": "Không gian làm việc",
       "moreTools": "Công cụ khác (liên kết đầy đủ)",
-      "referralProgramme": "Chương trình giới thiệu"
+      "referralProgramme": "Chương trình giới thiệu",
+      "firstValue": "Xưởng Chiến Dịch"
     },
     "title": "Bảng Điều Khiển",
     "subtitle": "Quản lý các chiến dịch video tự động của bạn",
@@ -6486,7 +6487,7 @@
           }
         }
       },
-      "eyebrow": "BÀN ĐIỀU KHIỂN CỦA GIÁM ĐỐC • OPC v3.0",
+      "eyebrow": "TỔNG HÀNH DINH OPC • 39 ĐỘNG CƠ AI",
       "title": "Tổng quan",
       "subtitle": "Chào mừng trở lại. Tổng quan hoạt động hôm nay.",
       "onboardingBanner": {

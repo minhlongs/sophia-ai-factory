@@ -103,7 +103,11 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
       )}
 
       {loadFailed && (
-        <DataStateBoundary state="error" testId="dashboard-load-error-boundary" />
+        <DataStateBoundary
+          state="error"
+          isVi={studioLocale === 'vi'}
+          testId="dashboard-load-error-boundary"
+        />
       )}
 
       <DataStateBoundary state="live" testId="dashboard-data-boundary">

@@ -1116,7 +1116,7 @@
   "dashboard": {
     "opcNav": {
       "today": "Today",
-      "engines": "AI Workbench (34 Engines)",
+      "engines": "AI Workbench (39 Engines)",
       "offers": "Commission Offers",
       "campaigns": "Campaigns",
       "approvals": "Needs approval",
@@ -1125,7 +1125,8 @@
       "referSophia": "Partner Rewards",
       "workspace": "Workspace",
       "moreTools": "More tools (all deep links)",
-      "referralProgramme": "Referral programme"
+      "referralProgramme": "Referral programme",
+      "firstValue": "First Value Studio"
     },
     "title": "Dashboard",
     "subtitle": "Manage your automated video campaigns",
@@ -6485,7 +6486,7 @@
           }
         }
       },
-      "eyebrow": "DIRECTOR'S CONTROL DECK • OPC v3.0",
+      "eyebrow": "OPC TACTICAL HQ • 39 AI ENGINES",
       "title": "Dashboard",
       "subtitle": "Welcome back. Here's what's happening with your workspace today.",
       "onboardingBanner": {
