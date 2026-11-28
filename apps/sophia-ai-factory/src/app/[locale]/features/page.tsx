@@ -109,7 +109,9 @@ export default async function FeaturesRoute({
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <MarketingNav />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-28 pb-16 sm:px-6 lg:pt-32 space-y-12">
+      <div className="h-24 shrink-0" aria-hidden="true" />
+
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-16 sm:px-6 space-y-12">
         <header className="mx-auto max-w-4xl text-center space-y-4">
           <span className="font-code inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary-text">
             <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
