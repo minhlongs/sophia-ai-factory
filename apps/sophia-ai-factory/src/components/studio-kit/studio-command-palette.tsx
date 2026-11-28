@@ -166,6 +166,16 @@ export function StudioCommandPalette({
   }
 
   async function handleRunRealtimePipeline() {
+    const trimmedScript = roe.script.trim();
+    if (!trimmedScript) {
+      setRunError(
+        locale === 'vi'
+          ? 'Vui lòng nhập kịch bản chiến dịch trước khi chạy 39 động cơ (hoặc chọn chế độ kiểm tra mẫu cục bộ).'
+          : 'Enter a campaign script before running the 39 engines (or explicitly select local sample check).',
+      );
+      return;
+    }
+
     const token = runTokenRef.current + 1;
     runTokenRef.current = token;
     setIsPipelineRunning(true);
@@ -174,7 +184,7 @@ export function StudioCommandPalette({
     setReceipt(null);
 
     const payloadBody = {
-      script: roe.script.trim() || DEFAULT_LIVE_PIPELINE_INPUT.script,
+      script: trimmedScript,
       platform: roe.platform,
       jurisdiction: regionToJurisdiction(roe.region),
       country: roe.region,

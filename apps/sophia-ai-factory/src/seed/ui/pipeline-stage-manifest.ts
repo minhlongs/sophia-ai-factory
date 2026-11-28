@@ -199,10 +199,10 @@ export function buildPipelineVerifiedReceipt(
     warningCount,
     blockedCount,
     totalComputeMs: Math.round(totalComputeMs * 10) / 10,
-    subIdWatermark: telemetryMap['subid-watermark-encoder']?.metricOutput ?? 'HMAC-SHA256',
-    waterfallSplit: telemetryMap['integer-cent-waterfall']?.metricOutput ?? '70/20/10 BigInt',
+    subIdWatermark: telemetryMap['subid-watermark-encoder']?.metricOutput ?? 'Not evaluated',
+    waterfallSplit: telemetryMap['integer-cent-waterfall']?.metricOutput ?? 'Not evaluated',
     reconciliationVerdict:
-      telemetryMap['affiliate-payout-reconciler']?.metricOutput ?? '3-Way Balanced',
+      telemetryMap['affiliate-payout-reconciler']?.metricOutput ?? 'Not evaluated',
   };
 }
 

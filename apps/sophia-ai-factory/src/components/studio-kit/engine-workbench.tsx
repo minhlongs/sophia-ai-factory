@@ -175,14 +175,8 @@ export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
           locale={locale}
           campaignDraft={{
             script: scriptDraft,
-            platform:
-              platformDraft === 'tiktok' || platformDraft === 'youtube_shorts' || platformDraft === 'instagram_reels'
-                ? platformDraft
-                : 'tiktok',
-            region:
-              jurisdictionDraft === 'VN' || jurisdictionDraft === 'US' || jurisdictionDraft === 'UK' || jurisdictionDraft === 'SG'
-                ? jurisdictionDraft
-                : 'US',
+            platform: platformDraft === 'generic' ? 'tiktok' : platformDraft,
+            region: jurisdictionDraft === 'GLOBAL' ? 'US' : jurisdictionDraft,
           }}
         />
       </div>

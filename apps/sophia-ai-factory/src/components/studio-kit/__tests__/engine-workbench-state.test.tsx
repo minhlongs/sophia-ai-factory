@@ -62,12 +62,12 @@ describe('EngineWorkbench & WorkbenchTabScriptPolicy campaign draft & Mission Co
     expect(latestDraft?.platform).toBe('youtube_shorts');
     expect(latestDraft?.region).toBe('US');
 
-    // Also exercise fallback mapping branches (facebook_reels -> tiktok, EU -> US)
+    // Exact supported platform and jurisdiction must be preserved without lossy substitution
     fireEvent.change(restoredSelects[0], { target: { value: 'facebook_reels' } });
     fireEvent.change(restoredSelects[1], { target: { value: 'EU' } });
     const mappedDraft = capturedDrafts[capturedDrafts.length - 1];
-    expect(mappedDraft?.platform).toBe('tiktok');
-    expect(mappedDraft?.region).toBe('US');
+    expect(mappedDraft?.platform).toBe('facebook_reels');
+    expect(mappedDraft?.region).toBe('EU');
 
     // Clearing script must keep it empty instead of reverting to default sample
     fireEvent.change(restoredTextarea, { target: { value: '' } });

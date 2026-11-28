@@ -10,7 +10,7 @@
  * @module components/studio-kit/opc-commander-roe-bar
  */
 
-export type RoePlatform = 'tiktok' | 'youtube_shorts' | 'instagram_reels';
+export type RoePlatform = 'tiktok' | 'youtube_shorts' | 'instagram_reels' | 'facebook_reels';
 export type RoeRegion = 'VN' | 'US' | 'EU' | 'UK' | 'SG';
 
 export interface CommanderRoeConfig {
@@ -32,6 +32,7 @@ const PLATFORMS: readonly { id: RoePlatform; label: string }[] = [
   { id: 'tiktok', label: 'TikTok' },
   { id: 'youtube_shorts', label: 'YT Shorts' },
   { id: 'instagram_reels', label: 'Reels' },
+  { id: 'facebook_reels', label: 'FB Reels' },
 ];
 
 const REGIONS: readonly { id: RoeRegion; label: string }[] = [
@@ -42,8 +43,8 @@ const REGIONS: readonly { id: RoeRegion; label: string }[] = [
   { id: 'SG', label: 'SG' },
 ];
 
-export function regionToJurisdiction(region: RoeRegion): 'VN' | 'US' | 'EU' | 'UK' {
-  if (region === 'SG') return 'US';
+export function regionToJurisdiction(region: RoeRegion): 'VN' | 'US' | 'EU' | 'UK' | 'GLOBAL' {
+  if (region === 'SG') return 'GLOBAL';
   return region;
 }
 
