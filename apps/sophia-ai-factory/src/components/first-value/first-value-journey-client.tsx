@@ -8,7 +8,7 @@
  * @module components/first-value/first-value-journey-client
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { AffiliateStudioSnapshot } from '@/land/first-value/pilot-affiliate-studio-revenue';
 import type { FirstValueCostPreview } from '@/seed/ai/cost/first-value-cost-preview';
@@ -25,7 +25,7 @@ import {
 } from './first-value-feedback-card';
 import { FirstValuePilotBanner } from './first-value-pilot-banner';
 import { FirstValueReviewPanel } from './first-value-review-panel';
-import { ZeroKeyPreviewStudio } from './zero-key-preview-studio';
+import { ZeroKeyPreviewStudio, type PreviewHandoffSnapshot } from './zero-key-preview-studio';
 import {
   FirstValueSupportCard,
   type SupportRequestKind,
@@ -207,14 +207,17 @@ export function FirstValueJourneyClient({
   );
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const activeOrgRef = useRef(orgId);
 
   const loadStatus = useCallback(async () => {
-    if (!orgId) return;
-    const res = await fetch(`/api/first-value?orgId=${encodeURIComponent(orgId)}`, {
+    const requestOrgId = orgId;
+    if (!requestOrgId) return;
+    const res = await fetch(`/api/first-value?orgId=${encodeURIComponent(requestOrgId)}`, {
       cache: 'no-store',
     });
-    if (!res.ok) return;
+    if (!res.ok || activeOrgRef.current !== requestOrgId) return;
     const data = (await res.json()) as StatusResponse;
+    if (activeOrgRef.current !== requestOrgId) return;
     setStatus(data);
     if (data.pilot?.liveInferenceEnabled && data.pilot.modelId) {
       setModel(data.pilot.modelId);
@@ -227,6 +230,7 @@ export function FirstValueJourneyClient({
   }, [loadStatus]);
 
   async function postAction(body: Record<string, unknown>, idempotencyKey?: string) {
+    const requestOrgId = orgId;
     setBusy(true);
     setErrorMessage(null);
     try {
@@ -241,6 +245,7 @@ export function FirstValueJourneyClient({
         body: JSON.stringify(body),
       });
       const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      if (activeOrgRef.current !== requestOrgId) return null;
       if (!res.ok) {
         setErrorMessage(String(json.error ?? `HTTP ${res.status}`));
         return null;
@@ -313,8 +318,12 @@ export function FirstValueJourneyClient({
     return null;
   }
 
+  const costPreviewTokenRef = useRef(0);
+
   async function handleCostPreview() {
     if (!topic.trim() || !audience.trim()) return;
+    const token = costPreviewTokenRef.current + 1;
+    costPreviewTokenRef.current = token;
     const data = await postAction({
       action: 'cost_preview',
       orgId,
@@ -324,6 +333,7 @@ export function FirstValueJourneyClient({
       audience: audience.trim(),
       durationSec,
     });
+    if (costPreviewTokenRef.current !== token) return;
     if (data?.preview) setCostPreview(data.preview as FirstValueCostPreview);
   }
 
@@ -465,6 +475,55 @@ export function FirstValueJourneyClient({
       )
     : Boolean(orgId && status?.receipt && inputsValid);
 
+  const [handoffSnapshot, setHandoffSnapshot] = useState<PreviewHandoffSnapshot | null>(null);
+
+  useEffect(() => {
+    activeOrgRef.current = orgId;
+    costPreviewTokenRef.current += 1;
+    setHandoffSnapshot(null);
+    setCostPreview(null);
+    setTopic('SaaS & Crypto Affiliate Campaign Angle');
+    setAudience('SaaS Buyers & Digital Teams');
+    setDurationSec(30);
+    setActiveReview(null);
+    setExportPayload(null);
+    setStatus(null);
+  }, [orgId]);
+
+  function handleTopicChange(next: string) {
+    costPreviewTokenRef.current += 1;
+    setTopic(next);
+    setCostPreview(null);
+  }
+
+  function handleAudienceChange(next: string) {
+    costPreviewTokenRef.current += 1;
+    setAudience(next);
+    setCostPreview(null);
+  }
+
+  function handleDurationChange(next: number) {
+    costPreviewTokenRef.current += 1;
+    setDurationSec(next);
+    setCostPreview(null);
+  }
+
+  function handleModelChange(next: string) {
+    costPreviewTokenRef.current += 1;
+    setModel(next);
+    setCostPreview(null);
+  }
+
+  function handlePreviewUpgradeHandoff(snapshot: PreviewHandoffSnapshot) {
+    if (snapshot.orgId !== orgId) return;
+    costPreviewTokenRef.current += 1;
+    setHandoffSnapshot(snapshot);
+    setTopic(snapshot.topic);
+    setAudience(snapshot.audience);
+    setDurationSec(snapshot.durationSec);
+    setCostPreview(null);
+  }
+
   if (isLivePilot) {
     return (
       <AffiliateCampaignStudio
@@ -511,6 +570,38 @@ export function FirstValueJourneyClient({
         </div>
       )}
 
+      {handoffSnapshot ? (
+        <section
+          data-testid="preview-byok-handoff-banner"
+          className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 space-y-2.5"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                Đã chuyển nội dung từ Preview Studio (Rev #{handoffSnapshot.revision} • {handoffSnapshot.provenance})
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Trạng thái preflight: {!effectiveByokConfigured ? 'KEY_NOT_CONFIGURED' : !isLivePilot ? 'LIVE_ACCESS_NOT_GRANTED' : 'COMMERCIAL_PREFLIGHT_READY'} • Ngôn ngữ: {handoffSnapshot.contentLanguage.toUpperCase()} • Phê duyệt cục bộ không thay thế phê duyệt thương mại.
+              </p>
+            </div>
+            <button
+              type="button"
+              data-testid="preview-handoff-cancel-btn"
+              onClick={() => setHandoffSnapshot(null)}
+              className="min-h-[40px] rounded-full border border-border bg-background px-3.5 text-xs font-medium text-foreground"
+            >
+              Hủy &amp; quay lại Preview
+            </button>
+          </div>
+          <pre
+            data-testid="preview-handoff-script-ref"
+            className="whitespace-pre-wrap rounded-xl border border-border bg-background p-3 text-xs text-foreground"
+          >
+            {handoffSnapshot.scriptText}
+          </pre>
+        </section>
+      ) : null}
+
       <FirstValueByokCard
         byokConfigured={effectiveByokConfigured}
         receipt={status?.receipt ?? null}
@@ -532,15 +623,17 @@ export function FirstValueJourneyClient({
         canPreview={Boolean(orgId && inputsValid)}
         canCreate={canCreate}
         costPreview={costPreview}
-        onTopicChange={setTopic}
-        onAudienceChange={setAudience}
-        onDurationChange={setDurationSec}
-        onModelChange={setModel}
+        onTopicChange={handleTopicChange}
+        onAudienceChange={handleAudienceChange}
+        onDurationChange={handleDurationChange}
+        onModelChange={handleModelChange}
         onPreviewCost={() => void handleCostPreview()}
         onCreateReview={() => void handleCreateReview()}
       />
 
-      {!isLivePilot ? <ZeroKeyPreviewStudio orgId={orgId} /> : null}
+      {!isLivePilot ? (
+        <ZeroKeyPreviewStudio orgId={orgId} onUpgradeToByok={handlePreviewUpgradeHandoff} />
+      ) : null}
 
       <FirstValueReviewPanel
         review={activeReview}

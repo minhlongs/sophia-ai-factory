@@ -224,4 +224,40 @@ describe('ZeroKeyPreviewStudio concurrency, snapshot & content integrity (PR #35
     fireEvent.click(screen.getByTestId('preview-render-mp4-btn'));
     await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Encoder crashed'));
   });
+
+  it('emits immutable PreviewHandoffSnapshot on Nâng cấp nội dung với AI without altering authorization', async () => {
+    const onUpgrade = vi.fn();
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ script: { title: 'T', scenes: [{ narration: 'Original scene' }] } }),
+    }) as unknown as typeof fetch;
+
+    render(<ZeroKeyPreviewStudio orgId="org-a" enabled onUpgradeToByok={onUpgrade} />);
+    fireEvent.change(screen.getByTestId('preview-topic-input'), { target: { value: 'Crypto Security VN' } });
+    fireEvent.change(screen.getByTestId('preview-audience-input'), { target: { value: 'Newcomers' } });
+    fireEvent.change(screen.getByTestId('preview-duration-select'), { target: { value: '45' } });
+    fireEvent.click(screen.getByTestId('preview-generate-script-btn'));
+    await waitFor(() => expect(screen.getByTestId('preview-script-editor')).toBeTruthy());
+
+    fireEvent.change(screen.getByTestId('preview-script-editor'), {
+      target: { value: 'Edited VI script — WAVE_C3_MARKER' },
+    });
+    fireEvent.click(screen.getByTestId('preview-local-approve-btn'));
+    expect(screen.getByText(/Giữ nguyên chủ đề và kịch bản đã chuẩn bị/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByTestId('preview-upgrade-to-byok-btn'));
+    expect(onUpgrade).toHaveBeenCalledTimes(1);
+    expect(onUpgrade).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orgId: 'org-a',
+        topic: 'Crypto Security VN',
+        audience: 'Newcomers',
+        durationSec: 45,
+        scriptText: 'Edited VI script — WAVE_C3_MARKER',
+        provenance: 'USER_EDITED_SCRIPT',
+        contentLanguage: 'vi',
+      }),
+    );
+  });
 });
