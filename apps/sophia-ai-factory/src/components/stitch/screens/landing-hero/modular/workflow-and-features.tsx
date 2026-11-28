@@ -1,6 +1,15 @@
 // i18n-namespace: stitch.landing
 import React from 'react';
-import { Layers, Cpu, Video, Coins } from 'lucide-react';
+import {
+  Layers,
+  Cpu,
+  Video,
+  Coins,
+  Clock,
+  ShieldAlert,
+  BotOff,
+  Sparkles,
+} from 'lucide-react';
 import {
   LandingFeaturesSection,
   type LandingFeaturesSectionProps,
@@ -46,16 +55,19 @@ export function WorkflowAndFeatures({ tLanding, t }: WorkflowAndFeaturesProps) {
   const painPoints = [
     {
       num: '01',
+      icon: Clock,
       title: t('v3Core.pain1Title'),
       desc: t('v3Core.pain1Desc'),
     },
     {
       num: '02',
+      icon: ShieldAlert,
       title: t('v3Core.pain2Title'),
       desc: t('v3Core.pain2Desc'),
     },
     {
       num: '03',
+      icon: BotOff,
       title: t('v3Core.pain3Title'),
       desc: t('v3Core.pain3Desc'),
     },
@@ -73,25 +85,38 @@ export function WorkflowAndFeatures({ tLanding, t }: WorkflowAndFeaturesProps) {
           <h2 className="h2">{t('v3Core.whyTitle')}</h2>
 
           <ol className="pains">
-            {painPoints.map((pain) => (
-              <li key={pain.num}>
-                <span className="num">{pain.num}</span>
-                <div>
-                  <strong>{pain.title}</strong>
-                  <p>{pain.desc}</p>
-                </div>
-              </li>
-            ))}
+            {painPoints.map((pain) => {
+              const PainIcon = pain.icon;
+              return (
+                <li key={pain.num} className="md3-surface-card p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--md-sys-color-primary-container)] text-primary-text">
+                      <PainIcon className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <span className="num">{pain.num}</span>
+                  </div>
+                  <div>
+                    <strong>{pain.title}</strong>
+                    <p>{pain.desc}</p>
+                  </div>
+                </li>
+              );
+            })}
           </ol>
 
-          <p className="turn">{t('v3Core.whyTurn')}</p>
+          <p className="turn">
+            <span className="inline-flex items-center gap-2.5">
+              <Sparkles className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+              <span>{t('v3Core.whyTurn')}</span>
+            </span>
+          </p>
         </div>
       </section>
 
       {/* ════ CHAPTER 02: #how — Live Command & Chat Replay + 4-Step Pipeline ═ */}
       <section
         id="how"
-        className="chapter border-t border-[#E2E8F0] dark:border-white/[0.08] bg-[#F8F9FC] dark:bg-[#090A10]"
+        className="chapter border-t border-border bg-background"
       >
         <div className="panel">
           <p className="kicker">{t('v3Core.howKicker')}</p>
@@ -108,20 +133,20 @@ export function WorkflowAndFeatures({ tLanding, t }: WorkflowAndFeaturesProps) {
               return (
                 <div
                   key={idx}
-                  className="p-6 rounded-2xl bg-white dark:bg-[#11131F] border border-[#E2E8F0] dark:border-white/[0.08] hover:border-[#4338CA]/40 dark:hover:border-[#6366F1]/40 hover:-translate-y-1 transition-all duration-300 shadow-sm dark:shadow-xl group"
+                  className="md3-surface-card p-6 hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 group"
                 >
                   <div className="flex items-center justify-between mb-5">
-                    <span className="text-xs font-bold font-mono px-2.5 py-1 rounded-md bg-slate-100 dark:bg-white/[0.05] text-slate-600 dark:text-slate-400 group-hover:text-[#4338CA] dark:group-hover:text-indigo-400 transition-colors">
+                    <span className="font-code text-xs font-bold px-2.5 py-1 rounded-full bg-muted text-muted-foreground group-hover:text-primary-text transition-colors">
                       STEP {item.step}
                     </span>
-                    <div className="w-10 h-10 rounded-xl bg-[#4338CA]/10 dark:bg-[#6366F1]/10 flex items-center justify-center text-[#4338CA] dark:text-indigo-400 group-hover:scale-110 transition-transform">
-                      <Icon className="w-5 h-5" />
+                    <div className="h-11 w-11 rounded-2xl bg-[var(--md-sys-color-primary-container)] flex items-center justify-center text-primary-text group-hover:scale-110 transition-transform">
+                      <Icon className="w-5 h-5" aria-hidden="true" />
                     </div>
                   </div>
-                  <h4 className="text-lg font-bold text-[#0B0F19] dark:text-white mb-2">
+                  <h4 className="text-lg font-bold text-foreground mb-2">
                     {item.title}
                   </h4>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     {item.desc}
                   </p>
                 </div>
