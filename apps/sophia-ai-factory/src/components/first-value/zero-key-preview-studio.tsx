@@ -30,9 +30,21 @@ interface ApprovedPreviewSnapshot {
   readonly revision: number;
 }
 
+export interface PreviewHandoffSnapshot {
+  readonly orgId: string;
+  readonly topic: string;
+  readonly audience: string;
+  readonly durationSec: number;
+  readonly scriptText: string;
+  readonly revision: number;
+  readonly provenance: 'FIXTURE_SCRIPT' | 'USER_EDITED_SCRIPT';
+  readonly contentLanguage: 'vi';
+}
+
 export interface ZeroKeyPreviewStudioProps {
   readonly orgId: string;
   readonly enabled?: boolean;
+  readonly onUpgradeToByok?: (snapshot: PreviewHandoffSnapshot) => void;
 }
 
 export function isZeroKeyPreviewEnabled(): boolean {
@@ -62,7 +74,7 @@ function buildScriptOutputFromSnapshot(snapshot: ApprovedPreviewSnapshot): Scrip
   };
 }
 
-export function ZeroKeyPreviewStudio({ orgId, enabled }: ZeroKeyPreviewStudioProps) {
+export function ZeroKeyPreviewStudio({ orgId, enabled, onUpgradeToByok }: ZeroKeyPreviewStudioProps) {
   const isEnabled = enabled ?? isZeroKeyPreviewEnabled();
   const [topic, setTopic] = useState('Cách đánh giá bảo mật sàn giao dịch crypto an toàn cho người mới tại Việt Nam');
   const [audience, setAudience] = useState('Người mới tìm hiểu tài sản số');
@@ -347,17 +359,42 @@ export function ZeroKeyPreviewStudio({ orgId, enabled }: ZeroKeyPreviewStudioPro
           </button>
         ) : null}
         {approvedSnapshot && (phase === 'LOCALLY_APPROVED' || phase === 'RENDERING' || phase === 'RENDERED') ? (
-          <button
-            type="button"
-            data-testid="preview-render-mp4-btn"
-            disabled={isRendering}
-            onClick={() => void handleRenderMp4()}
-            className="min-h-[44px] rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
-          >
-            {isRendering ? 'Đang render MP4...' : '3. Render Video MP4 (320×576 • 0 MCU)'}
-          </button>
+          <>
+            <button
+              type="button"
+              data-testid="preview-render-mp4-btn"
+              disabled={isRendering}
+              onClick={() => void handleRenderMp4()}
+              className="min-h-[44px] rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+            >
+              {isRendering ? 'Đang render MP4...' : '3. Render Video MP4 (320×576 • 0 MCU)'}
+            </button>
+            {onUpgradeToByok ? (
+              <button
+                type="button"
+                data-testid="preview-upgrade-to-byok-btn"
+                disabled={isRendering}
+                onClick={() =>
+                  onUpgradeToByok({
+                    ...approvedSnapshot,
+                    provenance: scriptSource,
+                    contentLanguage: 'vi',
+                  })
+                }
+                className="min-h-[44px] rounded-full border border-amber-500/50 bg-amber-500/15 px-4 py-2 text-xs font-semibold text-foreground disabled:opacity-50"
+              >
+                Nâng cấp nội dung với AI
+              </button>
+            ) : null}
+          </>
         ) : null}
       </div>
+
+      {approvedSnapshot && onUpgradeToByok ? (
+        <p className="text-xs text-muted-foreground">
+          Giữ nguyên chủ đề và kịch bản đã chuẩn bị. Kết nối API key để tiếp tục khi tài khoản đủ điều kiện.
+        </p>
+      ) : null}
 
       {scriptText ? (
         <label className="flex flex-col gap-1 text-xs text-muted-foreground">

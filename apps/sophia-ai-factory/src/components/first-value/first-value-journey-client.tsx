@@ -25,7 +25,7 @@ import {
 } from './first-value-feedback-card';
 import { FirstValuePilotBanner } from './first-value-pilot-banner';
 import { FirstValueReviewPanel } from './first-value-review-panel';
-import { ZeroKeyPreviewStudio } from './zero-key-preview-studio';
+import { ZeroKeyPreviewStudio, type PreviewHandoffSnapshot } from './zero-key-preview-studio';
 import {
   FirstValueSupportCard,
   type SupportRequestKind,
@@ -465,6 +465,21 @@ export function FirstValueJourneyClient({
       )
     : Boolean(orgId && status?.receipt && inputsValid);
 
+  const [handoffSnapshot, setHandoffSnapshot] = useState<PreviewHandoffSnapshot | null>(null);
+
+  useEffect(() => {
+    setHandoffSnapshot(null);
+  }, [orgId]);
+
+  function handlePreviewUpgradeHandoff(snapshot: PreviewHandoffSnapshot) {
+    if (snapshot.orgId !== orgId) return;
+    setHandoffSnapshot(snapshot);
+    setTopic(snapshot.topic);
+    setAudience(snapshot.audience);
+    setDurationSec(snapshot.durationSec);
+    setCostPreview(null);
+  }
+
   if (isLivePilot) {
     return (
       <AffiliateCampaignStudio
@@ -511,6 +526,38 @@ export function FirstValueJourneyClient({
         </div>
       )}
 
+      {handoffSnapshot ? (
+        <section
+          data-testid="preview-byok-handoff-banner"
+          className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 space-y-2.5"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                Đã chuyển nội dung từ Preview Studio (Rev #{handoffSnapshot.revision} • {handoffSnapshot.provenance})
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Trạng thái preflight: {!effectiveByokConfigured ? 'KEY_NOT_CONFIGURED' : !isLivePilot ? 'LIVE_ACCESS_NOT_GRANTED' : 'COMMERCIAL_PREFLIGHT_READY'} • Ngôn ngữ: {handoffSnapshot.contentLanguage.toUpperCase()} • Phê duyệt cục bộ không thay thế phê duyệt thương mại.
+              </p>
+            </div>
+            <button
+              type="button"
+              data-testid="preview-handoff-cancel-btn"
+              onClick={() => setHandoffSnapshot(null)}
+              className="min-h-[40px] rounded-full border border-border bg-background px-3.5 text-xs font-medium text-foreground"
+            >
+              Hủy &amp; quay lại Preview
+            </button>
+          </div>
+          <pre
+            data-testid="preview-handoff-script-ref"
+            className="whitespace-pre-wrap rounded-xl border border-border bg-background p-3 text-xs text-foreground"
+          >
+            {handoffSnapshot.scriptText}
+          </pre>
+        </section>
+      ) : null}
+
       <FirstValueByokCard
         byokConfigured={effectiveByokConfigured}
         receipt={status?.receipt ?? null}
@@ -540,7 +587,9 @@ export function FirstValueJourneyClient({
         onCreateReview={() => void handleCreateReview()}
       />
 
-      {!isLivePilot ? <ZeroKeyPreviewStudio orgId={orgId} /> : null}
+      {!isLivePilot ? (
+        <ZeroKeyPreviewStudio orgId={orgId} onUpgradeToByok={handlePreviewUpgradeHandoff} />
+      ) : null}
 
       <FirstValueReviewPanel
         review={activeReview}
