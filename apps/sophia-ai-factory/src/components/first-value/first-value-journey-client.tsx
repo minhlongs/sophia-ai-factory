@@ -364,6 +364,7 @@ export function FirstValueJourneyClient({
         topic: topic.trim(),
         audience: audience.trim(),
         durationSec,
+        ...(handoffSnapshot?.scriptText.trim() ? { referenceScript: handoffSnapshot.scriptText.trim() } : {}),
         provenance: isLivePilot ? 'live_provider' : 'fixture_simulated',
         ...(status?.receipt ? { receipt: status.receipt } : {}),
       },
