@@ -13,10 +13,13 @@
 import type { ScriptOutput } from '@/seed/ai/script-generator';
 import {
   encodePilotSlidesToMp4,
+  encodePilotSlidesWithAacToMp4,
   renderDeterministicRgbaSlide,
+  type EncodedNarratedPilotMp4Artifact,
   type EncodedPilotMp4Artifact,
   type PilotMp4SlideSpec,
 } from '@/seed/video/pilot-mp4-encoder';
+import { encodeAudioBytesToAacSamples } from './pilot-browser-audio-encoder';
 import {
   buildKaraokeWordCues,
   evaluateFrameStateAtIndex,
@@ -237,6 +240,44 @@ export async function renderPilotMp4Blob(args: RenderPilotMp4Args): Promise<{
   const isLandscape = args.aspectRatio === '16:9';
   const encoded = await encodePilotSlidesToMp4({
     slides,
+    width: isLandscape ? 576 : 320,
+    height: isLandscape ? 320 : 576,
+    renderRgbaFrame: (slide, w, h) => drawSlideOnCanvas(slide, w, h, productImages),
+  });
+  const blob = new Blob([encoded.bytes as BlobPart], { type: 'video/mp4' });
+  return { encoded, blob };
+}
+
+export interface RenderNarratedPilotMp4Args extends RenderPilotMp4Args {
+  readonly audioBytes: ArrayBuffer;
+}
+
+/**
+ * Renders a narrated H.264 + AAC-LC MP4 in the browser using WebCodecs AudioEncoder
+ * and the product ISO BMFF muxer (`muxAvc1AacMp4`).
+ * Aligns slide durations to the actual decoded audio duration and NEVER silently
+ * downgrades to silent output if audio decoding or encoding fails.
+ */
+export async function renderNarratedPilotMp4Blob(args: RenderNarratedPilotMp4Args): Promise<{
+  readonly encoded: EncodedNarratedPilotMp4Artifact;
+  readonly blob: Blob;
+}> {
+  const aac = await encodeAudioBytesToAacSamples(args.audioBytes);
+  const baseSlides = buildSlidesFromAcceptedScript(args);
+  const baseTotal = baseSlides.reduce((sum, s) => sum + s.durationSec, 0) || 1;
+  const scale = aac.durationSec / baseTotal;
+  const alignedSlides: PilotMp4SlideSpec[] = baseSlides.map((slide) => ({
+    ...slide,
+    durationSec: Number(Math.max(0.5, slide.durationSec * scale).toFixed(3)),
+  }));
+
+  const productImages = await loadProductImages(args.productImageUrls);
+  const isLandscape = args.aspectRatio === '16:9';
+  const encoded = await encodePilotSlidesWithAacToMp4({
+    slides: alignedSlides,
+    audioSampleRate: aac.sampleRate,
+    audioChannelCount: aac.channelCount,
+    audioSamples: aac.samples,
     width: isLandscape ? 576 : 320,
     height: isLandscape ? 320 : 576,
     renderRgbaFrame: (slide, w, h) => drawSlideOnCanvas(slide, w, h, productImages),

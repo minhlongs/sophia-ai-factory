@@ -143,13 +143,16 @@ export async function computeCreatePayloadHash(input: {
   readonly audience: string;
   readonly durationSec: number;
   readonly provenance: ScriptProvenance;
+  readonly referenceScript?: string;
 }): Promise<string> {
+  const trimmedRef = input.referenceScript?.trim();
   const canonical = JSON.stringify({
     missionId: input.missionId,
     topic: input.topic,
     audience: input.audience,
     durationSec: input.durationSec,
     provenance: input.provenance,
+    ...(trimmedRef ? { referenceScript: trimmedRef } : {}),
   });
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical));
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');

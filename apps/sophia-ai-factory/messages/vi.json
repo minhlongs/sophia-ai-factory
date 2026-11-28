@@ -9901,7 +9901,7 @@
     "pilotProductImagesTitle": "Ảnh sản phẩm làm nền Video MP4 (tối đa 5 ảnh)",
     "pilotProductImagesBtn": "+ Chọn ảnh sản phẩm",
     "pilotProductImagesHint": "Ảnh xử lý 100% trên máy bạn, tự động ghép làm nền từng cảnh khi xuất MP4.",
-    "pilotFreeVoiceTitle": "🎙️ Giọng đọc AI Miễn phí (Edge TTS — không cần API key)",
+    "pilotFreeVoiceTitle": "🎙️ Giọng đọc AI qua OpenRouter BYOK (microsoft/mai-voice-2.1-flash — ước tính $15/1M ký tự vào khóa OpenRouter của bạn)",
     "pilotGenerateVoiceBtn": "Tạo giọng đọc (.mp3)",
     "pilotDownloadVoiceBtn": "Tải file .mp3",
     "pilotVoiceError": "Không thể tạo giọng đọc lúc này. Vui lòng thử lại.",

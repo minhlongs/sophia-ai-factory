@@ -298,4 +298,65 @@ describe('FirstValueJourneyClient Preview-to-BYOK handoff, cost integrity & work
     expect(screen.queryByText(/WORKSPACE_A_STALE_LEAK_TITLE/)).toBeNull();
     expect(screen.getByText(/WORKSPACE_B_UNIQUE_TITLE/)).toBeTruthy();
   });
+
+  it('forwards exact edited Preview script as referenceScript in create_review POST payload when BYOK receipt is present (Wave C.4)', async () => {
+    const postPayloads: Array<Record<string, unknown>> = [];
+    globalThis.fetch = vi.fn((_url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        const body = JSON.parse(init.body as string) as Record<string, unknown>;
+        postPayloads.push(body);
+        return Promise.resolve({ ok: true, status: 200, json: async () => ({}) });
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          orgId: 'org-a',
+          configuredProviders: ['openrouter'],
+          receipt: {
+            version: 1,
+            userId: 'u-a',
+            orgId: 'org-a',
+            provider: 'openrouter',
+            storageStatus: 'stored',
+            providerAuthStatus: 'untested',
+            issuedAt: '2026-11-28T00:00:00Z',
+            expiresAt: '2026-11-29T00:00:00Z',
+            signature: 'sig-test',
+          },
+          recentReviews: [],
+          pilot: { liveInferenceEnabled: false },
+        }),
+      });
+    }) as unknown as typeof fetch;
+
+    render(
+      <NextIntlClientProvider locale="vi" messages={viMessages}>
+        <FirstValueJourneyClient orgId="org-a" initialPilotMode={false} />
+      </NextIntlClientProvider>,
+    );
+
+    await waitFor(() => expect(capturedOnUpgrade).toBeDefined());
+    const createBtn = screen.getByRole('button', { name: /Tạo bản duyệt mô phỏng bền vững/i });
+    await waitFor(() => expect((createBtn as HTMLButtonElement).disabled).toBe(false));
+
+    act(() => {
+      capturedOnUpgrade?.({
+        orgId: 'org-a',
+        topic: 'Crypto Security C4',
+        audience: 'Newcomers',
+        durationSec: 35,
+        scriptText: 'Bước 1: Kiểm tra 2FA.\nBước 2: Tách ví lạnh — WAVE_C4_REF_SCRIPT',
+        revision: 5,
+        provenance: 'USER_EDITED_SCRIPT',
+        contentLanguage: 'vi',
+      });
+    });
+
+    fireEvent.click(createBtn);
+    await waitFor(() => expect(postPayloads.some((p) => p.action === 'create_review')).toBe(true));
+    const createReq = postPayloads.find((p) => p.action === 'create_review');
+    expect(createReq?.referenceScript).toBe('Bước 1: Kiểm tra 2FA.\nBước 2: Tách ví lạnh — WAVE_C4_REF_SCRIPT');
+    expect(createReq?.topic).toBe('Crypto Security C4');
+  });
 });

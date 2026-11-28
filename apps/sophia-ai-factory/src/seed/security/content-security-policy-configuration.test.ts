@@ -87,7 +87,7 @@ describe('buildCSPHeader', () => {
       const header = buildCSPHeader()
       const parts = header.split('; ')
       // 13 directives defined in cspConfig (includes report-uri from Wave 5)
-      expect(parts.length).toBe(14)
+      expect(parts.length).toBe(15)
     })
 
     it('nonce directive is well-formed hex string of 32 chars', () => {

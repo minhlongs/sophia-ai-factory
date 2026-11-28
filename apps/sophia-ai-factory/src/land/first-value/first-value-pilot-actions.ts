@@ -80,6 +80,7 @@ export interface LiveScriptGeneratorInput {
   readonly topic: string;
   readonly audience: string;
   readonly durationSec: number;
+  readonly referenceScript?: string;
   readonly userId: string;
   readonly apiKey: string;
   readonly model?: string;
@@ -413,6 +414,7 @@ export async function handleLiveProviderCreateReview(
     audience: payload.audience,
     durationSec: payload.durationSec,
     provenance: 'live_provider',
+    ...(payload.referenceScript ? { referenceScript: payload.referenceScript } : {}),
   });
 
   // Short-circuit idempotent replays BEFORE reserving quota or calling the live AI provider.
@@ -532,6 +534,7 @@ export async function handleLiveProviderCreateReview(
       topic: payload.topic,
       audience: payload.audience,
       durationSec: payload.durationSec,
+      ...(payload.referenceScript ? { referenceScript: payload.referenceScript } : {}),
       userId: user.id,
       apiKey: resolvedApiKey,
       model: costConfig.modelId,

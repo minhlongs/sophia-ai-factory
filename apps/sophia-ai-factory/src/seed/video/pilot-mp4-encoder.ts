@@ -9,7 +9,14 @@
  * @module seed/video/pilot-mp4-encoder
  */
 
-import { concatBytes, muxAvc1Mp4, sha256HexOfBytes, type Avc1SampleEntry } from './pilot-mp4-muxer';
+import {
+  concatBytes,
+  muxAvc1AacMp4,
+  muxAvc1Mp4,
+  sha256HexOfBytes,
+  type AacAudioSampleEntry,
+  type Avc1SampleEntry,
+} from './pilot-mp4-muxer';
 
 export interface PilotMp4SlideSpec {
   readonly label: string;
@@ -336,6 +343,81 @@ export async function encodePilotSlidesToMp4(options: {
     height,
     durationSec: totalDurationSec,
     codec: 'h264',
+    containerBrand: 'isom',
+  };
+}
+
+export interface EncodedNarratedPilotMp4Artifact extends EncodedPilotMp4Artifact {
+  readonly audioCodec: 'aac-lc';
+  readonly audioDurationSec: number;
+}
+
+/**
+ * Encodes slides (H.264/AVC1) and AAC-LC narration frames into one combined ISO BMFF MP4.
+ * Fails explicitly on empty/malformed audio — never silently substitutes silent output.
+ */
+export async function encodePilotSlidesWithAacToMp4(options: {
+  readonly slides: readonly PilotMp4SlideSpec[];
+  readonly audioSampleRate: number;
+  readonly audioChannelCount: number;
+  readonly audioSamples: readonly AacAudioSampleEntry[];
+  readonly width?: number;
+  readonly height?: number;
+  readonly renderRgbaFrame?: (slide: PilotMp4SlideSpec, width: number, height: number) => Uint8Array;
+}): Promise<EncodedNarratedPilotMp4Artifact> {
+  const width = options.width ?? 320;
+  const height = options.height ?? 576;
+  if (width % 16 !== 0 || height % 16 !== 0) {
+    throw new Error(`MP4 dimensions (${width}x${height}) must be multiples of 16`);
+  }
+  if (options.slides.length === 0) {
+    throw new Error('At least one slide is required to encode narrated MP4');
+  }
+
+  const timescale = 1000;
+  const frameRenderer = options.renderRgbaFrame ?? renderDeterministicRgbaSlide;
+  const spsNal = buildBaselineSpsNal(width, height);
+  const ppsNal = buildBaselinePpsNal();
+
+  const samples: Avc1SampleEntry[] = options.slides.map((slide, index) => {
+    const clampedSec = Math.max(0.5, Math.min(120, Number(slide.durationSec) || 5));
+    const rgba = frameRenderer(slide, width, height);
+    return {
+      lengthPrefixedNals: encodeIdrIpcmSample(rgba, width, height, index),
+      durationTicks: Math.round(clampedSec * timescale),
+      isKeyframe: true,
+    };
+  });
+
+  const bytes = muxAvc1AacMp4({
+    width,
+    height,
+    timescale,
+    spsNal,
+    ppsNal,
+    samples,
+    audioSampleRate: options.audioSampleRate,
+    audioChannelCount: options.audioChannelCount,
+    audioSamples: options.audioSamples,
+  });
+
+  const videoDurationSec = Number(
+    (samples.reduce((sum, s) => sum + s.durationTicks, 0) / timescale).toFixed(3),
+  );
+  const totalAudioSamples = options.audioSamples.reduce((sum, s) => sum + s.durationSamples, 0);
+  const audioDurationSec = Number((totalAudioSamples / options.audioSampleRate).toFixed(3));
+  const sha256Hex = await sha256HexOfBytes(bytes);
+
+  return {
+    bytes,
+    sha256Hex,
+    byteSize: bytes.byteLength,
+    width,
+    height,
+    durationSec: Math.max(videoDurationSec, audioDurationSec),
+    codec: 'h264',
+    audioCodec: 'aac-lc',
+    audioDurationSec,
     containerBrand: 'isom',
   };
 }

@@ -332,6 +332,9 @@ export function FirstValueJourneyClient({
       topic: topic.trim(),
       audience: audience.trim(),
       durationSec,
+      ...(handoffSnapshot?.scriptText.trim()
+        ? { referenceScript: handoffSnapshot.scriptText.trim() }
+        : {}),
     });
     if (costPreviewTokenRef.current !== token) return;
     if (data?.preview) setCostPreview(data.preview as FirstValueCostPreview);
@@ -364,6 +367,7 @@ export function FirstValueJourneyClient({
         topic: topic.trim(),
         audience: audience.trim(),
         durationSec,
+        ...(handoffSnapshot?.scriptText.trim() ? { referenceScript: handoffSnapshot.scriptText.trim() } : {}),
         provenance: isLivePilot ? 'live_provider' : 'fixture_simulated',
         ...(status?.receipt ? { receipt: status.receipt } : {}),
       },
@@ -526,24 +530,78 @@ export function FirstValueJourneyClient({
 
   if (isLivePilot) {
     return (
-      <AffiliateCampaignStudio
-        orgId={orgId}
-        pilot={pilot}
-        studio={status?.affiliateStudio ?? null}
-        fallbackReview={activeReview}
-        byokConfigured={effectiveByokConfigured}
-        receipt={status?.receipt ?? null}
-        busy={busy}
-        errorMessage={errorMessage}
-        errorPrefix={t('errorPrefix')}
-        postAction={postAction}
-        onReloadStatus={loadStatus}
-        onAcceptPilotTerms={handleAcceptPilotTerms}
-        onSavePilotKey={handleSavePilotKey}
-        onClearPilotKey={handleClearPilotKey}
-        onSubmitFeedback={handleSubmitFeedback}
-        onSubmitSupportRequest={handleSubmitSupportRequest}
-      />
+      <div className="flex flex-col gap-6">
+        <ZeroKeyPreviewStudio
+          orgId={orgId}
+          onUpgradeToByok={handlePreviewUpgradeHandoff}
+        />
+        {handoffSnapshot && (
+          <div
+            data-testid="preview-byok-handoff-banner"
+            className="rounded-xl border border-primary/40 bg-primary/5 p-4 text-sm"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <div className="font-semibold text-foreground">
+                  Đã mang nguyên chủ đề và kịch bản Preview sang luồng thương mại (Revision #{handoffSnapshot.revision})
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Trạng thái preflight:{' '}
+                  {!effectiveByokConfigured
+                    ? 'KEY_NOT_CONFIGURED'
+                    : !pilot?.consentAccepted
+                      ? 'CONSENT_REQUIRED'
+                      : 'COMMERCIAL_PREFLIGHT_READY'}{' '}
+                  • Ngôn ngữ: {handoffSnapshot.contentLanguage.toUpperCase()} • Phê duyệt cục bộ không thay thế phê duyệt thương mại.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  data-testid="live-pilot-create-review-from-handoff-btn"
+                  disabled={busy || !canCreate}
+                  onClick={() => void handleCreateReview()}
+                  className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                >
+                  Tạo bản duyệt thương mại từ kịch bản Preview
+                </button>
+                <button
+                  type="button"
+                  data-testid="preview-handoff-cancel-btn"
+                  onClick={() => setHandoffSnapshot(null)}
+                  className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                >
+                  Hủy &amp; quay lại bản xem thử
+                </button>
+              </div>
+            </div>
+            <pre
+              data-testid="preview-handoff-script-ref"
+              className="mt-2 max-h-36 overflow-auto whitespace-pre-wrap rounded-lg border border-border bg-background/80 p-2.5 text-xs text-foreground"
+            >
+              {handoffSnapshot.scriptText}
+            </pre>
+          </div>
+        )}
+        <AffiliateCampaignStudio
+          orgId={orgId}
+          pilot={pilot}
+          studio={status?.affiliateStudio ?? null}
+          fallbackReview={activeReview}
+          byokConfigured={effectiveByokConfigured}
+          receipt={status?.receipt ?? null}
+          busy={busy}
+          errorMessage={errorMessage}
+          errorPrefix={t('errorPrefix')}
+          postAction={postAction}
+          onReloadStatus={loadStatus}
+          onAcceptPilotTerms={handleAcceptPilotTerms}
+          onSavePilotKey={handleSavePilotKey}
+          onClearPilotKey={handleClearPilotKey}
+          onSubmitFeedback={handleSubmitFeedback}
+          onSubmitSupportRequest={handleSubmitSupportRequest}
+        />
+      </div>
     );
   }
 

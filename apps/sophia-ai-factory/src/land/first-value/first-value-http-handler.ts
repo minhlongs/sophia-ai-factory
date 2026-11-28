@@ -365,6 +365,7 @@ async function handleCreateReview(
     audience: payload.audience,
     durationSec: payload.durationSec,
     provenance: 'fixture_simulated',
+    ...(payload.referenceScript ? { referenceScript: payload.referenceScript } : {}),
   });
 
   try {
@@ -558,6 +559,7 @@ function handleStatelessPreviewAction(data: FirstValuePostPayload): NextResponse
       topic: data.topic,
       audience: data.audience,
       durationSec: data.durationSec,
+      ...(data.referenceScript ? { referenceScript: data.referenceScript } : {}),
       capabilitiesKnown: 'inferred_from_provider_table',
     });
     return jsonPrivate(
