@@ -34,18 +34,20 @@ const EXISTING_DASHBOARD_ROUTES = new Set([
 ]);
 
 describe('OPC primary navigation', () => {
-  it('has exactly eight work groups, all pointing at existing dashboard routes', () => {
-    expect(OPC_PRIMARY_NAV_GROUPS).toHaveLength(8);
+  it('has exactly nine work groups, all pointing at existing dashboard routes', () => {
+    expect(OPC_PRIMARY_NAV_GROUPS).toHaveLength(9);
     for (const item of OPC_PRIMARY_NAV_GROUPS) {
       expect(EXISTING_DASHBOARD_ROUTES.has(item.href), item.href).toBe(true);
     }
   });
 
-  it('renders focused 5-route core primary groups for users, keeps all 18 deep links for admins, and separates Refer Sophia', () => {
+  it('renders 7 customer-facing primary groups including Distribution Center & Approvals, keeps all 18 deep links for admins, and separates Refer Sophia', () => {
     const { container } = render(<DashboardSidebarNav isAdmin />);
 
     const primaryNav = screen.getByRole('navigation', { name: 'Platform Navigation' });
-    expect(within(primaryNav).getAllByRole('link')).toHaveLength(5);
+    expect(within(primaryNav).getAllByRole('link')).toHaveLength(7);
+    expect(container.querySelector('a[href="/dashboard/publish/queue"]')).not.toBeNull();
+    expect(container.querySelector('a[href="/dashboard/approvals"]')).not.toBeNull();
 
     for (const item of SOPHIA_NAV_MODULES) {
       expect(
@@ -59,11 +61,14 @@ describe('OPC primary navigation', () => {
     expect(OPC_REFERRAL_NAV_ITEM.href).not.toContain('affiliate');
   });
 
-  it('renders Vietnamese primary labels when isVi is true', () => {
-    render(<DashboardSidebarNav isVi={true} />);
+  it('renders Vietnamese primary labels including Trung tâm Phân phối and Cần duyệt for normal customers without admin modules', () => {
+    const { container } = render(<DashboardSidebarNav isVi={true} isAdmin={false} />);
     const primaryNav = screen.getByRole('navigation', { name: 'Nền Tảng AI' });
-    expect(within(primaryNav).getAllByRole('link').length).toBe(5);
+    expect(within(primaryNav).getAllByRole('link').length).toBe(7);
+    expect(screen.getByText('Trung tâm Phân phối')).toBeDefined();
+    expect(screen.getByText('Cần duyệt')).toBeDefined();
     expect(screen.getByText('Kết quả')).toBeDefined();
     expect(screen.getByText('Kết nối')).toBeDefined();
+    expect(container.querySelector('a[href="/dashboard/system-health"]')).toBeNull();
   });
 });
