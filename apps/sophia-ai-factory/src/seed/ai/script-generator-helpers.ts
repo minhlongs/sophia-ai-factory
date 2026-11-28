@@ -19,6 +19,7 @@ export interface GenerateScriptInput {
   orgId?: string;
   affiliateOffer?: AffiliateOfferCta;
   steering?: PriorScriptSteering;
+  referenceScript?: string;
 }
 
 export type ApiKeyResolver = (

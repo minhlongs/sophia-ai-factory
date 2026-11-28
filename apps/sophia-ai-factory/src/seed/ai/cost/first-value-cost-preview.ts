@@ -26,6 +26,7 @@ export interface FirstValueCostPreviewInput {
   readonly topic: string;
   readonly audience: string;
   readonly durationSec: number;
+  readonly referenceScript?: string;
   readonly capabilitiesKnown?: 'probed' | 'inferred_from_provider_table' | 'unknown';
   readonly customRateCard?: Readonly<Record<string, { inputPer1MUsd: number; outputPer1MUsd: number }>>;
   readonly priceSource?: string;
@@ -116,7 +117,10 @@ export function buildFirstValueCostPreview(
   input: FirstValueCostPreviewInput,
 ): FirstValueCostPreview {
   const safeDurationSec = Math.max(10, Math.min(300, Math.round(input.durationSec || 30)));
-  const promptTokens = estimateTokenCount(`${input.topic} ${input.audience}`);
+  const referenceTokens = input.referenceScript?.trim()
+    ? estimateTokenCount(input.referenceScript.trim())
+    : 0;
+  const promptTokens = estimateTokenCount(`${input.topic} ${input.audience}`) + referenceTokens;
   const tokenAssumptions: TokenAssumptions = {
     inputTokens: SYSTEM_PROMPT_OVERHEAD_TOKENS + promptTokens,
     outputTokensMin: safeDurationSec * TOKENS_PER_SCRIPT_SECOND_MIN,

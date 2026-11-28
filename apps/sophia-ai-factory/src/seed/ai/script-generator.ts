@@ -50,6 +50,7 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
     orgId: _orgId,
     affiliateOffer,
     steering,
+    referenceScript,
   } = input;
   const stopTimer = deps?.startTimer?.();
 
@@ -90,7 +91,7 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
   const model = deps?.model ?? selectModelForTier(tier);
   const messages = [
     { role: 'system', content: SCRIPT_SYSTEM_PROMPT },
-    { role: 'user',   content: buildScriptUserPrompt(topic, audience, affiliateOffer, steering, durationSec) },
+    { role: 'user',   content: buildScriptUserPrompt(topic, audience, affiliateOffer, steering, durationSec, referenceScript) },
   ];
 
   try {

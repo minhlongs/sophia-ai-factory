@@ -38,9 +38,9 @@ export interface PilotVoiceAndCapCutPackProps {
 }
 
 const VOICE_OPTIONS = [
-  { id: 'vi-VN-HoaiMyNeural', locale: 'vi' as const, gender: 'female' as const, label: '🇻🇳 Hoài My (Nữ Miền Nam — Miễn phí)' },
-  { id: 'vi-VN-NamMinhNeural', locale: 'vi' as const, gender: 'male' as const, label: '🇻🇳 Nam Minh (Nam Miền Bắc — Miễn phí)' },
-  { id: 'en-US-JennyNeural', locale: 'en' as const, gender: 'female' as const, label: '🇺🇸 Jenny (English Female — Free)' },
+  { id: 'nova', locale: 'vi' as const, gender: 'female' as const, label: 'OpenRouter Nova (Nữ — BYOK openai/gpt-4o-mini-tts)' },
+  { id: 'onyx', locale: 'vi' as const, gender: 'male' as const, label: 'OpenRouter Onyx (Nam — BYOK openai/gpt-4o-mini-tts)' },
+  { id: 'alloy', locale: 'en' as const, gender: 'female' as const, label: 'OpenRouter Alloy (Neutral — BYOK openai/gpt-4o-mini-tts)' },
 ] as const;
 
 export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {

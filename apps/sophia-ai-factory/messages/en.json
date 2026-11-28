@@ -9900,7 +9900,7 @@
     "pilotProductImagesTitle": "Product Images for MP4 Background (up to 5)",
     "pilotProductImagesBtn": "+ Select Product Images",
     "pilotProductImagesHint": "Processed 100% locally in your browser and composited behind each scene in your MP4.",
-    "pilotFreeVoiceTitle": "🎙️ Free AI Voice-Over (Edge TTS — no extra API key)",
+    "pilotFreeVoiceTitle": "🎙️ AI Voice-Over via OpenRouter BYOK (openai/gpt-4o-mini-tts — billed to your OpenRouter key)",
     "pilotGenerateVoiceBtn": "Generate Voice (.mp3)",
     "pilotDownloadVoiceBtn": "Download .mp3",
     "pilotVoiceError": "Could not synthesize voice right now. Please try again.",

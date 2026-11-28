@@ -91,6 +91,7 @@ function buildLiveDeps(): FirstValueHttpDeps {
       topic,
       audience,
       durationSec,
+      referenceScript,
       userId,
       apiKey,
       model,
@@ -105,6 +106,7 @@ function buildLiveDeps(): FirstValueHttpDeps {
           audience,
           tier: 'BASIC',
           durationSec,
+          ...(referenceScript ? { referenceScript } : {}),
           userId,
         },
         {

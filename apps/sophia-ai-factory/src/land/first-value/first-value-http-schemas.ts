@@ -69,6 +69,7 @@ export const FirstValuePostSchema = z.discriminatedUnion('action', [
     topic: z.string().trim().min(1).max(500),
     audience: z.string().trim().min(1).max(300),
     durationSec: z.number().int().min(10).max(300).optional().default(30),
+    referenceScript: z.string().trim().min(1).max(4000).optional(),
   }),
   z.object({
     action: z.literal('fixture_preview'),

@@ -12,6 +12,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { isEmailAllowedForPilot } from '@/seed/pilot/pilot-access-policy';
+import { csrfForbiddenResponse, verifyCsrfToken } from '@/seed/security/csrf';
 import {
   recordFailure,
   recordSuccess,
@@ -22,6 +24,28 @@ import { lookupUserApiKey } from '@/tree/byok/user-api-key-store';
 
 const OPENROUTER_TTS_URL = 'https://openrouter.ai/api/v1/audio/speech';
 const DEFAULT_OPENROUTER_TTS_MODEL = 'openai/gpt-4o-mini-tts';
+const VOICE_RATE_LIMIT_MAX_REQUESTS = 6;
+const VOICE_RATE_LIMIT_WINDOW_MS = 60_000;
+
+const inFlightVoiceUsers = new Set<string>();
+const voiceRateWindow = new Map<string, number[]>();
+
+export function resetVoiceRouteGuardsForTests(): void {
+  inFlightVoiceUsers.clear();
+  voiceRateWindow.clear();
+}
+
+function checkVoiceRateLimit(userId: string, nowMs: number): boolean {
+  const prev = voiceRateWindow.get(userId) ?? [];
+  const recent = prev.filter((ts) => nowMs - ts < VOICE_RATE_LIMIT_WINDOW_MS);
+  if (recent.length >= VOICE_RATE_LIMIT_MAX_REQUESTS) {
+    voiceRateWindow.set(userId, recent);
+    return false;
+  }
+  recent.push(nowMs);
+  voiceRateWindow.set(userId, recent);
+  return true;
+}
 
 const ALLOWED_PILOT_VOICES = [
   'vi-VN-HoaiMyNeural',
@@ -62,6 +86,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
+  if (!verifyCsrfToken(request)) {
+    return csrfForbiddenResponse();
+  }
+
+  if (!isEmailAllowedForPilot(user.email, process.env)) {
+    return NextResponse.json(
+      { code: 'PILOT_ACCESS_REVOKED', error: 'Pilot access is not active for this account' },
+      { status: 403 },
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -89,6 +124,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
+  if (inFlightVoiceUsers.has(user.id)) {
+    return NextResponse.json(
+      { code: 'VOICE_SYNTHESIS_IN_PROGRESS', error: 'A voice synthesis request is already in progress' },
+      { status: 429 },
+    );
+  }
+
+  if (!checkVoiceRateLimit(user.id, Date.now())) {
+    return NextResponse.json(
+      { code: 'VOICE_RATE_LIMIT_EXCEEDED', error: 'Voice synthesis rate limit exceeded' },
+      { status: 429 },
+    );
+  }
+
   const breakerScope = `byok:${user.id}`;
   if (!shouldAllowRequest('openrouter', breakerScope)) {
     return NextResponse.json(
@@ -103,6 +152,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       ? 'onyx'
       : 'nova';
 
+  inFlightVoiceUsers.add(user.id);
   let upstreamRes: Response;
   try {
     upstreamRes = await fetch(OPENROUTER_TTS_URL, {
@@ -122,35 +172,42 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       signal: AbortSignal.timeout(30_000),
     });
   } catch {
+    inFlightVoiceUsers.delete(user.id);
     recordFailure('openrouter', FailureKind.NETWORK, breakerScope);
     return NextResponse.json({ code: 'OPENROUTER_TTS_NETWORK_ERROR', error: 'Voice synthesis network error' }, { status: 502 });
   }
 
-  if (!upstreamRes.ok) {
-    if (upstreamRes.status !== 401 && upstreamRes.status !== 402 && upstreamRes.status !== 403) {
-      recordFailure('openrouter', classifyHttpStatus(upstreamRes.status), breakerScope);
+  try {
+    if (!upstreamRes.ok) {
+      if (upstreamRes.status !== 401 && upstreamRes.status !== 402 && upstreamRes.status !== 403) {
+        recordFailure('openrouter', classifyHttpStatus(upstreamRes.status), breakerScope);
+      }
+      return NextResponse.json(
+        { code: `OPENROUTER_TTS_HTTP_${upstreamRes.status}`, error: 'Voice synthesis failed upstream' },
+        { status: upstreamRes.status === 401 || upstreamRes.status === 402 ? 422 : 502 },
+      );
     }
-    return NextResponse.json(
-      { code: `OPENROUTER_TTS_HTTP_${upstreamRes.status}`, error: 'Voice synthesis failed upstream' },
-      { status: upstreamRes.status === 401 || upstreamRes.status === 402 ? 422 : 502 },
-    );
-  }
 
-  recordSuccess('openrouter', breakerScope);
-  const audioBytes = new Uint8Array(await upstreamRes.arrayBuffer());
-  if (audioBytes.byteLength === 0) {
-    return NextResponse.json({ code: 'OPENROUTER_TTS_EMPTY', error: 'Empty audio returned' }, { status: 502 });
-  }
+    recordSuccess('openrouter', breakerScope);
+    const audioBytes = new Uint8Array(await upstreamRes.arrayBuffer());
+    if (audioBytes.byteLength === 0) {
+      return NextResponse.json({ code: 'OPENROUTER_TTS_EMPTY', error: 'Empty audio returned' }, { status: 502 });
+    }
 
-  const safeName = `${sanitizeFilename(parsed.data.filename)}.mp3`;
-  return new NextResponse(audioBytes, {
-    status: 200,
-    headers: {
-      'Content-Type': 'audio/mpeg',
-      'Content-Disposition': `attachment; filename="${safeName}"`,
-      'Cache-Control': 'no-store',
-      'X-Sophia-Voice': mappedVoice,
-      'X-Sophia-Tts-Provider': 'openrouter-byok',
-    },
-  });
+    const safeName = `${sanitizeFilename(parsed.data.filename)}.mp3`;
+    return new NextResponse(audioBytes, {
+      status: 200,
+      headers: {
+        'Content-Type': 'audio/mpeg',
+        'Content-Disposition': `attachment; filename="${safeName}"`,
+        'Cache-Control': 'private, no-store',
+        'X-Sophia-Voice': mappedVoice,
+        'X-Sophia-Tts-Provider': 'openrouter-byok',
+        'X-Sophia-Tts-Model': DEFAULT_OPENROUTER_TTS_MODEL,
+        'X-Sophia-Tts-Funding': 'customer_byok',
+      },
+    });
+  } finally {
+    inFlightVoiceUsers.delete(user.id);
+  }
 }
