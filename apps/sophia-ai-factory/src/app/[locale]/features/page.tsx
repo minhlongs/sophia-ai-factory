@@ -109,8 +109,8 @@ export default async function FeaturesRoute({
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <MarketingNav />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-12 sm:px-6 lg:py-16 space-y-12">
-        <header className="mx-auto max-w-2xl text-center space-y-4">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-28 pb-16 sm:px-6 lg:pt-32 space-y-12">
+        <header className="mx-auto max-w-4xl text-center space-y-4">
           <span className="font-code inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary-text">
             <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
             {isVi ? '39 ĐỘNG CƠ AI • 5 CHẶNG KHÉP KÍN' : '39 AI ENGINES • 5 AUTOMATED STAGES'}
