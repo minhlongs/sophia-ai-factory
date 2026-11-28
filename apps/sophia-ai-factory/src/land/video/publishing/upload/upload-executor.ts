@@ -34,6 +34,11 @@ export async function uploadToProvider(
   args: UploadToProviderArgs
 ): Promise<{ externalPostId: string; shouldRetry: boolean; error?: string }> {
   const { channel, accessToken, videoUrl, job, db, jobId, retryCount, scheduleRetry, tenantId, userId, compliance, provenance } = args;
+  // Duplicate-event guard: if provider already returned an externalPostId, never re-upload.
+  const existingExternalPostId = (job as { external_post_id?: string | null }).external_post_id;
+  if (existingExternalPostId) {
+    return { externalPostId: existingExternalPostId, shouldRetry: false };
+  }
   const pub = buildPublisher(channel, accessToken);
 
   try {
@@ -58,7 +63,16 @@ export async function uploadToProvider(
     } as Parameters<typeof pub.upload>[1]);
     return { externalPostId, shouldRetry: false };
   } catch (uploadErr) {
-    const errorMsg = sanitizeError(uploadErr);
+    const rawErrorMsg = sanitizeError(uploadErr);
+    const isAmbiguousTimeout =
+      !!uploadErr &&
+      typeof uploadErr === 'object' &&
+      ((uploadErr as { name?: string }).name === 'AbortError' ||
+        (uploadErr as { name?: string }).name === 'TimeoutError' ||
+        (uploadErr as { code?: string }).code === 'ETIMEDOUT' ||
+        (uploadErr as { statusCode?: number }).statusCode === 504 ||
+        /timed?\s*out|timeout|ambiguous/i.test(rawErrorMsg));
+    const errorMsg = isAmbiguousTimeout ? `AMBIGUOUS_UPLOAD_TIMEOUT: ${rawErrorMsg}` : rawErrorMsg;
     const nonRetriable = isNonRetriableUploadError(uploadErr);
     const nextStatus = nonRetriable || retryCount >= MAX_RETRIES ? 'failed' : 'scheduled';
 

@@ -12,6 +12,7 @@
  */
 
 import type { R2Bucket } from '@cloudflare/workers-types';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
@@ -29,13 +30,15 @@ interface MediaEnv {
   MEDIA_BUCKET?: R2Bucket;
 }
 
-function resolvePrivateR2Bucket(): R2Bucket | null {
+async function resolvePrivateR2Bucket(): Promise<R2Bucket | null> {
   try {
     const g = globalThis as unknown as Record<string, MediaEnv | undefined>;
     const env = g.__env__ ?? g.__env;
     if (env?.MEDIA_BUCKET) return env.MEDIA_BUCKET;
-    const ctx = (globalThis as Record<symbol, { env?: MediaEnv }>)[Symbol.for('__cloudflare-context__')];
-    return ctx?.env?.MEDIA_BUCKET ?? null;
+    const symCtx = (globalThis as Record<symbol, { env?: MediaEnv }>)[Symbol.for('__cloudflare-context__')];
+    if (symCtx?.env?.MEDIA_BUCKET) return symCtx.env.MEDIA_BUCKET;
+    const cfCtx = await getCloudflareContext({ async: true }).catch(() => null);
+    return (cfCtx?.env as MediaEnv | undefined)?.MEDIA_BUCKET ?? null;
   } catch {
     return null;
   }
@@ -97,7 +100,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // Early rejection signal (not sole boundary — enforced again during streaming read)
   const declaredLen = Number(request.headers.get('content-length') ?? '0');
   if (Number.isFinite(declaredLen) && declaredLen > MAX_DISTRIBUTION_MP4_BYTES) {
-    return NextResponse.json({ code: 'PAYLOAD_TOO_LARGE', error: 'Upload exceeds 50 MB limit' }, { status: 413 });
+    return NextResponse.json({ code: 'PAYLOAD_TOO_LARGE', error: 'Upload exceeds 25 MB limit' }, { status: 413 });
   }
 
   const hasAccess = await verifyWorkspaceAccess(orgId, user.id).catch(() => false);
@@ -106,7 +109,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const d1 = await getD1();
-  const r2 = resolvePrivateR2Bucket();
+  const r2 = await resolvePrivateR2Bucket();
   if (!d1 || !r2) {
     return NextResponse.json(
       { code: 'STORAGE_UNAVAILABLE', error: 'Private MEDIA_BUCKET or D1 storage binding unavailable' },
@@ -123,7 +126,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(
       {
         code: bounded.code,
-        error: bounded.code === 'PAYLOAD_TOO_LARGE' ? 'Streamed upload exceeds 50 MB limit' : 'Upload stream interrupted',
+        error: bounded.code === 'PAYLOAD_TOO_LARGE' ? 'Streamed upload exceeds 25 MB limit' : 'Upload stream interrupted',
       },
       { status: bounded.code === 'PAYLOAD_TOO_LARGE' ? 413 : 400 },
     );

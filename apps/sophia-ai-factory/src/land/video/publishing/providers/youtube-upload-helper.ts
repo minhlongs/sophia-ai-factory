@@ -12,6 +12,7 @@ import {
 } from '@/tree/publishing/synthetic-media-disclosure';
 import {
   isCanonicalPrivateR2Uri,
+  MAX_RESOLVED_PRIVATE_MEDIA_BYTES,
   resolvePrivateMediaFromR2,
 } from '../private-media-resolver';
 
@@ -104,7 +105,14 @@ export async function performResumableYouTubeUpload(
   } else {
     const videoRes = await fetch(videoUrl);
     if (!videoRes.ok) throw new Error(`Failed to fetch video: ${videoRes.status}`);
+    const declaredLen = Number(videoRes.headers.get('content-length') ?? '0');
+    if (Number.isFinite(declaredLen) && declaredLen > MAX_RESOLVED_PRIVATE_MEDIA_BYTES) {
+      throw new Error(`Video exceeds ${MAX_RESOLVED_PRIVATE_MEDIA_BYTES} byte upload limit`);
+    }
     videoBlob = await videoRes.blob();
+    if (videoBlob.size > MAX_RESOLVED_PRIVATE_MEDIA_BYTES) {
+      throw new Error(`Video exceeds ${MAX_RESOLVED_PRIVATE_MEDIA_BYTES} byte upload limit`);
+    }
     contentType = videoRes.headers.get('content-type') ?? 'video/mp4';
   }
 

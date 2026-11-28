@@ -56,6 +56,11 @@ bucket_name = "sophia-videos"
 binding = "BACKUPS_BUCKET"
 bucket_name = "sophia-backups"
 
+# Dedicated private R2 bucket for approved distribution MP4 assets (never public).
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "sophia-private-media"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "sophia-raas-db"

@@ -83,7 +83,7 @@ export async function saveApprovedMp4ForDistribution(
       ok: false,
       status: 400,
       code: 'INVALID_MP4_BYTES',
-      error: 'Uploaded media must be a valid MP4 container within 128 bytes – 50 MB',
+      error: 'Uploaded media must be a valid MP4 container within 128 bytes – 25 MB',
     };
   }
 
@@ -125,13 +125,14 @@ export async function saveApprovedMp4ForDistribution(
     };
   }
 
-  // Check whether R2 object already existed before this request so concurrent failures
-  // never delete an object committed by another request.
+  // Conditional R2 creation: `r2.put(..., { onlyIf: { etagDoesNotMatch: '*' } })` returns null
+  // without throwing when another request already created the object. Track `didWriteObject`
+  // so a losing race NEVER deletes an object committed by another request.
   const preExistingObj = typeof r2.head === 'function' ? await r2.head(r2ObjectKey).catch(() => null) : null;
-  const createdNewObject = !preExistingObj;
+  let didWriteObject = false;
 
-  if (createdNewObject) {
-    await r2.put(r2ObjectKey, input.mp4Bytes, {
+  if (!preExistingObj) {
+    const putRes = await r2.put(r2ObjectKey, input.mp4Bytes, {
       onlyIf: { etagDoesNotMatch: '*' },
       httpMetadata: { contentType: 'video/mp4' },
       customMetadata: {
@@ -142,6 +143,7 @@ export async function saveApprovedMp4ForDistribution(
         sha256Hex,
       },
     });
+    didWriteObject = putRes !== null;
   }
 
   const videoId = `vid_${crypto.randomUUID().replace(/-/g, '').slice(0, 24)}`;
@@ -183,7 +185,7 @@ export async function saveApprovedMp4ForDistribution(
       };
     }
 
-    if (createdNewObject) {
+    if (didWriteObject) {
       await r2.delete(r2ObjectKey).catch(() => {});
     }
     return {

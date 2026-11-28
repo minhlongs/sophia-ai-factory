@@ -7,8 +7,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { createServerClient } from '@/seed/db/client';
 import { schedulePublish } from '@/forest/publishing/schedule-publish';
+import { parseCanonicalPrivateR2Uri } from '@/land/video/publishing/private-media-resolver';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { logger } from '@/seed/utils/logger-utility';
 import {
@@ -64,12 +66,20 @@ export async function POST(
     const db = createServerClient().unwrap();
 
     const videoRow = await db
-      .prepare('SELECT user_id FROM videos WHERE id = ? LIMIT 1')
+      .prepare('SELECT user_id, video_url FROM videos WHERE id = ? LIMIT 1')
       .bind(videoId)
-      .first<{ user_id: string }>();
+      .first<{ user_id: string; video_url?: string | null }>();
 
     if (!videoRow) return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     if (videoRow.user_id !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    const parsedPrivateMedia = videoRow.video_url ? parseCanonicalPrivateR2Uri(videoRow.video_url) : null;
+    if (parsedPrivateMedia) {
+      const hasWorkspaceAccess = await verifyWorkspaceAccess(parsedPrivateMedia.orgId, user.id).catch(() => false);
+      if (!hasWorkspaceAccess) {
+        return NextResponse.json({ code: 'WORKSPACE_FORBIDDEN', error: 'Workspace access denied' }, { status: 403 });
+      }
+    }
 
     const { channelMap, missingProviders } = await resolveConnectedChannels(
       db,
@@ -101,6 +111,13 @@ export async function POST(
         });
         jobIds.push(jobId);
       } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (/UNIQUE constraint/i.test(msg)) {
+          return NextResponse.json(
+            { code: 'JOB_ALREADY_SCHEDULED', error: `Active publish job already exists for provider: ${provider}`, jobIds },
+            { status: 409 },
+          );
+        }
         logger.error('[distribute] schedulePublish failed', err instanceof Error ? err : undefined, {
           provider,
           videoId,

@@ -12,6 +12,7 @@
 
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { isCanonicalPrivateR2Uri } from '@/land/video/publishing/private-media-resolver';
 
 // ── Error types ───────────────────────────────────────────────────────────────
 
@@ -44,6 +45,7 @@ interface VideoR2Row {
   id: string;
   user_id: string;
   r2_key: string | null;
+  video_url: string | null;
 }
 
 interface ArtifactStorageRow {
@@ -56,13 +58,13 @@ async function resolveStorageRow(
   db: D1Database,
   videoId: string,
   userId: string,
-): Promise<{ ownerId: string; r2Key: string | null } | null> {
+): Promise<{ ownerId: string; r2Key: string | null; videoUrl?: string | null } | null> {
   const row = await db
-    .prepare(`SELECT id, user_id, r2_key FROM videos WHERE id = ?1 LIMIT 1`)
+    .prepare(`SELECT id, user_id, r2_key, video_url FROM videos WHERE id = ?1 LIMIT 1`)
     .bind(videoId)
     .first<VideoR2Row>();
   if (row) {
-    return { ownerId: row.user_id, r2Key: row.r2_key };
+    return { ownerId: row.user_id, r2Key: row.r2_key, videoUrl: row.video_url };
   }
 
   const artifact = await db
@@ -115,6 +117,10 @@ export async function getCanonicalVideoUrl(
       owner: resolved.ownerId,
     });
     throw new VideoUnauthorizedError(videoId);
+  }
+
+  if (resolved.videoUrl && isCanonicalPrivateR2Uri(resolved.videoUrl)) {
+    return resolved.videoUrl;
   }
 
   if (!resolved.r2Key) {

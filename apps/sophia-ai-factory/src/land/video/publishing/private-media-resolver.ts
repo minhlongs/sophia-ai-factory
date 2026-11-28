@@ -14,6 +14,7 @@
  */
 
 import type { R2Bucket } from '@cloudflare/workers-types';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 /** Safe prototype cap for Workers 128 MB isolate memory budget (25 MB raw + buffer + hash). */
 export const MAX_RESOLVED_PRIVATE_MEDIA_BYTES = 25 * 1024 * 1024;
@@ -70,13 +71,15 @@ export function parseCanonicalPrivateR2Uri(uri: string): ParsedCanonicalPrivateR
   return { objectKey, orgId, userId, artifactId, reviewVersion, sha256Hex };
 }
 
-export function resolveMediaBucketFromRuntime(): R2Bucket | null {
+export async function resolveMediaBucketFromRuntime(): Promise<R2Bucket | null> {
   try {
     const g = globalThis as unknown as Record<string, MediaEnv | undefined>;
     const env = g.__env__ ?? g.__env;
     if (env?.MEDIA_BUCKET) return env.MEDIA_BUCKET;
-    const ctx = (globalThis as Record<symbol, { env?: MediaEnv }>)[Symbol.for('__cloudflare-context__')];
-    return ctx?.env?.MEDIA_BUCKET ?? null;
+    const symCtx = (globalThis as Record<symbol, { env?: MediaEnv }>)[Symbol.for('__cloudflare-context__')];
+    if (symCtx?.env?.MEDIA_BUCKET) return symCtx.env.MEDIA_BUCKET;
+    const cfCtx = await getCloudflareContext({ async: true }).catch(() => null);
+    return (cfCtx?.env as MediaEnv | undefined)?.MEDIA_BUCKET ?? null;
   } catch {
     return null;
   }
@@ -109,7 +112,7 @@ export async function resolvePrivateMediaFromR2(args: {
     throw new Error('[privateMediaResolver] Cross-workspace private media access denied');
   }
 
-  const bucket = args.r2 ?? resolveMediaBucketFromRuntime();
+  const bucket = args.r2 !== undefined ? args.r2 : await resolveMediaBucketFromRuntime();
   if (!bucket) {
     throw new Error('[privateMediaResolver] MEDIA_BUCKET binding unavailable (fail-closed)');
   }
