@@ -8,7 +8,7 @@
  * @module components/first-value/first-value-journey-client
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { AffiliateStudioSnapshot } from '@/land/first-value/pilot-affiliate-studio-revenue';
 import type { FirstValueCostPreview } from '@/seed/ai/cost/first-value-cost-preview';
@@ -313,8 +313,12 @@ export function FirstValueJourneyClient({
     return null;
   }
 
+  const costPreviewTokenRef = useRef(0);
+
   async function handleCostPreview() {
     if (!topic.trim() || !audience.trim()) return;
+    const token = costPreviewTokenRef.current + 1;
+    costPreviewTokenRef.current = token;
     const data = await postAction({
       action: 'cost_preview',
       orgId,
@@ -324,6 +328,7 @@ export function FirstValueJourneyClient({
       audience: audience.trim(),
       durationSec,
     });
+    if (costPreviewTokenRef.current !== token) return;
     if (data?.preview) setCostPreview(data.preview as FirstValueCostPreview);
   }
 
@@ -468,11 +473,14 @@ export function FirstValueJourneyClient({
   const [handoffSnapshot, setHandoffSnapshot] = useState<PreviewHandoffSnapshot | null>(null);
 
   useEffect(() => {
+    costPreviewTokenRef.current += 1;
     setHandoffSnapshot(null);
+    setCostPreview(null);
   }, [orgId]);
 
   function handlePreviewUpgradeHandoff(snapshot: PreviewHandoffSnapshot) {
     if (snapshot.orgId !== orgId) return;
+    costPreviewTokenRef.current += 1;
     setHandoffSnapshot(snapshot);
     setTopic(snapshot.topic);
     setAudience(snapshot.audience);
