@@ -25,6 +25,7 @@ import {
 } from './first-value-feedback-card';
 import { FirstValuePilotBanner } from './first-value-pilot-banner';
 import { FirstValueReviewPanel } from './first-value-review-panel';
+import { ZeroKeyPreviewStudio } from './zero-key-preview-studio';
 import {
   FirstValueSupportCard,
   type SupportRequestKind,
@@ -538,6 +539,8 @@ export function FirstValueJourneyClient({
         onPreviewCost={() => void handleCostPreview()}
         onCreateReview={() => void handleCreateReview()}
       />
+
+      {!isLivePilot ? <ZeroKeyPreviewStudio orgId={orgId} /> : null}
 
       <FirstValueReviewPanel
         review={activeReview}
