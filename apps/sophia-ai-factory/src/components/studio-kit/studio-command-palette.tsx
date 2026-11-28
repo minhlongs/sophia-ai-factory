@@ -1,10 +1,15 @@
 'use client';
 
 /**
- * Sophia 34-Engine MD3 Expressive Command Center (User & Admin Unified View).
+ * Sophia 39-Engine Live Mission Control (MD3 Expressive).
  *
- * Shows all 34 live engines by default (zero hidden features) grouped cleanly
- * with MD3 Expressive Filter Chips, live counts, ⌘K search, and Inspector Drawer.
+ * Renders the single-viewport 5-Stage Cinematic Assembly Line by default
+ * (with toggle to the full catalog grid), executes all 39 live engines via
+ * POST /api/studio/pipeline/execute, surfaces inline role="alert" on failures,
+ * injects live metrics into StudioInspectorDrawer, and produces a shareable
+ * 39/39 Verified Receipt Card.
+ *
+ * @module components/studio-kit/studio-command-palette
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -19,6 +24,13 @@ import {
   evaluateSingleEngineLive,
   type EngineLiveTelemetry,
 } from '@/seed/ui/live-pipeline-runner';
+import {
+  buildPipelineVerifiedReceipt,
+  groupCapabilitiesIntoStages,
+  type PipelineVerifiedReceipt,
+} from '@/seed/ui/pipeline-stage-manifest';
+import { PipelineAssemblyMatrix } from './pipeline-assembly-matrix';
+import { PipelineVerifiedReceiptCard } from './pipeline-verified-receipt-card';
 import { StudioKpiStrip } from './studio-kpi-strip';
 import { StudioInspectorDrawer } from './studio-inspector-drawer';
 
@@ -27,283 +39,306 @@ export interface StudioCommandPaletteProps {
   readonly capabilities?: readonly StudioCapabilitySpec[];
 }
 
-const CATEGORIES: readonly { id: CapabilityCategory | 'all'; vi: string; en: string }[] = [
-  { id: 'all', vi: 'Tất cả', en: 'All' },
-  { id: 'video', vi: 'Video', en: 'Video' },
-  { id: 'affiliate', vi: 'Affiliate & Doanh thu', en: 'Affiliate & Revenue' },
-  { id: 'compliance', vi: 'Luật & An toàn', en: 'Compliance' },
-  { id: 'analytics', vi: 'Tăng trưởng & EPC', en: 'Growth & EPC' },
-  { id: 'security', vi: 'Bảo mật & VA', en: 'Security & VA' },
-];
+interface ExecutePipelineResponse {
+  readonly ok?: boolean;
+  readonly error?: string;
+  readonly executedAt?: string;
+  readonly telemetrySource?: 'live_d1' | 'default_sample';
+  readonly results?: readonly EngineLiveTelemetry[];
+}
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 export function StudioCommandPalette({
   locale,
   capabilities = SOPHIA_STUDIO_CAPABILITIES,
 }: StudioCommandPaletteProps) {
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<CapabilityCategory | 'all'>('all');
-  // Default to full 34-engine visibility so nothing is ever hidden from users or admins
-  const [showAllEngines, setShowAllEngines] = useState(true);
+  const [category] = useState<CapabilityCategory | 'all'>('all');
+  const [viewMode, setViewMode] = useState<'assembly' | 'catalog'>('assembly');
   const [selected, setSelected] = useState<StudioCapabilitySpec | null>(null);
   const [liveTelemetry, setLiveTelemetry] = useState<Record<string, EngineLiveTelemetry>>({});
   const [isPipelineRunning, setIsPipelineRunning] = useState(false);
   const [activeEngineId, setActiveEngineId] = useState<string | null>(null);
+  const [runError, setRunError] = useState<string | null>(null);
+  const [receipt, setReceipt] = useState<PipelineVerifiedReceipt | null>(null);
   const runTokenRef = useRef(0);
 
-  const completedCount = Object.keys(liveTelemetry).length;
-  const passedCount = Object.values(liveTelemetry).filter((t) => t.state === 'passed').length;
-  const warningCount = Object.values(liveTelemetry).filter((t) => t.state === 'warning').length;
-  const blockedCount = Object.values(liveTelemetry).filter((t) => t.state === 'blocked').length;
-  const progressPct = capabilities.length > 0 ? Math.round((completedCount / capabilities.length) * 100) : 0;
-
-  async function handleRunRealtimePipeline() {
-    const token = runTokenRef.current + 1;
-    runTokenRef.current = token;
-    setIsPipelineRunning(true);
-    setShowAllEngines(true);
-    setLiveTelemetry({});
-
-    let serverMap: Record<string, EngineLiveTelemetry> = {};
-    try {
-      const resp = await fetch('/api/studio/pipeline/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(DEFAULT_LIVE_PIPELINE_INPUT),
-      });
-      if (resp.ok) {
-        const json = (await resp.json()) as { results?: EngineLiveTelemetry[] };
-        if (Array.isArray(json.results)) {
-          serverMap = Object.fromEntries(json.results.map((r) => [r.engineId, r]));
-        }
-      }
-    } catch {
-      // Fallback to in-browser pure seed execution when offline
-    }
-
-    for (const cap of capabilities) {
-      if (runTokenRef.current !== token) return;
-      setActiveEngineId(cap.id);
-      await new Promise((resolve) => window.setTimeout(resolve, 35));
-      if (runTokenRef.current !== token) return;
-      const result = serverMap[cap.id] ?? evaluateSingleEngineLive(cap.id, DEFAULT_LIVE_PIPELINE_INPUT);
-      setLiveTelemetry((prev) => ({ ...prev, [cap.id]: result }));
-    }
-
-    if (runTokenRef.current === token) {
-      setActiveEngineId(null);
-      setIsPipelineRunning(false);
-    }
-  }
+  const stages = useMemo(() => groupCapabilitiesIntoStages(capabilities), [capabilities]);
+  const orderedCapabilities = useMemo(
+    () => stages.flatMap((s) => s.capabilities),
+    [stages],
+  );
+  const filtered = useMemo(
+    () => filterCapabilities(capabilities, { query, category, inspectorMode: true }),
+    [capabilities, query, category],
+  );
+  const matchedIds = useMemo(() => new Set(filtered.map((c) => c.id)), [filtered]);
 
   useEffect(() => {
-    return () => {
-      runTokenRef.current += 1;
-    };
-  }, []);
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault();
-        const input = document.getElementById('sophia-studio-cmdk-input');
-        input?.focus();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        document.getElementById('sophia-studio-cmdk-input')?.focus();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  const visible = useMemo(
-    () => filterCapabilities(capabilities, { query, category, inspectorMode: showAllEngines }),
-    [capabilities, query, category, showAllEngines],
-  );
+  async function commitSequence(
+    token: number,
+    serverMap: Map<string, EngineLiveTelemetry> | null,
+    executedAt: string,
+    telemetrySource: 'live_d1' | 'default_sample',
+  ) {
+    const instant = prefersReducedMotion();
+    const collected: Record<string, EngineLiveTelemetry> = {};
 
-  const countFor = (catId: CapabilityCategory | 'all') =>
-    catId === 'all'
-      ? capabilities.length
-      : capabilities.filter((c) => c.category === catId).length;
+    if (instant) {
+      for (const cap of orderedCapabilities) {
+        collected[cap.id] =
+          serverMap?.get(cap.id) ?? evaluateSingleEngineLive(cap.id, DEFAULT_LIVE_PIPELINE_INPUT);
+      }
+      if (runTokenRef.current !== token) return;
+      setLiveTelemetry(collected);
+      setActiveEngineId(null);
+      setIsPipelineRunning(false);
+      setReceipt(
+        buildPipelineVerifiedReceipt(collected, executedAt, telemetrySource, orderedCapabilities.length),
+      );
+      return;
+    }
+
+    for (const cap of orderedCapabilities) {
+      if (runTokenRef.current !== token) return;
+      setActiveEngineId(cap.id);
+      await new Promise((resolve) => setTimeout(resolve, 48));
+      if (runTokenRef.current !== token) return;
+      const result =
+        serverMap?.get(cap.id) ?? evaluateSingleEngineLive(cap.id, DEFAULT_LIVE_PIPELINE_INPUT);
+      collected[cap.id] = result;
+      setLiveTelemetry((prev) => ({ ...prev, [cap.id]: result }));
+    }
+
+    if (runTokenRef.current !== token) return;
+    setActiveEngineId(null);
+    setIsPipelineRunning(false);
+    setReceipt(
+      buildPipelineVerifiedReceipt(collected, executedAt, telemetrySource, orderedCapabilities.length),
+    );
+  }
+
+  async function handleRunRealtimePipeline() {
+    const token = runTokenRef.current + 1;
+    runTokenRef.current = token;
+    setIsPipelineRunning(true);
+    setLiveTelemetry({});
+    setRunError(null);
+    setReceipt(null);
+
+    try {
+      const resp = await fetch('/api/studio/pipeline/execute', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(DEFAULT_LIVE_PIPELINE_INPUT),
+      });
+      const payload = (await resp.json().catch(() => ({}))) as ExecutePipelineResponse;
+      if (!resp.ok || payload.ok === false || !Array.isArray(payload.results)) {
+        const detail = payload.error || `HTTP ${resp.status}`;
+        setRunError(
+          locale === 'vi'
+            ? `Không thể kết nối máy chủ thực thi (${detail}). Bạn có thể thử lại hoặc chạy kiểm tra cục bộ.`
+            : `Pipeline server request failed (${detail}). Retry or run local browser verification.`,
+        );
+        setIsPipelineRunning(false);
+        return;
+      }
+      const serverMap = new Map<string, EngineLiveTelemetry>();
+      for (const item of payload.results) serverMap.set(item.engineId, item);
+      await commitSequence(
+        token,
+        serverMap,
+        payload.executedAt ?? new Date().toISOString(),
+        payload.telemetrySource ?? 'default_sample',
+      );
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : 'Network error';
+      setRunError(
+        locale === 'vi'
+          ? `Không thể kết nối máy chủ thực thi (${detail}). Bạn có thể thử lại hoặc chạy kiểm tra cục bộ.`
+          : `Pipeline server request failed (${detail}). Retry or run local browser verification.`,
+      );
+      setIsPipelineRunning(false);
+    }
+  }
+
+  async function handleRunLocalBrowserCheck() {
+    const token = runTokenRef.current + 1;
+    runTokenRef.current = token;
+    setIsPipelineRunning(true);
+    setLiveTelemetry({});
+    setRunError(null);
+    setReceipt(null);
+    await commitSequence(token, null, new Date().toISOString(), 'default_sample');
+  }
+
+  const inspectedCapability = useMemo(() => {
+    if (!selected) return null;
+    const tel = liveTelemetry[selected.id];
+    if (!tel) return selected;
+    return {
+      ...selected,
+      summary: {
+        vi: `${selected.summary.vi} — ${tel.detail.vi}`,
+        en: `${selected.summary.en} — ${tel.detail.en}`,
+      },
+      inspectorFields: [
+        {
+          key: 'live_output',
+          label: { vi: 'Kết quả vừa chạy', en: 'Live Output' },
+          value: tel.metricOutput,
+          tone: tel.state === 'passed' ? ('success' as const) : tel.state === 'warning' ? ('warning' as const) : ('danger' as const),
+        },
+        {
+          key: 'live_ms',
+          label: { vi: 'Thời gian xử lý', en: 'Execution Time' },
+          value: `${tel.durationMs} ms`,
+          tone: 'neutral' as const,
+        },
+        ...selected.inspectorFields,
+      ],
+    };
+  }, [selected, liveTelemetry]);
+
+  const completedCount = Object.keys(liveTelemetry).length;
 
   return (
-    <section className="md3-surface-card space-y-5 p-5 sm:p-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <section
+      aria-label={locale === 'vi' ? 'Nhà máy 39 động cơ AI realtime' : '39-Engine Live AI Mission Control'}
+      className="md3-surface-card space-y-4 p-4 sm:p-6"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary-text">
-            {locale === 'vi'
-              ? `DANH MỤC CÔNG CỤ • ${visible.length}/${capabilities.length} ĐANG HOẠT ĐỘNG`
-              : `TOOL CATALOG • ${visible.length}/${capabilities.length} ACTIVE`}
+          <p className="font-code text-[11px] font-bold uppercase tracking-wider text-primary">
+            {isPipelineRunning
+              ? locale === 'vi'
+                ? 'REC • ĐANG CHẠY DÂY CHUYỀN THỰC TẾ'
+                : 'REC • LIVE PIPELINE EXECUTING'
+              : locale === 'vi'
+                ? `NHÀ MÁY TỰ ĐỘNG • ${orderedCapabilities.length}/${orderedCapabilities.length} ĐỘNG CƠ SẴN SÀNG`
+                : `AUTONOMOUS FACTORY • ${orderedCapabilities.length}/${orderedCapabilities.length} ENGINES READY`}
           </p>
-          <h2 className="mt-0.5 text-lg font-bold text-foreground">
+          <h2 className="mt-0.5 text-lg font-bold tracking-tight text-foreground sm:text-xl">
             {locale === 'vi'
-              ? `Toàn Bộ ${capabilities.length} Công Cụ AI Đang Hoạt Động`
-              : `All ${capabilities.length} Active AI Tools`}
+              ? 'Dây Chuyền 39 Động Cơ AI (5 Bước Khép Kín)'
+              : '39-Engine Live AI Assembly Line (5-Stage)'}
           </h2>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
+            data-testid="run-39-engines-btn"
             disabled={isPipelineRunning}
-            onClick={() => {
-              void handleRunRealtimePipeline();
-            }}
-            className="md3-pill-button min-h-[44px] bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-sm disabled:opacity-60"
+            onClick={() => void handleRunRealtimePipeline()}
+            className="md3-pill-button inline-flex min-h-[44px] items-center gap-2 bg-primary px-5 text-xs font-bold text-primary-foreground shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            {isPipelineRunning
-              ? locale === 'vi'
-                ? `Đang chạy ${completedCount}/${capabilities.length}…`
-                : `Running ${completedCount}/${capabilities.length}…`
-              : locale === 'vi'
-                ? `▶ Chạy Luồng ${capabilities.length} Động Cơ A–Z`
-                : `▶ Run ${capabilities.length}-Engine A–Z Flow`}
+            <span className="font-code md3-tabular-nums">
+              {isPipelineRunning
+                ? locale === 'vi'
+                  ? `Đang chạy ${completedCount}/${orderedCapabilities.length}…`
+                  : `Running ${completedCount}/${orderedCapabilities.length}…`
+                : receipt
+                  ? locale === 'vi'
+                    ? `Chạy Lại 39 Động Cơ (${receipt.totalComputeMs.toFixed(1)}ms)`
+                    : `Re-Run 39 Engines (${receipt.totalComputeMs.toFixed(1)}ms)`
+                  : locale === 'vi'
+                    ? 'Chạy 39 Động Cơ Realtime'
+                    : 'Run 39-Engine Live Pipeline'}
+            </span>
           </button>
 
-          <button
-            type="button"
-            aria-pressed={showAllEngines}
-            onClick={() => setShowAllEngines((prev) => !prev)}
-            className={`md3-pill-button min-h-[44px] border px-4 py-2 text-xs font-semibold ${
-              showAllEngines
-                ? 'border-primary bg-[var(--md-sys-color-primary-container)] text-foreground'
-                : 'border-border bg-card text-muted-foreground'
-            }`}
-          >
-            {showAllEngines
-              ? locale === 'vi'
-                ? 'Thu gọn (4 công cụ chính)'
-                : 'Show Core Only (4)'
-              : locale === 'vi'
-                ? `Xem đủ ${capabilities.length} công cụ`
-                : `Show All ${capabilities.length} Tools`}
-          </button>
+          <input
+            id="sophia-studio-cmdk-input"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={locale === 'vi' ? 'Tìm nhanh 39 động cơ (⌘K)…' : 'Search 39 engines (⌘K)…'}
+            className="min-h-[44px] w-full rounded-full border border-border bg-background px-4 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none sm:w-56"
+          />
+
+          <div className="inline-flex rounded-full border border-border bg-background p-0.5">
+            <button
+              type="button"
+              onClick={() => setViewMode('assembly')}
+              className={`min-h-[40px] rounded-full px-3 text-xs font-semibold transition-colors ${
+                viewMode === 'assembly' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {locale === 'vi' ? 'Dây chuyền 5 Bước' : '5-Stage Line'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('catalog')}
+              className={`min-h-[40px] rounded-full px-3 text-xs font-semibold transition-colors ${
+                viewMode === 'catalog' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {locale === 'vi' ? 'Danh mục' : 'Catalog'}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Realtime A-to-Z Pipeline Progress Telemetry Bar */}
-      {(isPipelineRunning || completedCount > 0) ? (
+      {runError ? (
         <div
-          role="status"
-          aria-live="polite"
-          className="md3-surface-tonal space-y-2 p-4"
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/35 bg-[var(--error-container)] p-3.5 text-xs font-medium text-[var(--on-error-container)]"
         >
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-            <span className="font-semibold text-foreground">
-              {isPipelineRunning
-                ? locale === 'vi'
-                  ? `Đang chạy luồng A–Z: ${completedCount}/${capabilities.length} động cơ (${progressPct}%)`
-                  : `Running A–Z Flow: ${completedCount}/${capabilities.length} engines (${progressPct}%)`
-                : locale === 'vi'
-                  ? `Hoàn tất luồng A–Z: ${completedCount}/${capabilities.length} động cơ`
-                  : `A–Z Flow Complete: ${completedCount}/${capabilities.length} engines`}
-            </span>
-            <span className="md3-tabular-nums flex items-center gap-3 text-muted-foreground">
-              <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
-                {passedCount} {locale === 'vi' ? 'Đạt' : 'Passed'}
-              </span>
-              {warningCount > 0 ? (
-                <span className="text-amber-700 dark:text-amber-400 font-semibold">
-                  {warningCount} {locale === 'vi' ? 'Cảnh báo' : 'Warning'}
-                </span>
-              ) : null}
-              {blockedCount > 0 ? (
-                <span className="text-rose-700 dark:text-rose-400 font-semibold">
-                  {blockedCount} {locale === 'vi' ? 'Chặn' : 'Blocked'}
-                </span>
-              ) : null}
-            </span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-150 motion-reduce:transition-none"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
+          <span>{runError}</span>
+          <button
+            type="button"
+            onClick={() => void handleRunLocalBrowserCheck()}
+            className="md3-pill-button inline-flex min-h-[44px] items-center border border-destructive/40 bg-background px-3.5 text-xs font-semibold text-foreground hover:bg-muted"
+          >
+            {locale === 'vi' ? 'Chạy kiểm tra cục bộ' : 'Run Local Browser Check'}
+          </button>
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-3">
-        <label htmlFor="sophia-studio-cmdk-input" className="sr-only">
-          {locale === 'vi'
-            ? `Tìm nhanh trong ${capabilities.length} công cụ`
-            : `Search all ${capabilities.length} tools`}
-        </label>
-        <input
-          id="sophia-studio-cmdk-input"
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={
-            locale === 'vi'
-              ? `Tìm nhanh trong ${capabilities.length} công cụ (⌘K)... ví dụ: Kịch bản, Hoa hồng, Giọng đọc, Phân quyền`
-              : `Search ${capabilities.length} tools (⌘K)... e.g. Hook, Affiliate, Voiceover, Permissions`
-          }
-          className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground"
+      {viewMode === 'assembly' ? (
+        <PipelineAssemblyMatrix
+          locale={locale}
+          stages={stages}
+          matchedIds={matchedIds}
+          selectedId={selected?.id ?? null}
+          activeEngineId={activeEngineId}
+          liveTelemetry={liveTelemetry}
+          onSelectEngine={setSelected}
         />
-
-        <div
-          role="group"
-          aria-label={locale === 'vi' ? 'Lọc theo nhóm công cụ' : 'Filter by tool category'}
-          className="flex flex-wrap gap-2"
-        >
-          {CATEGORIES.map((cat) => {
-            const active = category === cat.id;
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setCategory(cat.id)}
-                className={`md3-pill-button min-h-[38px] border px-3.5 py-1.5 text-xs font-semibold ${
-                  active
-                    ? 'border-primary bg-[var(--md-sys-color-primary-container)] text-foreground'
-                    : 'border-border bg-card text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {cat[locale]}{' '}
-                <span className="md3-tabular-nums opacity-75">({countFor(cat.id)})</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <StudioInspectorDrawer
-        locale={locale}
-        capability={selected}
-        onClose={() => setSelected(null)}
-      />
-
-      {visible.length === 0 ? (
-        <div className="md3-surface-tonal flex flex-col items-center justify-center gap-2 p-6 text-center">
-          <p className="text-sm font-semibold text-foreground">
-            {locale === 'vi' ? 'Không tìm thấy công cụ phù hợp' : 'No matching tools found'}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {locale === 'vi'
-              ? 'Thử từ khóa khác hoặc đặt lại bộ lọc để xem toàn bộ công cụ.'
-              : 'Try another keyword or reset filters to view all tools.'}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setQuery('');
-              setCategory('all');
-              setShowAllEngines(true);
-            }}
-            className="md3-pill-button mt-1 min-h-[40px] bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
-          >
-            {locale === 'vi' ? 'Xóa bộ lọc' : 'Reset filters'}
-          </button>
-        </div>
       ) : (
         <StudioKpiStrip
+          capabilities={filtered}
           locale={locale}
-          capabilities={visible}
           selectedId={selected?.id ?? null}
           onSelect={setSelected}
           liveTelemetry={liveTelemetry}
           activeEngineId={activeEngineId}
         />
       )}
+
+      <PipelineVerifiedReceiptCard locale={locale} receipt={receipt} />
+
+      <StudioInspectorDrawer
+        capability={inspectedCapability}
+        locale={locale}
+        onClose={() => setSelected(null)}
+      />
     </section>
   );
 }

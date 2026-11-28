@@ -83,16 +83,16 @@ const STEPS_EN = [
 
 const ROUTE_MAP_VI = [
   { goal: 'Làm nhanh 1 video + link affiliate đầu tiên (Khuyên dùng)', tool: 'Affiliate Studio (4 Bước)', href: '/dashboard/first-value' },
-  { goal: 'Xây kênh YouTube dài hạn (Chiến lược, Lịch đăng, Analytics)', tool: 'YouTube Factory Suite', href: '/dashboard/youtube' },
-  { goal: 'Hẹn giờ & tự động đăng hàng loạt đa nền tảng', tool: 'Publish Queue', href: '/dashboard/publish/queue' },
-  { goal: 'Chạy chiến dịch AI nhiều bước + Duyệt bài tự động', tool: 'AI Missions', href: '/dashboard/missions' },
+  { goal: 'Chạy & kiểm chứng realtime 39 động cơ AI (Dây chuyền 5 bước)', tool: 'Xưởng AI (39 Động Cơ)', href: '/dashboard/engines' },
+  { goal: 'Theo dõi doanh thu, ROI & link rút gọn /api/r/[code]', tool: 'Kết quả & Doanh thu', href: '/dashboard/monetization' },
+  { goal: 'Cấu hình khóa AI BYOK (OpenRouter, ElevenLabs, HeyGen)', tool: 'Kết nối Khóa AI', href: '/dashboard/settings' },
 ] as const;
 
 const ROUTE_MAP_EN = [
   { goal: 'Ship your first affiliate video + shortlink fast (Recommended)', tool: 'Affiliate Studio (4 Steps)', href: '/dashboard/first-value' },
-  { goal: 'Run a long-term YouTube channel (Strategy, Calendar, Analytics)', tool: 'YouTube Factory Suite', href: '/dashboard/youtube' },
-  { goal: 'Schedule & auto-publish across social channels', tool: 'Publish Queue', href: '/dashboard/publish/queue' },
-  { goal: 'Run multi-step autonomous AI campaigns & approvals', tool: 'AI Missions', href: '/dashboard/missions' },
+  { goal: 'Run & verify all 39 live AI engines (5-Stage Assembly Line)', tool: 'AI Workbench (39 Engines)', href: '/dashboard/engines' },
+  { goal: 'Track revenue, ROI & tamper-evident /api/r/[code] links', tool: 'Results & Monetization', href: '/dashboard/monetization' },
+  { goal: 'Configure BYOK AI keys (OpenRouter, ElevenLabs, HeyGen)', tool: 'Connections & Settings', href: '/dashboard/settings' },
 ] as const;
 
 export function GuideQuickstart2026({ locale }: GuideQuickstart2026Props) {
