@@ -62,11 +62,24 @@ export default async function MonetizationPage() {
     );
   }
 
+  const pageHeader = (
+    <header className="mb-6">
+      <h1 className="text-2xl font-bold text-foreground">{t('pageTitle')}</h1>
+      <p className="mt-1 text-sm text-muted-foreground">{t('pageDescription')}</p>
+    </header>
+  );
+
   const db = await getD1();
   if (!db) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <p role="alert" className="text-sm text-destructive">{t('loading')}</p>
+        {pageHeader}
+        <div
+          role="alert"
+          className="rounded-2xl border border-destructive/35 bg-[var(--error-container)] p-4 text-sm text-[var(--on-error-container)]"
+        >
+          {t('noData')}
+        </div>
       </div>
     );
   }
@@ -76,7 +89,13 @@ export default async function MonetizationPage() {
   if (!workspaceId) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <p className="text-sm text-muted-foreground">{t('loading')}</p>
+        {pageHeader}
+        <div
+          role="status"
+          className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground"
+        >
+          {t('noData')}
+        </div>
       </div>
     );
   }

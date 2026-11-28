@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { User, Key, BarChart3, Users, Languages, HardDrive, Shield, Fingerprint } from 'lucide-react';
 import { cn } from '@/seed/utils/cn';
 import { Link } from '@/navigation';
@@ -23,16 +24,16 @@ interface SettingsPageProps {
   initialTab?: string;
 }
 
-const NAV_TABS = [
-  { id: 'account', label: 'Profile', icon: User },
-  { id: 'security', label: 'Security (Passkeys & 2FA)', icon: Fingerprint },
-  { id: 'apiKeys', label: 'API Keys (BYOK)', icon: Key },
-  { id: 'storage', label: 'Storage (R2 BYOS)', icon: HardDrive },
-  { id: 'usage', label: 'Live Metering', icon: BarChart3 },
-  { id: 'team', label: 'Team & Ownership', icon: Users },
-  { id: 'openCore', label: 'Open-Core & Portability', icon: Shield },
-  { id: 'preferences', label: 'Preferences', icon: Languages },
-];
+const NAV_TAB_SPECS = [
+  { id: 'account', labelKey: 'tabs.account', fallback: 'Profile', icon: User },
+  { id: 'security', labelKey: 'tabs.security', fallback: 'Security (Passkeys & 2FA)', icon: Fingerprint },
+  { id: 'apiKeys', labelKey: 'tabs.apiKeys', fallback: 'API Keys (BYOK)', icon: Key },
+  { id: 'storage', labelKey: 'tabs.storage', fallback: 'Storage (R2 BYOS)', icon: HardDrive },
+  { id: 'usage', labelKey: 'tabs.usage', fallback: 'Live Metering', icon: BarChart3 },
+  { id: 'team', labelKey: 'tabs.team', fallback: 'Team & Ownership', icon: Users },
+  { id: 'openCore', labelKey: 'tabs.openCore', fallback: 'Open-Core & Portability', icon: Shield },
+  { id: 'preferences', labelKey: 'tabs.preferences', fallback: 'Preferences', icon: Languages },
+] as const;
 
 export default function SettingsPage({
   userName = '',
@@ -40,6 +41,7 @@ export default function SettingsPage({
   initialTab = 'account',
 }: SettingsPageProps = {}) {
   const [activeTab, setActiveTab] = useState(initialTab);
+  const t = useTranslations('stitch.settingsPage');
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -47,10 +49,10 @@ export default function SettingsPage({
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-6">
           <div>
             <h1 className="text-3xl font-black tracking-tight text-foreground">
-              Account & Workspace Settings
+              {t('title')}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              Manage personal identity, Passkeys, live AI provider credentials, usage telemetry, and team ownership.
+              {t('subtitle')}
             </p>
           </div>
           <Link
@@ -58,17 +60,18 @@ export default function SettingsPage({
             className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary-text border border-primary/30 px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all shadow-sm"
           >
             <BarChart3 className="w-4 h-4" />
-            View Billing Metering
+            {t('viewBillingMetering')}
           </Link>
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border custom-scrollbar">
-          {NAV_TABS.map((tab) => {
+          {NAV_TAB_SPECS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
                   'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap',
@@ -78,7 +81,7 @@ export default function SettingsPage({
                 )}
               >
                 <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
+                <span>{t(tab.labelKey)}</span>
               </button>
             );
           })}
@@ -97,16 +100,16 @@ export default function SettingsPage({
             <div className="bg-card rounded-2xl p-8 shadow-sm border border-border text-center space-y-4">
               <BarChart3 className="w-10 h-10 text-primary mx-auto" />
               <div className="max-w-md mx-auto space-y-2">
-                <h3 className="text-lg font-bold text-foreground">Transparent Consumption Ledger</h3>
+                <h3 className="text-lg font-bold text-foreground">{t('usagePanel.title')}</h3>
                 <p className="text-xs text-muted-foreground">
-                  Inspect granular video generation minutes, ElevenLabs synthesis, fal.ai diffusion calls, and LLM tokens.
+                  {t('usagePanel.description')}
                 </p>
               </div>
               <Link
                 href="/settings/usage"
                 className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground dark:bg-primary-600 dark:hover:bg-primary-500 dark:text-white text-xs font-mono font-bold px-5 py-2.5 rounded-xl shadow-sm transition-all active:scale-95"
               >
-                Open Real-Time Metering Portal
+                {t('usagePanel.cta')}
               </Link>
             </div>
           )}
