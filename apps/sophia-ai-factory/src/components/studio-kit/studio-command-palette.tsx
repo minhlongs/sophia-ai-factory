@@ -46,8 +46,8 @@ export interface StudioCommandPaletteProps {
   readonly capabilities?: readonly StudioCapabilitySpec[];
   readonly campaignDraft?: {
     readonly script: string;
-    readonly platform: CommanderRoeConfig['platform'];
-    readonly region: CommanderRoeConfig['region'];
+    readonly platform: CommanderRoeConfig['platform'] | 'generic';
+    readonly region: CommanderRoeConfig['region'] | 'GLOBAL';
   };
 }
 
@@ -80,8 +80,8 @@ export function StudioCommandPalette({
   const [receipt, setReceipt] = useState<PipelineVerifiedReceipt | null>(null);
   const [roe, setRoe] = useState<CommanderRoeConfig>({
     script: campaignDraft?.script ?? DEFAULT_LIVE_PIPELINE_INPUT.script,
-    platform: campaignDraft?.platform ?? 'tiktok',
-    region: campaignDraft?.region ?? 'VN',
+    platform: campaignDraft?.platform && campaignDraft.platform !== 'generic' ? campaignDraft.platform : 'tiktok',
+    region: campaignDraft?.region && campaignDraft.region !== 'GLOBAL' ? campaignDraft.region : 'VN',
     useLiveD1Gross: true,
     customGrossUsd: DEFAULT_LIVE_PIPELINE_INPUT.grossUsd,
   });
@@ -92,8 +92,8 @@ export function StudioCommandPalette({
     setRoe((prev) => ({
       ...prev,
       script: campaignDraft.script,
-      platform: campaignDraft.platform,
-      region: campaignDraft.region,
+      ...(campaignDraft.platform !== 'generic' ? { platform: campaignDraft.platform } : {}),
+      ...(campaignDraft.region !== 'GLOBAL' ? { region: campaignDraft.region } : {}),
     }));
   }, [campaignDraft?.script, campaignDraft?.platform, campaignDraft?.region]);
 
@@ -167,6 +167,15 @@ export function StudioCommandPalette({
   }
 
   async function handleRunRealtimePipeline() {
+    if (campaignDraft?.platform === 'generic' || campaignDraft?.region === 'GLOBAL') {
+      setRunError(
+        locale === 'vi'
+          ? 'Vui lòng chọn nền tảng cụ thể (TikTok/YT Shorts/Reels/FB Reels) và thị trường pháp lý (VN/US/EU/UK/SG) trước khi chạy.'
+          : 'Select a specific platform and compliance region (VN/US/EU/UK/SG) before running the pipeline.',
+      );
+      return;
+    }
+
     const trimmedScript = roe.script.trim();
     if (!trimmedScript) {
       setRunError(
@@ -222,8 +231,12 @@ export function StudioCommandPalette({
           typeof item.engineId === 'string' &&
           validIds.has(item.engineId) &&
           validStates.has(item.state) &&
+          typeof item.metricOutput === 'string' &&
+          typeof item.detail?.vi === 'string' &&
+          typeof item.detail?.en === 'string' &&
           typeof item.durationMs === 'number' &&
           Number.isFinite(item.durationMs) &&
+          item.durationMs >= 0 &&
           !serverMap.has(item.engineId);
         if (!isValid) {
           setRunError(

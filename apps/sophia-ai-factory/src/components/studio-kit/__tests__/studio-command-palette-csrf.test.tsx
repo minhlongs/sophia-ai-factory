@@ -76,6 +76,26 @@ describe('StudioCommandPalette CSRF, empty-script guard, provenance & partial re
     expect(partialClipboardEn).toContain('INCOMPLETE PIPELINE RECEIPT (1/39 ENGINES)');
   });
 
+  it('rejects generic platform or GLOBAL jurisdiction without silent substitution', () => {
+    const fetchMock = vi.fn();
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <StudioCommandPalette
+        locale="vi"
+        campaignDraft={{
+          script: 'Valid script',
+          platform: 'generic',
+          region: 'GLOBAL',
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('run-39-engines-btn'));
+    expect(screen.getByRole('alert').textContent).toContain('nền tảng cụ thể');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('rejects empty or whitespace-only campaign script without sending a sample request', async () => {
     const fetchMock = vi.fn();
     globalThis.fetch = fetchMock as unknown as typeof fetch;
@@ -109,6 +129,7 @@ describe('StudioCommandPalette CSRF, empty-script guard, provenance & partial re
             engineId: 'comment-pain-point-miner',
             state: 'passed',
             metricOutput: '3 pain points',
+            detail: { vi: '3 nỗi đau', en: '3 pain points' },
             durationMs: 1.2,
           },
         ],
