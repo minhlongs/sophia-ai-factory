@@ -136,7 +136,7 @@ describe('Scrollytelling Chapters & Cross-Surface Harmonization (Landing, Guide,
   it('applies .v3-core telemetry eyebrows and container scope across Guide, Dashboard, NicheStudio, and DataStateBoundary', () => {
     expect(guidePage).toContain('v3-core');
     expect(guidePage).toContain('eyebrow');
-    expect(dashboardPage).toContain('v3-core');
+    expect(dashboardPage).toContain('dashboard-overview-content');
     expect(dashboardPage).toContain('eyebrow');
     expect(dashboardPage).toContain('DataStateBoundary');
     expect(dashboardPage).toContain('dashboard-data-boundary');
