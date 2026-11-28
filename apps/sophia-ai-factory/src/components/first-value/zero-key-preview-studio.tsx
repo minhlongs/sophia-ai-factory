@@ -12,7 +12,7 @@
  * @module components/first-value/zero-key-preview-studio
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 import type { ScriptOutput } from '@/seed/ai/script-generator';
 import { renderPilotMp4Blob } from './pilot-browser-mp4-renderer';
@@ -21,6 +21,11 @@ type PreviewPhase = 'DRAFT' | 'PENDING_LOCAL_REVIEW' | 'LOCALLY_APPROVED' | 'REN
 
 export interface ZeroKeyPreviewStudioProps {
   readonly orgId: string;
+  readonly enabled?: boolean;
+}
+
+export function isZeroKeyPreviewEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_ENABLE_ZERO_KEY_PREVIEW === 'true';
 }
 
 function buildScriptOutputFromText(title: string, rawText: string, durationSec: number): ScriptOutput {
@@ -43,7 +48,8 @@ function buildScriptOutputFromText(title: string, rawText: string, durationSec: 
   };
 }
 
-export function ZeroKeyPreviewStudio({ orgId }: ZeroKeyPreviewStudioProps) {
+export function ZeroKeyPreviewStudio({ orgId, enabled }: ZeroKeyPreviewStudioProps) {
+  const isEnabled = enabled ?? isZeroKeyPreviewEnabled();
   const [topic, setTopic] = useState('Cách đánh giá bảo mật sàn giao dịch crypto an toàn cho người mới tại Việt Nam');
   const [audience, setAudience] = useState('Người mới tìm hiểu tài sản số');
   const [durationSec, setDurationSec] = useState(35);
@@ -55,12 +61,29 @@ export function ZeroKeyPreviewStudio({ orgId }: ZeroKeyPreviewStudioProps) {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoBytes, setVideoBytes] = useState<number>(0);
   const [videoDurationSec, setVideoDurationSec] = useState<number>(0);
+  const runTokenRef = useRef(0);
+
+  useEffect(() => {
+    runTokenRef.current += 1;
+    setScriptText('');
+    setPhase('DRAFT');
+    setError(null);
+    setVideoUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setVideoBytes(0);
+    setVideoDurationSec(0);
+  }, [orgId]);
 
   useEffect(() => {
     return () => {
+      runTokenRef.current += 1;
       if (videoUrl) URL.revokeObjectURL(videoUrl);
     };
   }, [videoUrl]);
+
+  if (!isEnabled) return null;
 
   function clearRenderedMedia() {
     if (videoUrl) {
@@ -72,6 +95,13 @@ export function ZeroKeyPreviewStudio({ orgId }: ZeroKeyPreviewStudioProps) {
   }
 
   async function handleGeneratePreview() {
+    if (!topic.trim() || !audience.trim()) {
+      setError('Vui lòng nhập đầy đủ chủ đề và đối tượng mục tiêu.');
+      setPhase('FAILED');
+      return;
+    }
+    const token = runTokenRef.current + 1;
+    runTokenRef.current = token;
     setError(null);
     clearRenderedMedia();
     try {
@@ -92,6 +122,7 @@ export function ZeroKeyPreviewStudio({ orgId }: ZeroKeyPreviewStudioProps) {
         error?: string;
         script?: { title?: string; scenes?: Array<{ narration?: string }> };
       };
+      if (runTokenRef.current !== token) return;
       if (!resp.ok || json.ok === false || !json.script) {
         setError(json.error || `HTTP ${resp.status}`);
         setPhase('FAILED');
@@ -104,6 +135,7 @@ export function ZeroKeyPreviewStudio({ orgId }: ZeroKeyPreviewStudioProps) {
       setRevision((r) => r + 1);
       setPhase('PENDING_LOCAL_REVIEW');
     } catch (err) {
+      if (runTokenRef.current !== token) return;
       setError(err instanceof Error ? err.message : 'Network error');
       setPhase('FAILED');
     }
@@ -111,6 +143,8 @@ export function ZeroKeyPreviewStudio({ orgId }: ZeroKeyPreviewStudioProps) {
 
   async function handleRenderMp4() {
     if (phase !== 'LOCALLY_APPROVED' || !scriptText.trim()) return;
+    const token = runTokenRef.current + 1;
+    runTokenRef.current = token;
     setError(null);
     clearRenderedMedia();
     setPhase('RENDERING');
@@ -124,12 +158,14 @@ export function ZeroKeyPreviewStudio({ orgId }: ZeroKeyPreviewStudioProps) {
         disclosureTag: '#AD • LOCAL_SIMULATION_NO_BYOK',
         aspectRatio: '9:16',
       });
+      if (runTokenRef.current !== token) return;
       const url = URL.createObjectURL(blob);
       setVideoUrl(url);
       setVideoBytes(encoded.bytes.byteLength);
       setVideoDurationSec(encoded.durationSec);
       setPhase('RENDERED');
     } catch (err) {
+      if (runTokenRef.current !== token) return;
       setError(err instanceof Error ? err.message : 'Render failed');
       setPhase('FAILED');
     }
