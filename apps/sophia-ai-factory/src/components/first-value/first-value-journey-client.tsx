@@ -208,7 +208,6 @@ export function FirstValueJourneyClient({
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const activeOrgRef = useRef(orgId);
-  activeOrgRef.current = orgId;
 
   const loadStatus = useCallback(async () => {
     const requestOrgId = orgId;
@@ -479,6 +478,7 @@ export function FirstValueJourneyClient({
   const [handoffSnapshot, setHandoffSnapshot] = useState<PreviewHandoffSnapshot | null>(null);
 
   useEffect(() => {
+    activeOrgRef.current = orgId;
     costPreviewTokenRef.current += 1;
     setHandoffSnapshot(null);
     setCostPreview(null);
