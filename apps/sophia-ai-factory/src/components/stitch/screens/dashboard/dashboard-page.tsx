@@ -65,7 +65,7 @@ export default function DashboardPage({ initialData, loadFailed, readiness }: Da
       }));
 
   return (
-    <div className="v3-core space-y-6" data-testid="dashboard-overview-content">
+    <div className="space-y-6" data-testid="dashboard-overview-content">
       {/* Dashboard Page Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 min-w-0">
         <div className="min-w-0">

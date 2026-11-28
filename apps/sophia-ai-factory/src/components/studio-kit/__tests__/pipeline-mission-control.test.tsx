@@ -48,27 +48,28 @@ describe('39-Engine Live Mission Control (MD3 Expressive)', () => {
 
   it('runs all 39 engines via POST /api/studio/pipeline/execute, shows LIVE D1 receipt & live inspector telemetry', async () => {
     const snapshot = runAll34EnginesSnapshot(DEFAULT_LIVE_PIPELINE_INPUT);
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
         ok: true,
-        status: 200,
-        json: async () => ({
-          ok: true,
-          executedAt: '2026-11-28T07:00:00.000Z',
-          telemetrySource: 'live_d1',
-          totalEngines: snapshot.length,
-          results: snapshot,
-        }),
+        executedAt: '2026-11-28T07:00:00.000Z',
+        telemetrySource: 'live_d1',
+        totalEngines: snapshot.length,
+        results: snapshot,
       }),
-    );
+    });
+    vi.stubGlobal('fetch', mockFetch);
 
     render(<StudioCommandPalette locale="en" />);
+    expect(screen.getByTestId('opc-commander-roe-bar')).toBeDefined();
     fireEvent.click(screen.getByTestId('run-39-engines-btn'));
 
     await waitFor(() => {
       expect(screen.getByTestId('pipeline-verified-receipt-card')).toBeDefined();
     });
+    const sentBody = JSON.parse(String(mockFetch.mock.calls[0]?.[1]?.body ?? '{}')) as Record<string, unknown>;
+    expect(sentBody.grossUsd).toBeUndefined();
     expect(screen.getByTestId('receipt-telemetry-source').textContent).toContain('LIVE D1 DATA');
 
     fireEvent.click(screen.getByTestId('engine-pill-subid-watermark-encoder'));
