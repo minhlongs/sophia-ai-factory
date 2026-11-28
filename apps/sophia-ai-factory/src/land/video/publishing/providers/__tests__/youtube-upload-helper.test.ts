@@ -234,6 +234,7 @@ describe('uploadToProvider metadata forwarding', () => {
         title: 'Apollo.io Review — Gate 1 Unlisted Proof',
         productLink: 'https://sophia.ai/r/apollo',
         privacyStatus: 'unlisted',
+        ownerUserId: 'usr_1',
       },
     );
   });
