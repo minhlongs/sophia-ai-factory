@@ -238,16 +238,17 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
     setSavingDist(true);
     setSaveDistError(null);
     try {
-      const form = new FormData();
-      form.append('orgId', props.orgId);
-      form.append('artifactId', props.artifactId);
-      form.append('durationSec', String(props.script.total_duration || 30));
-      form.append('file', narratedVideoBlob, `sophia-narrated-${props.artifactId}.mp4`);
       const res = await fetch('/api/first-value/distribution-asset', {
         method: 'POST',
         credentials: 'include',
-        headers: { ...getCsrfHeaders() },
-        body: form,
+        headers: {
+          'Content-Type': 'video/mp4',
+          'x-sophia-org-id': props.orgId,
+          'x-sophia-artifact-id': props.artifactId,
+          'x-sophia-duration-sec': String(props.script.total_duration || 30),
+          ...getCsrfHeaders(),
+        },
+        body: narratedVideoBlob,
       });
       if (fingerprintRef.current !== reqFingerprint) return;
       const data = (await res.json().catch(() => ({}))) as { videoId?: string; error?: string };

@@ -124,17 +124,23 @@ export async function saveApprovedMp4ForDistribution(
     };
   }
 
-  // Persist to private tenant-scoped R2 object
-  await r2.put(r2ObjectKey, input.mp4Bytes, {
-    httpMetadata: { contentType: 'video/mp4' },
-    customMetadata: {
-      orgId: input.orgId,
-      userId: input.userId,
-      artifactId: input.artifactId,
-      reviewVersion: String(review.version),
-      sha256Hex,
-    },
-  });
+  // Check whether R2 object already existed before this request so concurrent failures
+  // never delete an object committed by another request.
+  const preExistingObj = typeof r2.head === 'function' ? await r2.head(r2ObjectKey).catch(() => null) : null;
+  const createdNewObject = !preExistingObj;
+
+  if (createdNewObject) {
+    await r2.put(r2ObjectKey, input.mp4Bytes, {
+      httpMetadata: { contentType: 'video/mp4' },
+      customMetadata: {
+        orgId: input.orgId,
+        userId: input.userId,
+        artifactId: input.artifactId,
+        reviewVersion: String(review.version),
+        sha256Hex,
+      },
+    });
+  }
 
   const videoId = `vid_${crypto.randomUUID().replace(/-/g, '').slice(0, 24)}`;
   const safeDuration = Math.max(1, Math.min(600, Math.round(input.durationSec || review.durationSec || 30)));
@@ -156,13 +162,33 @@ export async function saveApprovedMp4ForDistribution(
       )
       .run();
   } catch {
-    // Compensating rollback: prevent orphaned R2 object if D1 finalization fails
-    await r2.delete(r2ObjectKey).catch(() => {});
+    // Re-check canonical row: if a concurrent request committed it, return idempotent replay
+    // and NEVER delete the shared R2 object.
+    const raced = await d1
+      .prepare('SELECT id, video_url FROM videos WHERE user_id = ? AND heygen_job_id = ? LIMIT 1')
+      .bind(input.userId, idempotentJobKey)
+      .first<{ id: string; video_url: string | null }>()
+      .catch(() => null);
+
+    if (raced) {
+      return {
+        ok: true,
+        videoId: raced.id,
+        r2ObjectKey: raced.video_url?.replace(/^r2:\/\//, '') ?? r2ObjectKey,
+        sha256Hex,
+        byteSize: input.mp4Bytes.byteLength,
+        idempotentReplay: true,
+      };
+    }
+
+    if (createdNewObject) {
+      await r2.delete(r2ObjectKey).catch(() => {});
+    }
     return {
       ok: false,
       status: 500,
       code: 'VIDEO_FINALIZATION_FAILED',
-      error: 'Failed to finalize canonical video record; uploaded object rolled back',
+      error: 'Failed to finalize canonical video record; uncommitted object cleaned up',
     };
   }
 

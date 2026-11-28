@@ -1,8 +1,12 @@
 /**
  * POST /api/first-value/distribution-asset
  *
- * Persists an approved narrated MP4 Blob into private tenant-scoped R2 storage
- * and registers a canonical `videos.id` record for the Distribution Center.
+ * Bounded streaming binary MP4 ingestion into private tenant-scoped `MEDIA_BUCKET`
+ * R2 storage and canonical `videos.id` finalization.
+ *
+ * Enforces byte limits via a streaming reader BEFORE buffering, even when
+ * `Content-Length` is missing or spoofed. Fails closed (503) when `MEDIA_BUCKET`
+ * is not configured (never falls back to `BACKUPS_BUCKET`).
  *
  * @module app/api/first-value/distribution-asset/route
  */
@@ -37,6 +41,43 @@ function resolvePrivateR2Bucket(): R2Bucket | null {
   }
 }
 
+/**
+ * Reads a ReadableStream up to `maxBytes` strictly, aborting immediately if
+ * received bytes exceed `maxBytes` (protects against missing or spoofed Content-Length).
+ */
+export async function readBoundedStream(
+  stream: ReadableStream<Uint8Array>,
+  maxBytes: number,
+): Promise<{ ok: true; bytes: Uint8Array } | { ok: false; code: 'PAYLOAD_TOO_LARGE' | 'STREAM_ERROR' }> {
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value || value.byteLength === 0) continue;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel('Payload exceeds maximum allowed size').catch(() => {});
+        return { ok: false, code: 'PAYLOAD_TOO_LARGE' };
+      }
+      chunks.push(value);
+    }
+  } catch {
+    return { ok: false, code: 'STREAM_ERROR' };
+  } finally {
+    reader.releaseLock();
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return { ok: true, bytes: merged };
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
   if (!user) {
@@ -46,31 +87,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return csrfForbiddenResponse();
   }
 
-  const contentLength = Number(request.headers.get('content-length') ?? '0');
-  if (Number.isFinite(contentLength) && contentLength > MAX_DISTRIBUTION_MP4_BYTES + 1024 * 1024) {
+  const orgId = (request.headers.get('x-sophia-org-id') ?? '').trim();
+  const artifactId = (request.headers.get('x-sophia-artifact-id') ?? '').trim();
+  const durationSec = Number(request.headers.get('x-sophia-duration-sec') ?? '30');
+  if (!orgId || !artifactId) {
+    return NextResponse.json({ error: 'Missing x-sophia-org-id or x-sophia-artifact-id header' }, { status: 400 });
+  }
+
+  // Early rejection signal (not sole boundary — enforced again during streaming read)
+  const declaredLen = Number(request.headers.get('content-length') ?? '0');
+  if (Number.isFinite(declaredLen) && declaredLen > MAX_DISTRIBUTION_MP4_BYTES) {
     return NextResponse.json({ code: 'PAYLOAD_TOO_LARGE', error: 'Upload exceeds 50 MB limit' }, { status: 413 });
-  }
-
-  let formData: FormData;
-  try {
-    formData = await request.formData();
-  } catch {
-    return NextResponse.json({ error: 'Expected multipart/form-data upload' }, { status: 400 });
-  }
-
-  const orgId = String(formData.get('orgId') ?? '').trim();
-  const artifactId = String(formData.get('artifactId') ?? '').trim();
-  const durationSec = Number(formData.get('durationSec') ?? 30);
-  const file = formData.get('file');
-
-  if (!orgId || !artifactId || !(file instanceof Blob)) {
-    return NextResponse.json({ error: 'Missing orgId, artifactId, or MP4 file' }, { status: 400 });
-  }
-  if (file.size > MAX_DISTRIBUTION_MP4_BYTES) {
-    return NextResponse.json({ code: 'PAYLOAD_TOO_LARGE', error: 'MP4 file exceeds 50 MB limit' }, { status: 413 });
-  }
-  if (file.size < MIN_DISTRIBUTION_MP4_BYTES) {
-    return NextResponse.json({ code: 'INVALID_MP4_BYTES', error: 'MP4 file is too small' }, { status: 400 });
   }
 
   const hasAccess = await verifyWorkspaceAccess(orgId, user.id).catch(() => false);
@@ -82,18 +109,36 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const r2 = resolvePrivateR2Bucket();
   if (!d1 || !r2) {
     return NextResponse.json(
-      { code: 'STORAGE_UNAVAILABLE', error: 'Private R2 or D1 storage binding unavailable' },
+      { code: 'STORAGE_UNAVAILABLE', error: 'Private MEDIA_BUCKET or D1 storage binding unavailable' },
       { status: 503 },
     );
   }
 
-  const mp4Bytes = new Uint8Array(await file.arrayBuffer());
+  if (!request.body) {
+    return NextResponse.json({ code: 'INVALID_MP4_BYTES', error: 'Empty request body' }, { status: 400 });
+  }
+
+  const bounded = await readBoundedStream(request.body, MAX_DISTRIBUTION_MP4_BYTES);
+  if (!bounded.ok) {
+    return NextResponse.json(
+      {
+        code: bounded.code,
+        error: bounded.code === 'PAYLOAD_TOO_LARGE' ? 'Streamed upload exceeds 50 MB limit' : 'Upload stream interrupted',
+      },
+      { status: bounded.code === 'PAYLOAD_TOO_LARGE' ? 413 : 400 },
+    );
+  }
+
+  if (bounded.bytes.byteLength < MIN_DISTRIBUTION_MP4_BYTES) {
+    return NextResponse.json({ code: 'INVALID_MP4_BYTES', error: 'MP4 file is too small' }, { status: 400 });
+  }
+
   const result = await saveApprovedMp4ForDistribution(d1, r2, {
     orgId,
     userId: user.id,
     artifactId,
     durationSec,
-    mp4Bytes,
+    mp4Bytes: bounded.bytes,
   });
 
   if (!result.ok) {

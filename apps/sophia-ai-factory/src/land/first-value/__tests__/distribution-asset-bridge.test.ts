@@ -4,6 +4,7 @@ import { describe, it, expect } from 'vitest';
 import Database from 'better-sqlite3';
 import type { D1Database, R2Bucket } from '@cloudflare/workers-types';
 import { saveApprovedMp4ForDistribution } from '../distribution-asset-bridge';
+import { readBoundedStream } from '@/app/api/first-value/distribution-asset/route';
 
 function createRealSqliteD1(): { db: Database.Database; d1: D1Database } {
   const db = new Database(':memory:');
@@ -196,5 +197,28 @@ describe('Omnichannel Phase 3 G1+G2+G3: Canonical R2 Media Asset Bridge (real SQ
     expect(wrongOrgRes.ok).toBe(false);
     if (!wrongOrgRes.ok) expect(wrongOrgRes.status).toBe(404);
     expect(store.size).toBe(0);
+  });
+
+  it('enforces bounded streaming ingestion even when Content-Length is missing or spoofed', async () => {
+    const oversizedStream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array(60));
+        controller.enqueue(new Uint8Array(60));
+        controller.close();
+      },
+    });
+    const overRes = await readBoundedStream(oversizedStream, 100);
+    expect(overRes.ok).toBe(false);
+    if (!overRes.ok) expect(overRes.code).toBe('PAYLOAD_TOO_LARGE');
+
+    const okStream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array([1, 2, 3, 4]));
+        controller.close();
+      },
+    });
+    const okRes = await readBoundedStream(okStream, 100);
+    expect(okRes.ok).toBe(true);
+    if (okRes.ok) expect(okRes.bytes.byteLength).toBe(4);
   });
 });
