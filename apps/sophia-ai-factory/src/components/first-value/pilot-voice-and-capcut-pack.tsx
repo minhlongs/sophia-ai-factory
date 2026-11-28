@@ -14,6 +14,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/navigation';
 import type { ScriptOutput } from '@/seed/ai/script-generator';
 import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 import {
@@ -59,6 +60,10 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
   const [narratedLoading, setNarratedLoading] = useState(false);
   const [narratedError, setNarratedError] = useState<string | null>(null);
   const [narratedVideoUrl, setNarratedVideoUrl] = useState<string | null>(null);
+  const [narratedVideoBlob, setNarratedVideoBlob] = useState<Blob | null>(null);
+  const [savingDist, setSavingDist] = useState(false);
+  const [savedVideoId, setSavedVideoId] = useState<string | null>(null);
+  const [saveDistError, setSaveDistError] = useState<string | null>(null);
   const [copiedPack, setCopiedPack] = useState(false);
   const [renderingClipIdx, setRenderingClipIdx] = useState<number | null>(null);
   const repurposedClips = extractThreeShortClipsFromLongScript(props.script);
@@ -104,6 +109,9 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
     setAudioBlob(null);
     setAudioUrl(null);
     setNarratedVideoUrl(null);
+    setNarratedVideoBlob(null);
+    setSavedVideoId(null);
+    setSaveDistError(null);
     setNarratedError(null);
     setVoiceError(null);
   }, [scriptFingerprint]);
@@ -205,7 +213,10 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
       });
       if (fingerprintRef.current !== reqFingerprint || renderSeqRef.current !== reqSeq) return;
       if (narratedVideoUrl) URL.revokeObjectURL(narratedVideoUrl);
+      setNarratedVideoBlob(blob);
       setNarratedVideoUrl(URL.createObjectURL(blob));
+      setSavedVideoId(null);
+      setSaveDistError(null);
     } catch (err) {
       if (fingerprintRef.current === reqFingerprint && renderSeqRef.current === reqSeq) {
         setNarratedError(
@@ -217,6 +228,41 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
     } finally {
       if (fingerprintRef.current === reqFingerprint && renderSeqRef.current === reqSeq) {
         setNarratedLoading(false);
+      }
+    }
+  }
+
+  async function handleSaveForDistribution() {
+    if (!narratedVideoBlob || !props.orgId || savingDist) return;
+    const reqFingerprint = scriptFingerprint;
+    setSavingDist(true);
+    setSaveDistError(null);
+    try {
+      const form = new FormData();
+      form.append('orgId', props.orgId);
+      form.append('artifactId', props.artifactId);
+      form.append('durationSec', String(props.script.total_duration || 30));
+      form.append('file', narratedVideoBlob, `sophia-narrated-${props.artifactId}.mp4`);
+      const res = await fetch('/api/first-value/distribution-asset', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { ...getCsrfHeaders() },
+        body: form,
+      });
+      if (fingerprintRef.current !== reqFingerprint) return;
+      const data = (await res.json().catch(() => ({}))) as { videoId?: string; error?: string };
+      if (!res.ok || !data.videoId) {
+        setSaveDistError(data.error ?? 'Không thể lưu video lên kho phân phối.');
+        return;
+      }
+      setSavedVideoId(data.videoId);
+    } catch {
+      if (fingerprintRef.current === reqFingerprint) {
+        setSaveDistError('Không thể lưu video lên kho phân phối.');
+      }
+    } finally {
+      if (fingerprintRef.current === reqFingerprint) {
+        setSavingDist(false);
       }
     }
   }
@@ -361,7 +407,7 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
               src={narratedVideoUrl}
               className="max-h-72 w-auto rounded-lg border border-border bg-black"
             />
-            <div>
+            <div className="flex flex-wrap items-center gap-2">
               <a
                 href={narratedVideoUrl}
                 data-testid="pilot-download-narrated-mp4-btn"
@@ -370,7 +416,28 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
               >
                 Tải MP4 có giọng đọc (.mp4)
               </a>
+              {props.orgId && (
+                <button
+                  type="button"
+                  data-testid="pilot-save-for-distribution-btn"
+                  disabled={props.busy || savingDist}
+                  onClick={() => void handleSaveForDistribution()}
+                  className="inline-flex rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                >
+                  {savingDist ? t('loading') : 'Lưu để phân phối'}
+                </button>
+              )}
+              {savedVideoId && (
+                <Link
+                  href={`/dashboard/publish/queue?videoId=${encodeURIComponent(savedVideoId)}`}
+                  data-testid="pilot-open-saved-distribution-link"
+                  className="inline-flex rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:opacity-90"
+                >
+                  Mở Trung tâm Phân phối ({savedVideoId})
+                </Link>
+              )}
             </div>
+            {saveDistError && <p role="alert" className="text-xs text-destructive">{saveDistError}</p>}
           </div>
         )}
       </div>
