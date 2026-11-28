@@ -25,14 +25,14 @@ interface SettingsPageProps {
 }
 
 const NAV_TAB_SPECS = [
-  { id: 'account', labelKey: 'tabs.account', fallback: 'Profile', icon: User },
-  { id: 'security', labelKey: 'tabs.security', fallback: 'Security (Passkeys & 2FA)', icon: Fingerprint },
-  { id: 'apiKeys', labelKey: 'tabs.apiKeys', fallback: 'API Keys (BYOK)', icon: Key },
-  { id: 'storage', labelKey: 'tabs.storage', fallback: 'Storage (R2 BYOS)', icon: HardDrive },
-  { id: 'usage', labelKey: 'tabs.usage', fallback: 'Live Metering', icon: BarChart3 },
-  { id: 'team', labelKey: 'tabs.team', fallback: 'Team & Ownership', icon: Users },
-  { id: 'openCore', labelKey: 'tabs.openCore', fallback: 'Open-Core & Portability', icon: Shield },
-  { id: 'preferences', labelKey: 'tabs.preferences', fallback: 'Preferences', icon: Languages },
+  { id: 'account', labelKey: 'tabs.account', icon: User },
+  { id: 'security', labelKey: 'tabs.security', icon: Fingerprint },
+  { id: 'apiKeys', labelKey: 'tabs.apiKeys', icon: Key },
+  { id: 'storage', labelKey: 'tabs.storage', icon: HardDrive },
+  { id: 'usage', labelKey: 'tabs.usage', icon: BarChart3 },
+  { id: 'team', labelKey: 'tabs.team', icon: Users },
+  { id: 'openCore', labelKey: 'tabs.openCore', icon: Shield },
+  { id: 'preferences', labelKey: 'tabs.preferences', icon: Languages },
 ] as const;
 
 export default function SettingsPage({

@@ -42,26 +42,73 @@ vi.mock('@/components/settings/open-core-portability-panel', () => ({
   OpenCorePortabilityPanel: () => <div data-testid="mock-open-core" />,
 }));
 
-describe('SettingsPage VI/EN localization (Wave A)', () => {
+function flattenKeys(obj: Record<string, unknown>, prefix = ''): string[] {
+  const keys: string[] = [];
+  for (const [k, v] of Object.entries(obj)) {
+    const full = prefix ? `${prefix}.${k}` : k;
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      keys.push(...flattenKeys(v as Record<string, unknown>, full));
+    } else {
+      keys.push(full);
+    }
+  }
+  return keys.sort();
+}
+
+describe('SettingsPage VI/EN localization & catalog compatibility (Wave A.1)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders Vietnamese H1, subtitle, tabs, and usage panel with zero hardcoded English shell text', () => {
+  it('preserves all legacy stitch.settingsPage keys alongside Wave A keys with exact VI/EN parity', () => {
+    const viNs = viMessages.stitch.settingsPage as Record<string, unknown>;
+    const enNs = enMessages.stitch.settingsPage as Record<string, unknown>;
+
+    const viKeys = flattenKeys(viNs);
+    const enKeys = flattenKeys(enNs);
+    expect(viKeys).toEqual(enKeys);
+
+    // Legacy base keys must remain present (backward compatibility)
+    for (const legacyKey of [
+      'pageTitle',
+      'topNav.upgradePlan',
+      'nav.account',
+      'profile.title',
+      'apiKeys.title',
+      'locale.title',
+      'dangerZone.title',
+    ]) {
+      expect(viKeys).toContain(legacyKey);
+      expect(enKeys).toContain(legacyKey);
+    }
+  });
+
+  it('renders all 8 Vietnamese tabs, H1, billing CTA, and usage panel with zero hardcoded English shell text', () => {
     render(
       <NextIntlClientProvider locale="vi" messages={viMessages}>
         <SettingsPage userName="Founder" userEmail="founder@example.test" />
       </NextIntlClientProvider>,
     );
 
-    const h1 = screen.getByRole('heading', { level: 1 });
-    expect(h1.textContent).toBe('Cài đặt tài khoản và không gian làm việc');
+    const h1s = screen.getAllByRole('heading', { level: 1 });
+    expect(h1s).toHaveLength(1);
+    expect(h1s[0].textContent).toBe('Cài đặt tài khoản và không gian làm việc');
     expect(screen.queryByText('Account & Workspace Settings')).toBeNull();
     expect(screen.queryByText('View Billing Metering')).toBeNull();
     expect(screen.getByText('Xem đo lường cước phí')).toBeTruthy();
-    expect(screen.getByText('Hồ sơ')).toBeTruthy();
-    expect(screen.getByText('Khóa API (BYOK)')).toBeTruthy();
-    expect(screen.getByText('Đo lường trực tiếp')).toBeTruthy();
+
+    for (const tabLabel of [
+      'Hồ sơ',
+      'Bảo mật (Passkeys & 2FA)',
+      'Khóa API (BYOK)',
+      'Lưu trữ (R2 BYOS)',
+      'Đo lường trực tiếp',
+      'Đội ngũ & Quyền sở hữu',
+      'Open-Core & Di chuyển dữ liệu',
+      'Tùy chọn',
+    ]) {
+      expect(screen.getByText(tabLabel)).toBeTruthy();
+    }
 
     fireEvent.click(screen.getByText('Đo lường trực tiếp'));
     expect(screen.getByText('Sổ cái tiêu thụ minh bạch')).toBeTruthy();
@@ -69,18 +116,31 @@ describe('SettingsPage VI/EN localization (Wave A)', () => {
     expect(screen.queryByText('Transparent Consumption Ledger')).toBeNull();
   });
 
-  it('renders English H1, tabs, and usage panel when locale is en', () => {
+  it('renders all 8 English tabs, H1, and usage panel when locale is en', () => {
     render(
       <NextIntlClientProvider locale="en" messages={enMessages}>
         <SettingsPage userName="Founder" userEmail="founder@example.test" initialTab="usage" />
       </NextIntlClientProvider>,
     );
 
-    const h1 = screen.getByRole('heading', { level: 1 });
-    expect(h1.textContent).toBe('Account & Workspace Settings');
+    const h1s = screen.getAllByRole('heading', { level: 1 });
+    expect(h1s).toHaveLength(1);
+    expect(h1s[0].textContent).toBe('Account & Workspace Settings');
     expect(screen.getByText('View Billing Metering')).toBeTruthy();
-    expect(screen.getByText('Profile')).toBeTruthy();
-    expect(screen.getByText('API Keys (BYOK)')).toBeTruthy();
+
+    for (const tabLabel of [
+      'Profile',
+      'Security (Passkeys & 2FA)',
+      'API Keys (BYOK)',
+      'Storage (R2 BYOS)',
+      'Live Metering',
+      'Team & Ownership',
+      'Open-Core & Portability',
+      'Preferences',
+    ]) {
+      expect(screen.getByText(tabLabel)).toBeTruthy();
+    }
+
     expect(screen.getByText('Transparent Consumption Ledger')).toBeTruthy();
     expect(screen.getByText('Open Real-Time Metering Portal')).toBeTruthy();
   });

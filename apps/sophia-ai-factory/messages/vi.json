@@ -7725,6 +7725,56 @@
       }
     },
     "settingsPage": {
+      "pageTitle": "Cài đặt",
+      "topNav": {
+        "upgradePlan": "Nâng cấp",
+        "notifications": "Thông báo"
+      },
+      "nav": {
+        "label": "Điều hướng cài đặt",
+        "title": "Cài đặt",
+        "account": "Tài khoản",
+        "apiKeys": "Khóa API",
+        "billing": "Thanh toán",
+        "notifications": "Thông báo",
+        "team": "Nhóm",
+        "appearance": "Giao diện",
+        "signOut": "Đăng xuất"
+      },
+      "profile": {
+        "title": "Thông tin cá nhân",
+        "name": "Tên",
+        "email": "Địa chỉ Email",
+        "verified": "Đã xác thực",
+        "save": "Lưu thay đổi"
+      },
+      "apiKeys": {
+        "title": "Khóa API",
+        "addKey": "Thêm khóa",
+        "elevenLabs": "Khóa API ElevenLabs",
+        "openRouter": "Khóa API OpenRouter",
+        "did": "Khóa API D-ID",
+        "configured": "Đã cấu hình",
+        "missing": "Thiếu",
+        "didHint": "Nhập khóa bí mật D-ID để kích hoạt tính năng video avatar.",
+        "show": "Hiện khóa",
+        "hide": "Ẩn khóa",
+        "delete": "Xóa",
+        "connect": "Kết nối"
+      },
+      "locale": {
+        "title": "Ngôn ngữ & Vùng miền",
+        "vietnamese": "Tiếng Việt",
+        "english": "English (United States)"
+      },
+      "dangerZone": {
+        "title": "Khu vực nguy hiểm",
+        "description": "Quản lý các thay đổi quan trọng tới tài khoản của bạn. Vui lòng thận trọng.",
+        "deleteAccount": "Xóa tài khoản",
+        "deleteDesc": "Xóa vĩnh viễn tài khoản và tất cả dữ liệu liên quan.",
+        "irreversible": "Hành động này không thể hoàn tác.",
+        "deleteButton": "Xóa tài khoản"
+      },
       "title": "Cài đặt tài khoản và không gian làm việc",
       "subtitle": "Quản lý danh tính cá nhân, Passkeys, khóa API nhà cung cấp AI (BYOK), đo lường mức sử dụng và quyền sở hữu đội ngũ.",
       "viewBillingMetering": "Xem đo lường cước phí",
@@ -8234,7 +8284,10 @@
     "adjustedCostMCU": "Chi phí điều chỉnh / MCU",
     "multiplier": "Hệ số",
     "noData": "Chưa có dữ liệu doanh thu. Hãy bắt đầu tạo nội dung để theo dõi.",
-    "loading": "Đang tải..."
+    "loading": "Đang tải...",
+    "dependencyUnavailable": "Cơ sở dữ liệu kiếm tiền hiện tạm thời chưa sẵn sàng. Vui lòng thử lại sau.",
+    "workspaceUnavailable": "Không gian làm việc chưa được khởi tạo đầy đủ cho báo cáo kiếm tiền. Hãy hoàn tất thiết lập ban đầu.",
+    "fetchError": "Không thể tải dữ liệu kiếm tiền lúc này. Vui lòng thử lại."
   },
   "creativeEconomy": {
     "pageTitle": "Kinh tế Sáng tạo",

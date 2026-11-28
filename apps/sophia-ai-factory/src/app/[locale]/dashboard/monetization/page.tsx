@@ -78,7 +78,7 @@ export default async function MonetizationPage() {
           role="alert"
           className="rounded-2xl border border-destructive/35 bg-[var(--error-container)] p-4 text-sm text-[var(--on-error-container)]"
         >
-          {t('noData')}
+          {t('dependencyUnavailable')}
         </div>
       </div>
     );
@@ -94,7 +94,7 @@ export default async function MonetizationPage() {
           role="status"
           className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground"
         >
-          {t('noData')}
+          {t('workspaceUnavailable')}
         </div>
       </div>
     );
@@ -150,7 +150,7 @@ export default async function MonetizationPage() {
       },
     };
   } catch {
-    error = 'Failed to fetch monetization data';
+    error = t('fetchError');
   }
 
   return (
