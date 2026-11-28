@@ -8,7 +8,7 @@ interface SignupRouteProps {
 export default async function LocaleSignupRoute({ searchParams }: SignupRouteProps = {}) {
   const resolved = searchParams ? await searchParams : {};
   const isPilot = isPilotInviteOnlyEnabled();
-  const redirectTo = resolved.next ?? (isPilot ? '/dashboard/first-value' : undefined);
+  const redirectTo = resolved.next ?? '/dashboard/first-value';
   const emailOtpEnabled = !isPilot || Boolean(process.env.RESEND_API_KEY?.trim());
 
   return <RegisterPage redirectTo={redirectTo} emailOtpEnabled={emailOtpEnabled} />;

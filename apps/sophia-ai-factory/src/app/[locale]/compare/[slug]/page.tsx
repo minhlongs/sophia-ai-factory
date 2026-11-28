@@ -27,16 +27,16 @@ const CURATED_COMPARISONS: Readonly<Record<string, CuratedComparison>> = {
     h1En: 'Sophia AI Factory vs HeyGen SaaS: Wholesale BYOK Factory or Per-Minute Credits?',
     tldrVi: [
       'Mô hình chi phí: HeyGen thu phí gói tháng giới hạn phút/credit và hết tháng mất credit; Sophia dùng BYOK — trả đúng giá gốc API, 0đ phí biên nền tảng.',
-      'Tự động hóa doanh thu: HeyGen chỉ dựng video đơn lẻ; Sophia tích hợp 34 động cơ từ kịch bản, kiểm duyệt luật 4 chiều, xuất 30fps trình duyệt đến sổ cái hoa hồng 70/20/10.',
+      'Tự động hóa doanh thu: HeyGen chỉ dựng video đơn lẻ; Sophia tích hợp 39 động cơ từ kịch bản, kiểm duyệt luật 4 chiều, xuất 30fps trình duyệt đến sổ cái hoa hồng 70/20/10.',
       'Điều hành cho CEO: Ra lệnh trực tiếp qua Telegram (@Sophia_Bbot) và phân quyền VA Fail-Closed khóa cứng link affiliate.',
     ],
     tldrEn: [
       'Pricing Model: HeyGen charges recurring monthly plans tied to expiring minute/credit caps; Sophia uses BYOK wholesale provider rates with $0 platform AI markup.',
-      'End-to-End Revenue Loop: HeyGen renders standalone clips; Sophia runs 34 engines covering 4-axis policy preflight, Zero-GPU 30fps browser rendering, and a 70/20/10 integer-cent ledger.',
+      'End-to-End Revenue Loop: HeyGen renders standalone clips; Sophia runs 39 engines covering 4-axis policy preflight, Zero-GPU 30fps browser rendering, and a 70/20/10 integer-cent ledger.',
       'Executive Control: Non-technical CEOs run campaigns from Telegram (@Sophia_Bbot) with Fail-Closed VA RBAC protecting affiliate links.',
     ],
     faqQVi: 'Sophia AI Factory khác gì HeyGen SaaS cho team affiliate?',
-    faqAVi: 'Sophia kết nối trực tiếp khóa AI giá gốc (BYOK), xuất video 30fps ngay trên trình duyệt không tốn GPU server và tích hợp sẵn 34 động cơ bảo vệ doanh thu cùng sổ cái chia hoa hồng 70/20/10.',
+    faqAVi: 'Sophia kết nối trực tiếp khóa AI giá gốc (BYOK), xuất video 30fps ngay trên trình duyệt không tốn GPU server và tích hợp sẵn 39 động cơ bảo vệ doanh thu cùng sổ cái chia hoa hồng 70/20/10.',
     faqQEn: 'How does Sophia AI Factory differ from HeyGen SaaS for affiliate teams?',
     faqAEn: 'Sophia uses BYOK wholesale API keys, renders 30fps in-browser with $0 GPU COGS, and includes 34 revenue-guard engines plus an integer-cent 70/20/10 commission ledger.',
   },
@@ -46,7 +46,7 @@ const CURATED_COMPARISONS: Readonly<Record<string, CuratedComparison>> = {
     tldrVi: [
       'Mục đích cốt lõi: InVideo tập trung dựng từng clip rời; Sophia là nhà máy video không lộ mặt nối thẳng đến doanh thu affiliate.',
       'Chi phí & Quyền sở hữu: InVideo khóa hạn mức credit theo gói; Sophia dùng khóa AI của riêng bạn (BYOK), 100% quyền sở hữu tài khoản và dữ liệu.',
-      'Bảo vệ doanh thu: 34 động cơ kiểm duyệt chính sách 4 chiều, chấm điểm 3 giây mở đầu và điều hành gọn nhẹ qua Telegram (@Sophia_Bbot).',
+      'Bảo vệ doanh thu: 39 động cơ kiểm duyệt chính sách 4 chiều, chấm điểm 3 giây mở đầu và điều hành gọn nhẹ qua Telegram (@Sophia_Bbot).',
     ],
     tldrEn: [
       'Core Purpose: InVideo is a prompt-to-video editor for individual clips; Sophia is an end-to-end affiliate video factory wired to actual revenue.',
@@ -63,12 +63,12 @@ const CURATED_COMPARISONS: Readonly<Record<string, CuratedComparison>> = {
     h1En: 'BYOK vs Credit Subscriptions: Why CEOs Are Leaving Per-Minute AI Video Plans Behind',
     tldrVi: [
       'Xóa bỏ thuế credit: Gói credit SaaS thường độn giá gốc AI gấp 3–5 lần và xóa credit dư cuối tháng; BYOK trả đúng giá gốc cho OpenRouter, ElevenLabs, D-ID.',
-      'Mở rộng không giới hạn: Kết hợp BYOK với 34 động cơ giới hạn ngân sách ngày theo thời gian thực để không bao giờ có hóa đơn bất ngờ.',
+      'Mở rộng không giới hạn: Kết hợp BYOK với 39 động cơ giới hạn ngân sách ngày theo thời gian thực để không bao giờ có hóa đơn bất ngờ.',
       'Không cần biết code: Setup Wizard 5 phút và điều khiển qua Telegram (@Sophia_Bbot) thiết kế riêng cho CEO không rành công nghệ.',
     ],
     tldrEn: [
       'Eliminates the Credit Tax: Credit SaaS plans mark up underlying AI costs 3x–5x and expire unused credits; BYOK pays wholesale rates directly.',
-      'Predictable Scaling: Pairs BYOK economics with 34 engines including hard daily cent spend caps so volume scales with zero surprise bills.',
+      'Predictable Scaling: Pairs BYOK economics with 39 engines including hard daily cent spend caps so volume scales with zero surprise bills.',
       'Zero Technical Barrier: 5-minute Setup Wizard and Telegram (@Sophia_Bbot) control built specifically for non-technical CEOs.',
     ],
     faqQVi: 'CEO không rành công nghệ có tự cài đặt BYOK được không?',

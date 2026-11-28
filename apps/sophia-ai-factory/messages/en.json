@@ -126,8 +126,8 @@
   },
   "seo": {
     "home": {
-      "title": "Sophia AI Factory — 34-Engine Autonomous Affiliate Video Factory",
-      "description": "34 quality engines that script, lint, render 30fps in-browser, and guard affiliate commissions. Bring your own AI keys (BYOK), $0 platform markup."
+      "title": "Sophia AI Factory — Turn 1 Affiliate Link Into a 39-Engine Video Pipeline",
+      "description": "Run a disciplined affiliate video operation in 15 minutes: paste 1 offer link and let 39 automated engines draft compliant scripts, render 9:16 WebCodecs video at $0 GPU cost, seal SubID links against bots, and reconcile commissions. 100% BYOK, $0 AI markup."
     },
     "login": {
       "title": "Sign In · Sophia AI Factory",
@@ -898,7 +898,7 @@
         },
         "vnd_payment": {
           "question": "Can I pay in VND?",
-          "answer": "Yes. We support VNPay, Momo, and bank transfer. Contact support@sophia.agency for setup instructions."
+          "answer": "Yes. We support VNPay, Momo, and bank transfer. Contact support@mekongmind.com for setup instructions."
         },
         "zalo": {
           "question": "Can I get support through Zalo?",
@@ -7571,10 +7571,10 @@
       }
     },
     "landing": {
-      "badge": "34 Live AI Engines • Wholesale BYOK Keys • $0 Platform Markup",
-      "headline": "Your 24/7 Autonomous Affiliate Video Factory.",
-      "headlineHighlight": "34 revenue-guard engines — $0 AI markup.",
-      "subheading": "Automate global CEX and SaaS affiliate campaigns with 34 live engines: 4-axis policy preflight, Zero-GPU 30fps browser rendering, Fail-Closed VA RBAC, and 70/20/10 integer-cent reconciliation.",
+      "badge": "$0 AI markup • 0% commission cut",
+      "headline": "Paste 1 Affiliate Offer. Let 39 Engines Run the Campaign.",
+      "headlineHighlight": "39 commission-guard engines — $0 platform AI markup.",
+      "subheading": "Picture your next 15 minutes: paste one verified CEX, SaaS, or e-commerce affiliate offer, set your daily provider spend cap, and approve the script. Sophia checks regional ad disclosures, renders 9:16 WebCodecs video in-browser ($0 GPU server cost), seals your tracking link against click-bots, and reports status straight to Telegram @Sophia_Bbot.",
       "nav": {
         "features": "Features",
         "pricing": "Pricing",
@@ -7588,11 +7588,11 @@
         "brand": "Brand"
       },
       "cta": {
-        "startFree": "Launch Free Pilot Now",
-        "watchDemo": "Explore 34 AI Engines",
+        "startFree": "Ship Your First Campaign in 10 Minutes",
+        "watchDemo": "Inspect All 39 Engines",
         "viewPricing": "View Pricing",
-        "readyTitle": "Start with one verified offer",
-        "readySubtitle": "Create a workspace, connect your own provider keys, and prepare a campaign for approval. Paid plans and provider costs are shown before you commit."
+        "readyTitle": "Ship Your First Governed Affiliate Campaign in 10 Minutes.",
+        "readySubtitle": "Create your account to enter the First-Value Studio (/dashboard/first-value) immediately: generate a policy-checked affiliate script at $0 draft cost, inspect the 39-engine receipt, and upgrade only when you are ready to scale."
       },
       "trustBar": {
         "label": "What the workspace controls",
@@ -7674,20 +7674,20 @@
       "controlNote": "You control the content, your provider keys, the spend cap and the money. External affiliate earnings belong to your workspace; Sophia does not take a platform fee and does not trade or hold customer funds.",
       "demoNote": "Product preview is illustrative. It is not a live run and shows no customer revenue.",
       "v3Core": {
-        "eyebrow": "SOPHIA AI FACTORY • OPC v3.0 • ZERO-CUSTODY AFFILIATE ENGINE",
-        "headlineLead": "Turn verified affiliate offers into governed campaigns —",
+        "eyebrow": "A 15-MINUTE DAILY WORKFLOW • 39 AUTOMATED ENGINES • 100% WHOLESALE BYOK",
+        "headlineLead": "Stop losing 4 hours a night stitching manual tools —",
         "runtimesLabel": "INTEGRATES WITH YOUR STACK",
-        "whyKicker": "01 / WHY MANUAL CAMPAIGNS STALL",
-        "whyTitle": "Affiliate operators do not fail from lack of offers. They stall when compliance, spend, and attribution scatter.",
+        "whyKicker": "ACT 1 • 08:30 AM — THE 4-HOUR MANUAL AFFILIATE GRIND",
+        "whyTitle": "You do not lack good affiliate offers. You stall because manual production burns hours while leaks eat your clicks.",
         "pain1Title": "Unverified links & compliance drift.",
         "pain1Desc": "Drafting CEX or SaaS scripts without jurisdiction disclosures risks channel strikes and rejected payouts.",
         "pain2Title": "Uncapped render spend before approval.",
         "pain2Desc": "Triggering ElevenLabs or video synthesis before locking the script burns provider credits on unapproved drafts.",
         "pain3Title": "Detached postbacks & opaque fees.",
         "pain3Desc": "Tracking clicks in spreadsheets without S2S postback reconciliation leaves net commission unverified.",
-        "whyTurn": "Sophia locks the sequence: $0.00 AI draft first, SHA-256 CEO approval second, BYOK media render third, and 0%-fee Domain B ledger reconciliation last.",
-        "howKicker": "02 / HOW SOPHIA EXECUTES",
-        "howTitle": "One operator command. Five governed assembly stations.",
+        "whyTurn": "09:00 AM — You close the fragmented tabs, step into Sophia's cockpit, and paste a single affiliate link.",
+        "howKicker": "ACT 2 • 09:00 AM — STEP INTO THE COCKPIT (1 LINK IN)",
+        "howTitle": "Paste 1 affiliate offer. Watch 39 automated engines execute in 5 stages.",
         "chatHeader": "sophia-opc — illustrative session trace",
         "chatCommand": "/sophia launch --niche crypto_cex --offer binance-vip --gate sha256",
         "chatYou1": "Draft a bilingual VI/EN campaign for our verified CEX & SaaS offers with a $15 render cap.",
@@ -7695,7 +7695,7 @@
         "chatYou2": "Lock the script at $0.00 draft cost and require my SHA-256 signature before spending BYOK credits.",
         "chatSophia2": "Draft locked ($0.00 spend) → SHA-256 approval digest verified → queued for ElevenLabs + HeyGen synthesis & Domain B 0%-fee ledger.",
         "ecosystemKicker": "03 / 5-STATION ASSEMBLY & 7-LEVEL EVIDENCE",
-        "joinKicker": "04 / LAUNCH YOUR WORKSPACE"
+        "joinKicker": "ACT 4 • 09:15 AM — YOUR TURN IN THE COCKPIT"
       },
       "videoShowcase": {
         "kicker": "LIVE PRODUCT DEMOS",
