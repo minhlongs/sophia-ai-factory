@@ -384,6 +384,7 @@ export function FirstValueMp4AffiliateCard(props: FirstValueMp4AffiliateCardProp
         {props.review && isAccepted && (
           <div className="mt-4">
             <PilotVoiceAndCapCutPack
+              orgId={props.review.orgId}
               artifactId={props.review.artifactId}
               script={props.review.script}
               ctaText={activeLink?.ctaText ?? ctaText}

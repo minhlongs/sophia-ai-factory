@@ -1,12 +1,27 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { PILOT_POLICY_VERSION } from '@/seed/pilot/pilot-access-policy';
 
 const mockGetCurrentUser = vi.fn();
 const mockVerifyCsrfToken = vi.fn();
+const mockVerifyWorkspaceAccess = vi.fn();
+const mockGetD1 = vi.fn();
 const mockLookupUserApiKey = vi.fn();
+const mockGetPilotConsent = vi.fn();
+const mockReserveSlot = vi.fn();
+const mockClearLock = vi.fn();
+const mockReleaseSlot = vi.fn();
 
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: () => mockGetCurrentUser(),
+}));
+
+vi.mock('@/seed/auth/workspace-access', () => ({
+  verifyWorkspaceAccess: (...args: unknown[]) => mockVerifyWorkspaceAccess(...args),
+}));
+
+vi.mock('@/seed/db/client', () => ({
+  getD1: () => mockGetD1(),
 }));
 
 vi.mock('@/seed/security/csrf', async (importOriginal) => {
@@ -21,81 +36,103 @@ vi.mock('@/tree/byok/user-api-key-store', () => ({
   lookupUserApiKey: (...args: unknown[]) => mockLookupUserApiKey(...args),
 }));
 
-import { POST, resetVoiceRouteGuardsForTests } from '../route';
+vi.mock('@/tree/first-value/pilot-state-repo', () => ({
+  getPilotConsent: (...args: unknown[]) => mockGetPilotConsent(...args),
+  reservePilotGenerationSlot: (...args: unknown[]) => mockReserveSlot(...args),
+  clearPilotInFlightLock: (...args: unknown[]) => mockClearLock(...args),
+  releasePilotGenerationSlot: (...args: unknown[]) => mockReleaseSlot(...args),
+}));
 
-describe('Wave C.4.1 G4+G5: /api/first-value/voice authorization, CSRF, BYOK & provider truth', () => {
+import { POST } from '../route';
+
+describe('Wave C.4 Lane B: /api/first-value/voice durable auth, workspace, consent, BYOK & D1 quota', () => {
   const originalFetch = globalThis.fetch;
+  const origEnv = { ...process.env };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    resetVoiceRouteGuardsForTests();
+    process.env.PILOT_LIVE_INFERENCE_ENABLED = 'true';
+    process.env.PILOT_FINANCING_MODE = 'CUSTOMER_BYOK';
+    process.env.PILOT_MAX_GENERATIONS = '5';
+    process.env.PILOT_MAX_ESTIMATED_SPEND_USD = '1.00';
+    process.env.PILOT_ESTIMATED_COST_PER_ATTEMPT_USD = '0.01';
+    mockGetD1.mockResolvedValue({});
+    mockClearLock.mockResolvedValue(undefined);
+    mockReleaseSlot.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    process.env = { ...origEnv };
   });
 
-  it('rejects unauthenticated requests with 401 and invalid CSRF with 403', async () => {
+  it('rejects unauthenticated (401), invalid CSRF (403), cross-workspace (403), and missing consent (403)', async () => {
     mockGetCurrentUser.mockResolvedValueOnce(null);
-    const req1 = new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+    const r1 = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
       method: 'POST',
-      body: JSON.stringify({ text: 'Xin chào Sophia AI Factory' }),
-    });
-    const res1 = await POST(req1);
-    expect(res1.status).toBe(401);
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory' }),
+    }));
+    expect(r1.status).toBe(401);
 
-    mockGetCurrentUser.mockResolvedValueOnce({ id: 'u-voice-1', email: 'v@example.test' });
+    mockGetCurrentUser.mockResolvedValue({ id: 'u-voice-1', email: 'v@example.test' });
     mockVerifyCsrfToken.mockReturnValueOnce(false);
-    const req2 = new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+    const r2 = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
       method: 'POST',
-      body: JSON.stringify({ text: 'Xin chào Sophia AI Factory' }),
-    });
-    const res2 = await POST(req2);
-    expect(res2.status).toBe(403);
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory' }),
+    }));
+    expect(r2.status).toBe(403);
+
+    mockVerifyCsrfToken.mockReturnValue(true);
+    mockVerifyWorkspaceAccess.mockResolvedValueOnce(false);
+    const r3 = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: 'org-other', text: 'Xin chào Sophia AI Factory' }),
+    }));
+    expect(r3.status).toBe(403);
+
+    mockVerifyWorkspaceAccess.mockResolvedValue(true);
+    mockGetPilotConsent.mockResolvedValueOnce(null);
+    const r4 = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory' }),
+    }));
+    expect(r4.status).toBe(403);
   });
 
-  it('requires customer BYOK key (422), enforces rate limit (429), and returns truthful OpenRouter BYOK headers', async () => {
+  it('enforces BYOK key (422), durable D1 concurrency/quota (429), and truthful OpenRouter headers (200)', async () => {
     mockGetCurrentUser.mockResolvedValue({ id: 'u-voice-2', email: 'v@example.test' });
     mockVerifyCsrfToken.mockReturnValue(true);
-    mockLookupUserApiKey.mockResolvedValueOnce({ status: 'NOT_FOUND' });
+    mockVerifyWorkspaceAccess.mockResolvedValue(true);
+    mockGetPilotConsent.mockResolvedValue({ policyVersion: PILOT_POLICY_VERSION });
 
-    const reqNoKey = new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+    mockLookupUserApiKey.mockResolvedValueOnce({ status: 'NOT_FOUND' });
+    const rNoKey = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
       method: 'POST',
-      body: JSON.stringify({ text: 'Xin chào Sophia AI Factory' }),
-    });
-    const resNoKey = await POST(reqNoKey);
-    expect(resNoKey.status).toBe(422);
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory' }),
+    }));
+    expect(rNoKey.status).toBe(422);
 
     mockLookupUserApiKey.mockResolvedValue({ status: 'FOUND', key: 'sk-or-v1-test-key-123456' });
+    mockReserveSlot.mockResolvedValueOnce({ outcome: 'in_flight' });
+    const rInFlight = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory', voice: 'nova' }),
+    }));
+    expect(rInFlight.status).toBe(429);
+
+    mockReserveSlot.mockResolvedValueOnce({ outcome: 'reserved', lockUntilMs: Date.now() + 60_000 });
     globalThis.fetch = vi.fn(async () => new Response(new Uint8Array([0x49, 0x44, 0x33, 0x03]), { status: 200 })) as unknown as typeof fetch;
 
-    const reqOk = new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+    const rOk = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
       method: 'POST',
-      body: JSON.stringify({ text: 'Xin chào Sophia AI Factory', voice: 'nova' }),
-    });
-    const resOk = await POST(reqOk);
-    expect(resOk.status).toBe(200);
-    expect(resOk.headers.get('X-Sophia-Tts-Provider')).toBe('openrouter-byok');
-    expect(resOk.headers.get('X-Sophia-Tts-Model')).toBe('openai/gpt-4o-mini-tts');
-    expect(resOk.headers.get('X-Sophia-Tts-Funding')).toBe('customer_byok');
-    expect(resOk.headers.get('X-Sophia-Voice')).toBe('nova');
-
-    // Exhaust 6/min rate limit
-    for (let i = 0; i < 5; i += 1) {
-      const r = await POST(
-        new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
-          method: 'POST',
-          body: JSON.stringify({ text: 'Xin chào Sophia AI Factory', voice: 'nova' }),
-        }),
-      );
-      expect(r.status).toBe(200);
-    }
-    const resRateLimited = await POST(
-      new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
-        method: 'POST',
-        body: JSON.stringify({ text: 'Xin chào Sophia AI Factory', voice: 'nova' }),
-      }),
-    );
-    expect(resRateLimited.status).toBe(429);
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory', voice: 'nova' }),
+    }));
+    expect(rOk.status).toBe(200);
+    expect(rOk.headers.get('X-Sophia-Tts-Provider')).toBe('openrouter-byok');
+    expect(rOk.headers.get('X-Sophia-Tts-Model')).toBe('openai/gpt-4o-mini-tts');
+    expect(rOk.headers.get('X-Sophia-Tts-Funding')).toBe('customer_byok');
+    expect(rOk.headers.get('X-Sophia-Tts-Cost-Status')).toBe('COST_ESTIMATE_UNAVAILABLE');
+    expect(rOk.headers.get('X-Sophia-Voice')).toBe('nova');
+    expect(mockClearLock).toHaveBeenCalledTimes(1);
   });
 });

@@ -105,7 +105,7 @@ export async function encodeAudioBytesToAacSamples(
   const AudioCtx =
     globalThis.AudioContext ??
     (globalThis as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-  const audioCtx = new AudioCtx();
+  const audioCtx = new AudioCtx({ sampleRate: DEFAULT_AAC_SAMPLE_RATE });
   let decoded: AudioBuffer;
   try {
     decoded = await audioCtx.decodeAudioData(audioBytes.slice(0));
@@ -154,6 +154,9 @@ export async function encodeAudioBytesToAacSamples(
     });
 
     for (let offset = 0; offset < monoPcm.length; offset += CHUNK_FRAMES) {
+      if (encoderError) {
+        throw encoderError;
+      }
       const end = Math.min(offset + CHUNK_FRAMES, monoPcm.length);
       const frameSlice = monoPcm.subarray(offset, end);
       const timestampUs = Math.round((offset / sampleRate) * 1_000_000);

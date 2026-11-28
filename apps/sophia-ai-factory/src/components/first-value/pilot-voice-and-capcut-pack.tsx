@@ -30,6 +30,7 @@ import {
 } from './pilot-browser-mp4-renderer';
 
 export interface PilotVoiceAndCapCutPackProps {
+  readonly orgId?: string;
   readonly artifactId: string;
   readonly script: ScriptOutput;
   readonly ctaText: string;
@@ -127,6 +128,7 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
         body: JSON.stringify({
+          ...(props.orgId ? { orgId: props.orgId } : {}),
           text,
           locale: voiceOption.locale,
           gender: voiceOption.gender,
