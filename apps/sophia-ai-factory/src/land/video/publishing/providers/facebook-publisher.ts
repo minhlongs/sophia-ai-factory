@@ -17,6 +17,10 @@ import {
   type FBVideoResponse,
   type FBInsightsResponse,
 } from './facebook-publisher-helpers';
+import {
+  isCanonicalPrivateR2Uri,
+  resolvePrivateMediaFromR2,
+} from '../private-media-resolver';
 
 export class FacebookPublisher implements Publisher {
   constructor(
@@ -37,16 +41,36 @@ export class FacebookPublisher implements Publisher {
     try {
       const description = buildFacebookReelDescription(meta);
 
-      const res = await fetch(`${GRAPH_BASE}/${this.pageId}/video_reels`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          video_url: videoUrl,
-          description,
-          video_state: 'PUBLISHED',
-          access_token: this.pageAccessToken,
-        }),
-      });
+      let res: Response;
+      if (isCanonicalPrivateR2Uri(videoUrl)) {
+        const ownerUserId = (meta as PublishMeta & { ownerUserId?: string; ownerOrgId?: string }).ownerUserId ?? '';
+        const ownerOrgId = (meta as PublishMeta & { ownerUserId?: string; ownerOrgId?: string }).ownerOrgId;
+        const resolved = await resolvePrivateMediaFromR2({
+          uri: videoUrl,
+          expectedUserId: ownerUserId,
+          ...(ownerOrgId ? { expectedOrgId: ownerOrgId } : {}),
+        });
+        const form = new FormData();
+        form.append('source', new Blob([resolved.bytes as BlobPart], { type: resolved.contentType }), 'video.mp4');
+        form.append('description', description);
+        form.append('video_state', 'PUBLISHED');
+        form.append('access_token', this.pageAccessToken);
+        res = await fetch(`${GRAPH_BASE}/${this.pageId}/video_reels`, {
+          method: 'POST',
+          body: form,
+        });
+      } else {
+        res = await fetch(`${GRAPH_BASE}/${this.pageId}/video_reels`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            video_url: videoUrl,
+            description,
+            video_state: 'PUBLISHED',
+            access_token: this.pageAccessToken,
+          }),
+        });
+      }
 
       if (!res.ok) {
         const text = await res.text();

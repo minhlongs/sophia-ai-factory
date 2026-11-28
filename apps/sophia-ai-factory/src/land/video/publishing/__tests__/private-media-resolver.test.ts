@@ -10,6 +10,7 @@ import {
 } from '../private-media-resolver';
 import { assertSafeVideoUrl } from '../publish-url-utils';
 import { performResumableYouTubeUpload } from '../providers/youtube-upload-helper';
+import { FacebookPublisher } from '../providers/facebook-publisher';
 
 async function sha256Hex(bytes: Uint8Array): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', bytes as BufferSource);
@@ -131,6 +132,41 @@ describe('Private Media Resolver + Provider SHA-256 Parity + Media Approval Bind
     expect(ytId).toBe('yt_fixture_video_001');
     expect(uploadedSha256).toBe(expectedHash);
     expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+    // Distinct second channel publication: Facebook fixture adapter with private R2 binary upload
+    const prevFbAppId = process.env.FACEBOOK_APP_ID;
+    process.env.FACEBOOK_APP_ID = 'fixture-fb-app-id';
+    let fbUploadedSha256 = '';
+    let fbHttpCalls = 0;
+    fetchSpy.mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.includes('/video_reels')) {
+        fbHttpCalls += 1;
+        const form = init?.body as FormData;
+        const sourceBlob = form.get('source') as Blob;
+        const receivedBytes = new Uint8Array(await sourceBlob.arrayBuffer());
+        fbUploadedSha256 = await sha256Hex(receivedBytes);
+        return new Response(JSON.stringify({ id: 'fb_fixture_reel_002' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      throw new Error(`Unexpected Facebook fetch URL: ${url}`);
+    });
+    try {
+      const fbPub = new FacebookPublisher('fb-fixture-token', 'page-fixture-1');
+      const fbId = await fbPub.upload(canonicalUri, {
+        caption: 'Fixture Facebook Reels caption',
+        hashtags: ['sophia', 'fixture'],
+        ownerUserId: 'user-1',
+      } as Parameters<typeof fbPub.upload>[1]);
+      expect(fbId).toBe('fb_fixture_reel_002');
+      expect(fbUploadedSha256).toBe(expectedHash);
+      expect(fbHttpCalls).toBe(1);
+    } finally {
+      if (prevFbAppId === undefined) delete process.env.FACEBOOK_APP_ID;
+      else process.env.FACEBOOK_APP_ID = prevFbAppId;
+    }
   });
 
   it('rejects tampered R2 bytes whose SHA-256 does not match the canonical URI', async () => {
