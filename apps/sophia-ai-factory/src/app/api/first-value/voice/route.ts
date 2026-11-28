@@ -38,9 +38,14 @@ import {
 } from '@/tree/first-value/pilot-state-repo';
 
 const OPENROUTER_TTS_URL = 'https://openrouter.ai/api/v1/audio/speech';
-const DEFAULT_OPENROUTER_TTS_MODEL = 'openai/gpt-4o-mini-tts';
+const DEFAULT_OPENROUTER_TTS_MODEL = 'microsoft/mai-voice-2.1-flash';
+const TTS_PRICE_PER_CHAR_USD = 0.000015; // Published OpenRouter rate: USD 15 / 1,000,000 characters
 
 const ALLOWED_PILOT_VOICES = [
+  'vi-VN-Harper:MAI-Voice-2.1-Flash',
+  'vi-VN-Grant:MAI-Voice-2.1-Flash',
+  'en-US-Harper:MAI-Voice-2.1-Flash',
+  'en-US-Grant:MAI-Voice-2.1-Flash',
   'vi-VN-HoaiMyNeural',
   'vi-VN-NamMinhNeural',
   'en-US-JennyNeural',
@@ -51,13 +56,17 @@ const ALLOWED_PILOT_VOICES = [
 ] as const;
 
 const VOICE_TO_OPENROUTER_MAP: Record<(typeof ALLOWED_PILOT_VOICES)[number], string> = {
-  'vi-VN-HoaiMyNeural': 'nova',
-  'vi-VN-NamMinhNeural': 'onyx',
-  'en-US-JennyNeural': 'alloy',
-  'en-US-GuyNeural': 'onyx',
-  alloy: 'alloy',
-  nova: 'nova',
-  onyx: 'onyx',
+  'vi-VN-Harper:MAI-Voice-2.1-Flash': 'vi-VN-Harper:MAI-Voice-2.1-Flash',
+  'vi-VN-Grant:MAI-Voice-2.1-Flash': 'vi-VN-Grant:MAI-Voice-2.1-Flash',
+  'en-US-Harper:MAI-Voice-2.1-Flash': 'en-US-Harper:MAI-Voice-2.1-Flash',
+  'en-US-Grant:MAI-Voice-2.1-Flash': 'en-US-Grant:MAI-Voice-2.1-Flash',
+  'vi-VN-HoaiMyNeural': 'vi-VN-Harper:MAI-Voice-2.1-Flash',
+  'vi-VN-NamMinhNeural': 'vi-VN-Grant:MAI-Voice-2.1-Flash',
+  'en-US-JennyNeural': 'en-US-Harper:MAI-Voice-2.1-Flash',
+  'en-US-GuyNeural': 'en-US-Grant:MAI-Voice-2.1-Flash',
+  alloy: 'en-US-Harper:MAI-Voice-2.1-Flash',
+  nova: 'vi-VN-Harper:MAI-Voice-2.1-Flash',
+  onyx: 'vi-VN-Grant:MAI-Voice-2.1-Flash',
 };
 
 const PilotVoiceRequestSchema = z.object({
@@ -201,9 +210,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const mappedVoice = parsed.data.voice
     ? VOICE_TO_OPENROUTER_MAP[parsed.data.voice]
-    : parsed.data.gender === 'male'
-      ? 'onyx'
-      : 'nova';
+    : parsed.data.locale === 'en'
+      ? parsed.data.gender === 'male'
+        ? 'en-US-Grant:MAI-Voice-2.1-Flash'
+        : 'en-US-Harper:MAI-Voice-2.1-Flash'
+      : parsed.data.gender === 'male'
+        ? 'vi-VN-Grant:MAI-Voice-2.1-Flash'
+        : 'vi-VN-Harper:MAI-Voice-2.1-Flash';
 
   let upstreamRes: Response;
   try {
@@ -274,6 +287,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const safeName = `${sanitizeFilename(parsed.data.filename)}.mp3`;
+  const billableChars = parsed.data.text.length;
+  const estimatedCostUsd = Number((billableChars * TTS_PRICE_PER_CHAR_USD).toFixed(6));
   return new NextResponse(audioBytes, {
     status: 200,
     headers: {
@@ -284,7 +299,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       'X-Sophia-Tts-Provider': 'openrouter-byok',
       'X-Sophia-Tts-Model': DEFAULT_OPENROUTER_TTS_MODEL,
       'X-Sophia-Tts-Funding': 'customer_byok',
-      'X-Sophia-Tts-Cost-Status': 'COST_ESTIMATE_UNAVAILABLE',
+      'X-Sophia-Tts-Cost-Status': 'COST_ESTIMATE_AVAILABLE',
+      'X-Sophia-Tts-Estimated-Cost-Usd': estimatedCostUsd.toFixed(6),
+      'X-Sophia-Tts-Billable-Chars': String(billableChars),
     },
   });
 }

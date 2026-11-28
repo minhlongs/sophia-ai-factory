@@ -43,9 +43,9 @@ export interface PilotVoiceAndCapCutPackProps {
 }
 
 const VOICE_OPTIONS = [
-  { id: 'nova', locale: 'vi' as const, gender: 'female' as const, label: 'OpenRouter Nova (Nữ — BYOK openai/gpt-4o-mini-tts)' },
-  { id: 'onyx', locale: 'vi' as const, gender: 'male' as const, label: 'OpenRouter Onyx (Nam — BYOK openai/gpt-4o-mini-tts)' },
-  { id: 'alloy', locale: 'en' as const, gender: 'female' as const, label: 'OpenRouter Alloy (Neutral — BYOK openai/gpt-4o-mini-tts)' },
+  { id: 'vi-VN-Harper:MAI-Voice-2.1-Flash', locale: 'vi' as const, gender: 'female' as const, label: 'Tiếng Việt — Harper (MAI-Voice-2.1-Flash • BYOK $15/1M ký tự)' },
+  { id: 'vi-VN-Grant:MAI-Voice-2.1-Flash', locale: 'vi' as const, gender: 'male' as const, label: 'Tiếng Việt — Grant (MAI-Voice-2.1-Flash • BYOK $15/1M ký tự)' },
+  { id: 'en-US-Harper:MAI-Voice-2.1-Flash', locale: 'en' as const, gender: 'female' as const, label: 'English — Harper (MAI-Voice-2.1-Flash • BYOK $15/1M chars)' },
 ] as const;
 
 export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {

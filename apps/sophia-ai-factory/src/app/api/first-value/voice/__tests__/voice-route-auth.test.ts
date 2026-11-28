@@ -121,19 +121,61 @@ describe('Wave C.4 Lane B: /api/first-value/voice durable auth, workspace, conse
     expect(rInFlight.status).toBe(429);
 
     mockReserveSlot.mockResolvedValueOnce({ outcome: 'reserved', lockUntilMs: Date.now() + 60_000 });
-    globalThis.fetch = vi.fn(async () => new Response(new Uint8Array([0x49, 0x44, 0x33, 0x03]), { status: 200 })) as unknown as typeof fetch;
+    const capturedBodies: Array<Record<string, unknown>> = [];
+    globalThis.fetch = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      capturedBodies.push(JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>);
+      return new Response(new Uint8Array([0x49, 0x44, 0x33, 0x03]), { status: 200 });
+    }) as unknown as typeof fetch;
 
     const rOk = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
       method: 'POST',
-      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory', voice: 'nova' }),
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory', voice: 'vi-VN-Harper:MAI-Voice-2.1-Flash' }),
     }));
     expect(rOk.status).toBe(200);
+    expect(capturedBodies[0]?.model).toBe('microsoft/mai-voice-2.1-flash');
+    expect(capturedBodies[0]?.voice).toBe('vi-VN-Harper:MAI-Voice-2.1-Flash');
+    expect(capturedBodies[0]?.response_format).toBe('mp3');
     expect(rOk.headers.get('X-Sophia-Tts-Provider')).toBe('openrouter-byok');
-    expect(rOk.headers.get('X-Sophia-Tts-Model')).toBe('openai/gpt-4o-mini-tts');
+    expect(rOk.headers.get('X-Sophia-Tts-Model')).toBe('microsoft/mai-voice-2.1-flash');
     expect(rOk.headers.get('X-Sophia-Tts-Funding')).toBe('customer_byok');
-    expect(rOk.headers.get('X-Sophia-Tts-Cost-Status')).toBe('COST_ESTIMATE_UNAVAILABLE');
-    expect(rOk.headers.get('X-Sophia-Voice')).toBe('nova');
+    expect(rOk.headers.get('X-Sophia-Tts-Cost-Status')).toBe('COST_ESTIMATE_AVAILABLE');
+    expect(rOk.headers.get('X-Sophia-Tts-Estimated-Cost-Usd')).toBe('0.000390');
+    expect(rOk.headers.get('X-Sophia-Tts-Billable-Chars')).toBe('26');
+    expect(rOk.headers.get('X-Sophia-Voice')).toBe('vi-VN-Harper:MAI-Voice-2.1-Flash');
     expect(mockClearLock).toHaveBeenCalledTimes(1);
+
+    // Default English female voice without explicit voice ID
+    mockReserveSlot.mockResolvedValueOnce({ outcome: 'reserved', lockUntilMs: Date.now() + 60_000 });
+    const rEn = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: 'org-1', text: 'Hello Sophia AI Factory', locale: 'en', gender: 'female' }),
+    }));
+    expect(rEn.status).toBe(200);
+    expect(rEn.headers.get('X-Sophia-Voice')).toBe('en-US-Harper:MAI-Voice-2.1-Flash');
+
+    // Invalid schema -> 400
+    const rBadSchema = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: '', text: 'a' }),
+    }));
+    expect(rBadSchema.status).toBe(400);
+
+    // Default English male & Vietnamese male voices
+    mockReserveSlot.mockResolvedValueOnce({ outcome: 'reserved', lockUntilMs: Date.now() + 60_000 });
+    const rEnMale = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: 'org-1', text: 'Hello Sophia AI Factory', locale: 'en', gender: 'male' }),
+    }));
+    expect(rEnMale.status).toBe(200);
+    expect(rEnMale.headers.get('X-Sophia-Voice')).toBe('en-US-Grant:MAI-Voice-2.1-Flash');
+
+    mockReserveSlot.mockResolvedValueOnce({ outcome: 'reserved', lockUntilMs: Date.now() + 60_000 });
+    const rViMale = await POST(new NextRequest('http://127.0.0.1:8788/api/first-value/voice', {
+      method: 'POST',
+      body: JSON.stringify({ orgId: 'org-1', text: 'Xin chào Sophia AI Factory', locale: 'vi', gender: 'male' }),
+    }));
+    expect(rViMale.status).toBe(200);
+    expect(rViMale.headers.get('X-Sophia-Voice')).toBe('vi-VN-Grant:MAI-Voice-2.1-Flash');
   });
 
   it('handles kill-switch, cost controls, financing disabled, storage unavailable, and upstream failure branches', async () => {
