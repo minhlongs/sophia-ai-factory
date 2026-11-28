@@ -199,10 +199,10 @@ export function buildPipelineVerifiedReceipt(
     warningCount,
     blockedCount,
     totalComputeMs: Math.round(totalComputeMs * 10) / 10,
-    subIdWatermark: telemetryMap['subid-watermark-encoder']?.metricOutput ?? 'HMAC-SHA256',
-    waterfallSplit: telemetryMap['integer-cent-waterfall']?.metricOutput ?? '70/20/10 BigInt',
+    subIdWatermark: telemetryMap['subid-watermark-encoder']?.metricOutput ?? 'Not evaluated',
+    waterfallSplit: telemetryMap['integer-cent-waterfall']?.metricOutput ?? 'Not evaluated',
     reconciliationVerdict:
-      telemetryMap['affiliate-payout-reconciler']?.metricOutput ?? '3-Way Balanced',
+      telemetryMap['affiliate-payout-reconciler']?.metricOutput ?? 'Not evaluated',
   };
 }
 
@@ -210,6 +210,8 @@ export function formatReceiptClipboardText(
   receipt: PipelineVerifiedReceipt,
   locale: 'vi' | 'en',
 ): string {
+  const evaluatedCount = receipt.passedCount + receipt.warningCount + receipt.blockedCount;
+  const isComplete = evaluatedCount === receipt.totalEngines;
   const sourceLabel =
     receipt.telemetrySource === 'live_d1'
       ? locale === 'vi'
@@ -220,8 +222,11 @@ export function formatReceiptClipboardText(
         : 'STANDARD SAMPLE BRIEF';
 
   if (locale === 'vi') {
+    const header = isComplete
+      ? `BIÊN NHẬN XÁC THỰC ${evaluatedCount}/${receipt.totalEngines} ĐỘNG CƠ • SOPHIA AI FACTORY`
+      : `BIÊN NHẬN CHƯA ĐẦY ĐỦ (${evaluatedCount}/${receipt.totalEngines} ĐỘNG CƠ) • SOPHIA AI FACTORY`;
     return [
-      `BIÊN NHẬN XÁC THỰC ${receipt.passedCount}/${receipt.totalEngines} ĐỘNG CƠ • SOPHIA AI FACTORY`,
+      header,
       `• Nguồn dữ liệu: ${sourceLabel}`,
       `• Thời gian xử lý Edge: ${receipt.totalComputeMs.toFixed(1)}ms`,
       `• Dấu SubID HMAC: ${receipt.subIdWatermark}`,
@@ -230,8 +235,11 @@ export function formatReceiptClipboardText(
     ].join('\n');
   }
 
+  const enHeader = isComplete
+    ? `SOPHIA AI FACTORY • ${evaluatedCount}/${receipt.totalEngines} ENGINE VERIFIED RECEIPT`
+    : `SOPHIA AI FACTORY • INCOMPLETE PIPELINE RECEIPT (${evaluatedCount}/${receipt.totalEngines} ENGINES)`;
   return [
-    `SOPHIA AI FACTORY • ${receipt.passedCount}/${receipt.totalEngines} ENGINE VERIFIED RECEIPT`,
+    enHeader,
     `• Telemetry Source: ${sourceLabel}`,
     `• Edge Compute: ${receipt.totalComputeMs.toFixed(1)}ms`,
     `• S2S SubID Seal: ${receipt.subIdWatermark}`,

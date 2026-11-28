@@ -25,7 +25,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   },
 }));
 
-import { DELETE } from './route';
+import { GET, DELETE } from './route';
 
 function makeDelete(id: string): NextRequest {
   return new NextRequest(`https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/campaigns?id=${id}`, {
@@ -53,6 +53,8 @@ function makeDb(existing: Record<string, unknown> | null) {
               return chain;
             }),
             maybeSingle: vi.fn(async () => ({ data: existing, error: null })),
+            single: vi.fn(async () => ({ data: existing, error: existing ? null : { message: 'Not found' } })),
+            order: vi.fn(async () => ({ data: existing ? [existing] : [], error: null })),
           };
           return chain;
         }),
@@ -116,5 +118,54 @@ describe('/api/campaigns DELETE', () => {
       ['user_id', 'user-1'],
     ]);
     expect(calls.deletes).toBe(1);
+  });
+});
+
+describe('/api/campaigns GET ownership controls', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('denies unauthenticated GET with HTTP 401', async () => {
+    mocks.getCurrentUser.mockResolvedValue(null);
+    const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/campaigns');
+    const res = await GET(req);
+    expect(res.status).toBe(401);
+  });
+
+  it('lists only the authenticated user campaigns', async () => {
+    mocks.getCurrentUser.mockResolvedValue({ id: 'user-a' });
+    const { db, calls } = makeDb({ id: 'camp-a', user_id: 'user-a', title: 'Campaign A' });
+    mocks.createServerClient.mockReturnValue(db);
+
+    const req = new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/campaigns');
+    const res = await GET(req);
+    const body = (await res.json()) as { campaigns: Array<{ id: string }> };
+
+    expect(res.status).toBe(200);
+    expect(body.campaigns).toHaveLength(1);
+    expect(body.campaigns[0].id).toBe('camp-a');
+    expect(calls.filters).toEqual([['user_id', 'user-a']]);
+  });
+
+  it('allows reading own campaign by ID and denies cross-user campaign read with 404 and zero data leak', async () => {
+    mocks.getCurrentUser.mockResolvedValue({ id: 'user-a' });
+
+    const own = makeDb({ id: 'camp-a', user_id: 'user-a' });
+    mocks.createServerClient.mockReturnValue(own.db);
+    const resOwn = await GET(new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/campaigns?id=camp-a'));
+    expect(resOwn.status).toBe(200);
+
+    const cross = makeDb(null);
+    mocks.createServerClient.mockReturnValue(cross.db);
+    const resCross = await GET(new NextRequest('https://sophia-ai-factory.agencyos-openclaw.workers.dev/api/campaigns?id=camp-b'));
+    const crossBody = (await resCross.json()) as { error: string; campaigns?: unknown };
+    expect(resCross.status).toBe(404);
+    expect(crossBody.error).toBe('Not found');
+    expect(crossBody.campaigns).toBeUndefined();
+    expect(cross.calls.filters).toEqual([
+      ['id', 'camp-b'],
+      ['user_id', 'user-a'],
+    ]);
   });
 });

@@ -32,6 +32,8 @@ export function PipelineVerifiedReceiptCard({
   if (!receipt) return null;
 
   const isLiveD1 = receipt.telemetrySource === 'live_d1';
+  const evaluatedCount = receipt.passedCount + receipt.warningCount + receipt.blockedCount;
+  const isComplete = evaluatedCount === receipt.totalEngines;
 
   async function handleCopy() {
     if (!receipt || copyState === 'copying') return;
@@ -74,9 +76,13 @@ export function PipelineVerifiedReceiptCard({
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-code text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
-              {locale === 'vi'
-                ? 'BIÊN NHẬN XÁC THỰC 39/39 ĐỘNG CƠ • SOPHIA AI FACTORY'
-                : '39/39 ENGINE VERIFIED RECEIPT • SOPHIA AI FACTORY'}
+              {isComplete
+                ? locale === 'vi'
+                  ? `BIÊN NHẬN XÁC THỰC ${evaluatedCount}/${receipt.totalEngines} ĐỘNG CƠ • SOPHIA AI FACTORY`
+                  : `${evaluatedCount}/${receipt.totalEngines} ENGINE VERIFIED RECEIPT • SOPHIA AI FACTORY`
+                : locale === 'vi'
+                  ? `BIÊN NHẬN CHƯA ĐẦY ĐỦ (${evaluatedCount}/${receipt.totalEngines} ĐỘNG CƠ) • SOPHIA AI FACTORY`
+                  : `INCOMPLETE PIPELINE RECEIPT (${evaluatedCount}/${receipt.totalEngines} ENGINES) • SOPHIA AI FACTORY`}
             </span>
             <span
               data-testid="receipt-telemetry-source"

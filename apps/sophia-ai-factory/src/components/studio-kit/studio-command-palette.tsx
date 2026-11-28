@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 import {
   SOPHIA_STUDIO_CAPABILITIES,
   filterCapabilities,
@@ -33,6 +34,7 @@ import { PipelineAssemblyMatrix } from './pipeline-assembly-matrix';
 import { PipelineVerifiedReceiptCard } from './pipeline-verified-receipt-card';
 import {
   OpcCommanderRoeBar,
+  regionToCountry,
   regionToJurisdiction,
   type CommanderRoeConfig,
 } from './opc-commander-roe-bar';
@@ -42,6 +44,11 @@ import { StudioInspectorDrawer } from './studio-inspector-drawer';
 export interface StudioCommandPaletteProps {
   readonly locale: 'vi' | 'en';
   readonly capabilities?: readonly StudioCapabilitySpec[];
+  readonly campaignDraft?: {
+    readonly script: string;
+    readonly platform: CommanderRoeConfig['platform'] | 'generic';
+    readonly region: CommanderRoeConfig['region'] | 'GLOBAL';
+  };
 }
 
 interface ExecutePipelineResponse {
@@ -60,6 +67,7 @@ function prefersReducedMotion(): boolean {
 export function StudioCommandPalette({
   locale,
   capabilities = SOPHIA_STUDIO_CAPABILITIES,
+  campaignDraft,
 }: StudioCommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [category] = useState<CapabilityCategory | 'all'>('all');
@@ -71,13 +79,23 @@ export function StudioCommandPalette({
   const [runError, setRunError] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<PipelineVerifiedReceipt | null>(null);
   const [roe, setRoe] = useState<CommanderRoeConfig>({
-    script: DEFAULT_LIVE_PIPELINE_INPUT.script,
-    platform: 'tiktok',
-    region: 'VN',
+    script: campaignDraft?.script ?? DEFAULT_LIVE_PIPELINE_INPUT.script,
+    platform: campaignDraft?.platform && campaignDraft.platform !== 'generic' ? campaignDraft.platform : 'tiktok',
+    region: campaignDraft?.region && campaignDraft.region !== 'GLOBAL' ? campaignDraft.region : 'VN',
     useLiveD1Gross: true,
     customGrossUsd: DEFAULT_LIVE_PIPELINE_INPUT.grossUsd,
   });
   const runTokenRef = useRef(0);
+
+  useEffect(() => {
+    if (!campaignDraft) return;
+    setRoe((prev) => ({
+      ...prev,
+      script: campaignDraft.script,
+      ...(campaignDraft.platform !== 'generic' ? { platform: campaignDraft.platform } : {}),
+      ...(campaignDraft.region !== 'GLOBAL' ? { region: campaignDraft.region } : {}),
+    }));
+  }, [campaignDraft?.script, campaignDraft?.platform, campaignDraft?.region]);
 
   const stages = useMemo(() => groupCapabilitiesIntoStages(capabilities), [capabilities]);
   const orderedCapabilities = useMemo(
@@ -112,8 +130,10 @@ export function StudioCommandPalette({
 
     if (instant) {
       for (const cap of orderedCapabilities) {
-        collected[cap.id] =
-          serverMap?.get(cap.id) ?? evaluateSingleEngineLive(cap.id, DEFAULT_LIVE_PIPELINE_INPUT);
+        const result = serverMap
+          ? serverMap.get(cap.id)
+          : evaluateSingleEngineLive(cap.id, DEFAULT_LIVE_PIPELINE_INPUT);
+        if (result) collected[cap.id] = result;
       }
       if (runTokenRef.current !== token) return;
       setLiveTelemetry(collected);
@@ -130,8 +150,10 @@ export function StudioCommandPalette({
       setActiveEngineId(cap.id);
       await new Promise((resolve) => setTimeout(resolve, 48));
       if (runTokenRef.current !== token) return;
-      const result =
-        serverMap?.get(cap.id) ?? evaluateSingleEngineLive(cap.id, DEFAULT_LIVE_PIPELINE_INPUT);
+      const result = serverMap
+        ? serverMap.get(cap.id)
+        : evaluateSingleEngineLive(cap.id, DEFAULT_LIVE_PIPELINE_INPUT);
+      if (!result) continue;
       collected[cap.id] = result;
       setLiveTelemetry((prev) => ({ ...prev, [cap.id]: result }));
     }
@@ -145,6 +167,25 @@ export function StudioCommandPalette({
   }
 
   async function handleRunRealtimePipeline() {
+    if (campaignDraft?.platform === 'generic' || campaignDraft?.region === 'GLOBAL') {
+      setRunError(
+        locale === 'vi'
+          ? 'Vui lòng chọn nền tảng cụ thể (TikTok/YT Shorts/Reels/FB Reels) và thị trường pháp lý (VN/US/EU/UK/SG) trước khi chạy.'
+          : 'Select a specific platform and compliance region (VN/US/EU/UK/SG) before running the pipeline.',
+      );
+      return;
+    }
+
+    const trimmedScript = roe.script.trim();
+    if (!trimmedScript) {
+      setRunError(
+        locale === 'vi'
+          ? 'Vui lòng nhập kịch bản chiến dịch trước khi chạy 39 động cơ (hoặc chọn chế độ kiểm tra mẫu cục bộ).'
+          : 'Enter a campaign script before running the 39 engines (or explicitly select local sample check).',
+      );
+      return;
+    }
+
     const token = runTokenRef.current + 1;
     runTokenRef.current = token;
     setIsPipelineRunning(true);
@@ -152,11 +193,12 @@ export function StudioCommandPalette({
     setRunError(null);
     setReceipt(null);
 
+    const country = regionToCountry(roe.region);
     const payloadBody = {
-      script: roe.script.trim() || DEFAULT_LIVE_PIPELINE_INPUT.script,
+      script: trimmedScript,
       platform: roe.platform,
       jurisdiction: regionToJurisdiction(roe.region),
-      country: roe.region,
+      ...(country ? { country } : {}),
       postsToday: DEFAULT_LIVE_PIPELINE_INPUT.postsToday,
       ...(roe.useLiveD1Gross ? {} : { grossUsd: roe.customGrossUsd }),
     };
@@ -165,10 +207,11 @@ export function StudioCommandPalette({
       const resp = await fetch('/api/studio/pipeline/execute', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
         body: JSON.stringify(payloadBody),
       });
       const payload = (await resp.json().catch(() => ({}))) as ExecutePipelineResponse;
+      if (runTokenRef.current !== token) return;
       if (!resp.ok || payload.ok === false || !Array.isArray(payload.results)) {
         const detail = payload.error || `HTTP ${resp.status}`;
         setRunError(
@@ -179,8 +222,33 @@ export function StudioCommandPalette({
         setIsPipelineRunning(false);
         return;
       }
+      const validIds = new Set(orderedCapabilities.map((c) => c.id));
+      const validStates = new Set(['passed', 'warning', 'blocked']);
       const serverMap = new Map<string, EngineLiveTelemetry>();
-      for (const item of payload.results) serverMap.set(item.engineId, item);
+      for (const item of payload.results) {
+        const isValid =
+          item &&
+          typeof item.engineId === 'string' &&
+          validIds.has(item.engineId) &&
+          validStates.has(item.state) &&
+          typeof item.metricOutput === 'string' &&
+          typeof item.detail?.vi === 'string' &&
+          typeof item.detail?.en === 'string' &&
+          typeof item.durationMs === 'number' &&
+          Number.isFinite(item.durationMs) &&
+          item.durationMs >= 0 &&
+          !serverMap.has(item.engineId);
+        if (!isValid) {
+          setRunError(
+            locale === 'vi'
+              ? 'Phản hồi từ máy chủ chứa kết quả trùng lặp, không hợp lệ hoặc không thuộc danh mục 39 động cơ.'
+              : 'Server response contained duplicate, unknown, or malformed engine telemetry.',
+          );
+          setIsPipelineRunning(false);
+          return;
+        }
+        serverMap.set(item.engineId, item);
+      }
       await commitSequence(
         token,
         serverMap,
@@ -188,6 +256,7 @@ export function StudioCommandPalette({
         payload.telemetrySource ?? 'default_sample',
       );
     } catch (err) {
+      if (runTokenRef.current !== token) return;
       const detail = err instanceof Error ? err.message : 'Network error';
       setRunError(
         locale === 'vi'
