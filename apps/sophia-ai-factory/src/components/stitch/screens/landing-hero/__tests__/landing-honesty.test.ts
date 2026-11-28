@@ -15,8 +15,8 @@ const mockupHeader = readFileSync(resolve(SRC, 'pipeline-mockup-header.tsx'), 'u
 
 describe('landing headline (exact VI/EN copy)', () => {
   it('uses the prescribed operator headline in both locales', () => {
-    expect(en.stitch.landing.headline).toBe('Your 24/7 Autonomous Affiliate Video Factory.');
-    expect(vi.stitch.landing.headline).toBe('Nhà Máy Video Affiliate Chạy Tự Động 24/7.');
+    expect(en.stitch.landing.headline).toBe('Paste 1 Affiliate Offer. Let 39 Engines Run the Campaign.');
+    expect(vi.stitch.landing.headline).toBe('Dán 1 Link Affiliate. Để 39 Động Cơ Vận Hành Chiến Dịch Cho Bạn.');
   });
 
   it('explains CEX + SaaS use cases and who controls content, cost and money', () => {

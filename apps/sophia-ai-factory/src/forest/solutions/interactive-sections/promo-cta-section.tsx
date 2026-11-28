@@ -21,7 +21,7 @@ interface PromoCtaSectionProps {
 
 export function PromoCtaSection({ industry, isVi }: PromoCtaSectionProps) {
   const telegramUrl = `https://t.me/Sophia_Bbot?start=sol_${industry.slug}`;
-  const checkoutUrl = `/checkout?plan=starter&promo=SOLO100`;
+  const checkoutUrl = '/signup?next=/dashboard/first-value';
 
   return (
     <section className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/40 via-zinc-900 to-zinc-950 p-8 sm:p-12 text-center relative overflow-hidden shadow-2xl">

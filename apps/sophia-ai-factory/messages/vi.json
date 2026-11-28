@@ -126,8 +126,8 @@
   },
   "seo": {
     "home": {
-      "title": "Sophia AI Factory — Nhà Máy Video Affiliate Tự Động 34 Động Cơ",
-      "description": "34 động cơ kiểm duyệt, xuất video 30fps trên trình duyệt và tối ưu hoa hồng. Dùng khóa AI của bạn (BYOK), 0đ phí biên nền tảng."
+      "title": "Sophia AI Factory — Từ 1 Link Affiliate Thành Dây Chuyền Video 39 Động Cơ",
+      "description": "Hoá thân thành nhà vận hành affiliate chuyên nghiệp trong 15 phút: dán 1 link offer, để 39 động cơ tự động viết kịch bản chuẩn luật, dựng video dọc 9:16 $0 GPU, gắn mã chống bot và đối soát hoa hồng minh bạch. 100% BYOK, 0đ phí chênh lệch AI."
     },
     "login": {
       "title": "Đăng Nhập · Sophia AI Factory",
@@ -898,7 +898,7 @@
         },
         "vnd_payment": {
           "question": "Tôi có thể thanh toán bằng VND không?",
-          "answer": "Có! Chúng tôi hỗ trợ thanh toán qua VNPay, Momo và chuyển khoản ngân hàng. Liên hệ support@sophia.agency để được hướng dẫn."
+          "answer": "Có! Chúng tôi hỗ trợ thanh toán qua VNPay, Momo và chuyển khoản ngân hàng. Liên hệ support@mekongmind.com để được hướng dẫn."
         },
         "zalo": {
           "question": "Tôi có thể nhận hỗ trợ qua Zalo không?",
@@ -7572,10 +7572,10 @@
       }
     },
     "landing": {
-      "badge": "34 Động Cơ AI Sống • Khóa BYOK Giá Gốc • 0đ Phí Biên Nền Tảng",
-      "headline": "Nhà Máy Video Affiliate Chạy Tự Động 24/7.",
-      "headlineHighlight": "34 động cơ bảo vệ doanh thu — 0đ phí biên.",
-      "subheading": "Tự động hóa chiến dịch affiliate CEX và SaaS toàn cầu với 34 động cơ sống: kiểm duyệt luật 4 chiều, xuất video 30fps ngay trên trình duyệt, khóa link VA và đối soát hoa hồng 70/20/10.",
+      "badge": "0đ phí chênh lệch AI • 0% cắt phế hoa hồng",
+      "headline": "Dán 1 Link Affiliate. Để 39 Động Cơ Vận Hành Chiến Dịch Cho Bạn.",
+      "headlineHighlight": "39 động cơ bảo vệ hoa hồng — 0đ phí chênh lệch AI.",
+      "subheading": "Hãy hình dung 15 phút sáng nay của bạn: chọn 1 offer CEX, SaaS hoặc thương mại điện tử, đặt trần chi phí AI theo ngày và bấm duyệt. Sophia tự động kiểm duyệt chính sách khu vực, dựng video dọc 9:16 ngay trên trình duyệt ($0 GPU), khóa link chống bot gian lận và báo kết quả trực tiếp về Telegram @Sophia_Bbot.",
       "nav": {
         "features": "Tính năng",
         "pricing": "Bảng giá",
@@ -7589,11 +7589,11 @@
         "brand": "Thương hiệu"
       },
       "cta": {
-        "startFree": "Chạy Thử Pilot Ngay",
-        "watchDemo": "Xem 34 Động Cơ AI",
+        "startFree": "Khởi Chạy Chiến Dịch Đầu Tiên (10 Phút)",
+        "watchDemo": "Xem 5 Chặng & 39 Động Cơ",
         "viewPricing": "Xem Bảng Giá",
-        "readyTitle": "Bắt đầu với một gói ưu đãi đã xác thực",
-        "readySubtitle": "Tạo workspace, kết nối khóa API BYOK của riêng bạn và chuẩn bị chiến dịch trước khi xuất bản. Mức giá gói và chi phí nhà cung cấp được hiển thị minh bạch trước khi bạn cam kết."
+        "readyTitle": "Biến Link Affiliate Đầu Tiên Của Bạn Thành Chiến Dịch Sống Trong 10 Phút.",
+        "readySubtitle": "Tạo tài khoản ngay để mở trang Khởi Tạo Giá Trị Đầu Tiên (/dashboard/first-value): soạn kịch bản affiliate chuẩn luật ở mức phí nháp $0, kiểm tra biên nhận 39 động cơ và chỉ nâng cấp khi bạn sẵn sàng mở rộng quy mô."
       },
       "trustBar": {
         "label": "Cam kết minh bạch",
@@ -7675,20 +7675,20 @@
       "controlNote": "Bạn kiểm soát nội dung, khóa provider, trần chi phí và tiền. Thu nhập affiliate bên ngoài thuộc về workspace; Sophia không thu phí nền tảng và không giao dịch hay lưu giữ tiền của khách hàng.",
       "demoNote": "Bản xem trước mang tính minh họa, không phải phiên chạy trực tiếp và không hiển thị doanh thu khách hàng.",
       "v3Core": {
-        "eyebrow": "SOPHIA AI FACTORY • OPC v3.0 • ĐỘNG CƠ AFFILIATE KHÔNG LƯU KÝ",
-        "headlineLead": "Biến offer affiliate đã xác minh thành chiến dịch có kiểm soát —",
+        "eyebrow": "HÀNH TRÌNH 15 PHÚT MỖI NGÀY • 39 ĐỘNG CƠ TỰ ĐỘNG • 100% BYOK GIÁ GỐC",
+        "headlineLead": "Ngừng đốt 4 tiếng mỗi tối chắp vá từng video lẻ —",
         "runtimesLabel": "TÍCH HỢP HỆ SINH THÁI CỦA BẠN",
-        "whyKicker": "01 / VÌ SAO CHIẾN DỊCH THỦ CÔNG DỄ TẮC NGHẼN",
-        "whyTitle": "Nhà vận hành affiliate không thiếu offer. Họ tắc nghẽn khi pháp lý, ngân sách render và đối soát hoa hồng bị phân mảnh.",
+        "whyKicker": "HỒI 1 • 08:30 SÁNG — THỰC TẾ CỦA LÀM AFFILIATE THỦ CÔNG",
+        "whyTitle": "Bạn không thiếu kèo affiliate ngon. Bạn kiệt sức vì 4 tiếng chắp vá công cụ mà vẫn mất click và sập kênh.",
         "pain1Title": "Link chưa xác minh & rủi ro pháp lý.",
         "pain1Desc": "Soạn kịch bản CEX hoặc SaaS thiếu nhãn công bố theo khu vực dễ dẫn đến vi phạm kênh và từ chối thanh toán.",
         "pain2Title": "Tốn phí render trước khi duyệt kịch bản.",
         "pain2Desc": "Gọi ElevenLabs hoặc dựng video khi chưa khóa kịch bản làm tiêu hao credit BYOK vào các bản nháp chưa duyệt.",
         "pain3Title": "Postback rời rạc & phí ẩn.",
         "pain3Desc": "Theo dõi click thủ công không có đối soát S2S postback khiến hoa hồng thực nhận thiếu bằng chứng xác thực.",
-        "whyTurn": "Sophia khóa chặt trình tự: Soạn nháp AI $0.00 trước, CEO ký duyệt SHA-256 thứ hai, render bằng khóa BYOK thứ ba, và đối soát sổ cái Domain B (0% phí nền tảng) cuối cùng.",
-        "howKicker": "02 / CÁCH SOPHIA VẬN HÀNH",
-        "howTitle": "Một lệnh điều hành. Năm trạm lắp ráp có bảo chứng.",
+        "whyTurn": "09:00 sáng — Bạn đóng toàn bộ tab rời rạc lại, mở buồng lái Sophia và chỉ dán đúng 1 đường link affiliate.",
+        "howKicker": "HỒI 2 • 09:00 SÁNG — BƯỚC VÀO BUỒNG LÁI (1 LINK ĐẦU VÀO)",
+        "howTitle": "Dán 1 offer affiliate. Xem 39 động cơ tự động chạy qua 5 chặng bảo chứng.",
         "chatHeader": "sophia-opc — bản ghi phiên minh họa",
         "chatCommand": "/sophia launch --niche crypto_cex --offer binance-vip --gate sha256",
         "chatYou1": "Soạn chiến dịch song ngữ Việt/Anh cho offer CEX & SaaS đã xác minh với trần render $15.",
@@ -7696,7 +7696,7 @@
         "chatYou2": "Khóa bản nháp ở mức phí $0.00 và yêu cầu chữ ký SHA-256 của tôi trước khi chi tiêu credit BYOK.",
         "chatSophia2": "Đã khóa bản nháp ($0.00 phí) → Xác thực chữ ký SHA-256 → Đưa vào hàng đợi ElevenLabs + HeyGen & sổ cái Domain B 0% phí.",
         "ecosystemKicker": "03 / DÂY CHUYỀN 5 TRẠM & CHUỖI BẰNG CHỨNG 7 CẤP ĐỘ",
-        "joinKicker": "04 / KHỞI TẠO WORKSPACE CỦA BẠN"
+        "joinKicker": "HỒI 4 • 09:15 SÁNG — ĐẾN LƯỢT BẠN CẦM LÁI"
       },
       "videoShowcase": {
         "kicker": "XEM DEMO THỰC TẾ",

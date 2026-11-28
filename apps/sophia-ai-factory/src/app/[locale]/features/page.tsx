@@ -1,7 +1,12 @@
-import FeaturesPage from '@/components/stitch/screens/features/features-page';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-export default function FeaturesRoute() {
-  return <FeaturesPage />;
+export default async function FeaturesRoute({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  redirect(`/${locale}#how`);
 }
