@@ -5,6 +5,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import viMessages from '../../../../messages/vi.json';
 import { FirstValueJourneyClient } from '../first-value-journey-client';
 import type { PreviewHandoffSnapshot } from '../zero-key-preview-studio';
+import type { CostPreviewAvailable } from '@/seed/ai/cost/first-value-cost-preview';
 
 let capturedOnUpgrade: ((snapshot: PreviewHandoffSnapshot) => void) | undefined;
 
@@ -41,7 +42,24 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
-describe('FirstValueJourneyClient Preview-to-BYOK handoff & stale cost protection (Wave C.3)', () => {
+function makeAvailableEstimate(minUsd: number, maxUsd: number, model: string): CostPreviewAvailable {
+  return {
+    status: 'COST_ESTIMATE_AVAILABLE',
+    provider: 'openrouter',
+    model,
+    tokenAssumptions: { inputTokens: 320, outputTokensMin: 280, outputTokensMax: 560, durationSec: 35 },
+    unitPricePer1MTokensUsd: { input: 0.15, output: 0.6 },
+    priceSource: 'sophia-static-rate-card:src/seed/ai/cost/rate-card-table.ts',
+    priceUpdatedAt: '2026-04-14T00:00:00.000Z',
+    estimatedCostRangeUsd: { minUsd, maxUsd },
+    fundingResponsibility: 'customer_byok',
+    costBasis: 'estimated',
+    promotionalCreditsExcluded: true,
+    warnings: [],
+  };
+}
+
+describe('FirstValueJourneyClient Preview-to-BYOK handoff, cost integrity & workspace isolation (PR #359)', () => {
   const originalFetch = globalThis.fetch;
 
   beforeEach(() => {
@@ -53,11 +71,11 @@ describe('FirstValueJourneyClient Preview-to-BYOK handoff & stale cost protectio
     globalThis.fetch = originalFetch;
   });
 
-  it('transfers exact brief + script, verifies cost_preview payload, rejects wrong-org snapshot, cancels cleanly, and discards stale cost response', async () => {
+  it('proves real CostPreviewAvailable positive/negative stale control, input invalidation, and full workspace reset on orgId change', async () => {
     const staleCostResp = deferred<{ ok: boolean; status: number; json: () => Promise<unknown> }>();
     const postPayloads: Array<Record<string, unknown>> = [];
 
-    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
       if (init?.method === 'POST') {
         const body = JSON.parse(init.body as string) as Record<string, unknown>;
         postPayloads.push(body);
@@ -68,13 +86,7 @@ describe('FirstValueJourneyClient Preview-to-BYOK handoff & stale cost protectio
           ok: true,
           status: 200,
           json: async () => ({
-            preview: {
-              pricingStatus: 'estimated',
-              provider: 'openrouter',
-              model: 'google/gemini-2-5-flash',
-              estimatedUsd: 0.002,
-              estimatedMcu: 0,
-            },
+            preview: makeAvailableEstimate(0.0123, 0.0456, 'google/gemini-2-5-flash'),
           }),
         });
       }
@@ -115,7 +127,7 @@ describe('FirstValueJourneyClient Preview-to-BYOK handoff & stale cost protectio
     });
     expect(screen.queryByTestId('preview-byok-handoff-banner')).toBeNull();
 
-    // 2. Start cost_preview #1 (stale), then receive valid handoff for org-a before #1 resolves
+    // 2. Start stale cost_preview #1 (9.1111–9.2222), then receive valid handoff for org-a before #1 resolves
     const costBtn = screen.getByRole('button', { name: /Xem dự toán chi phí/i });
     fireEvent.click(costBtn);
 
@@ -132,30 +144,28 @@ describe('FirstValueJourneyClient Preview-to-BYOK handoff & stale cost protectio
       });
     });
 
-    // Resolve stale cost_preview #1 -> must be ignored
     await act(async () => {
       staleCostResp.resolve({
         ok: true,
         status: 200,
         json: async () => ({
-          preview: {
-            pricingStatus: 'estimated',
-            provider: 'openrouter',
-            model: 'stale-model',
-            estimatedUsd: 9.99,
-            estimatedMcu: 99,
-          },
+          preview: makeAvailableEstimate(9.1111, 9.2222, 'stale-model'),
         }),
       });
     });
 
+    // Stale estimate #1 MUST NOT appear
+    expect(screen.queryByText(/9\.1111/)).toBeNull();
     expect(screen.getByTestId('preview-byok-handoff-banner').textContent).toContain('KEY_NOT_CONFIGURED');
     expect(screen.getByTestId('preview-handoff-script-ref').textContent).toContain('Bước 1: Kiểm tra 2FA.');
-    expect(screen.queryByText(/9\.99/)).toBeNull();
 
-    // 3. Request cost_preview #2 -> verify actual POST payload carries transferred topic/audience/duration
+    // 3. Positive control: request cost_preview #2 -> real monetary range 0.0123–0.0456 MUST render
     fireEvent.click(costBtn);
-    await waitFor(() => expect(postPayloads.length).toBeGreaterThanOrEqual(2));
+    await waitFor(() => {
+      expect(screen.getByText(/0\.0123/)).toBeTruthy();
+      expect(screen.getByText(/0\.0456/)).toBeTruthy();
+    });
+
     const latestCostReq = postPayloads[postPayloads.length - 1];
     expect(latestCostReq.action).toBe('cost_preview');
     expect(latestCostReq.orgId).toBe('org-a');
@@ -163,24 +173,36 @@ describe('FirstValueJourneyClient Preview-to-BYOK handoff & stale cost protectio
     expect(latestCostReq.audience).toBe('Người mới tìm hiểu tài sản số');
     expect(latestCostReq.durationSec).toBe(45);
 
-    // 4. Cancel handoff closes banner cleanly
+    // 4. Editing duration, topic, audience, or model invalidates existing cost estimate
+    const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+    const numberInput = screen.getByRole('spinbutton') as HTMLInputElement;
+    fireEvent.change(numberInput, { target: { value: '30' } });
+    expect(screen.queryByText(/0\.0123/)).toBeNull();
+
+    // Re-fetch estimate, then invalidate via model edit
+    fireEvent.click(costBtn);
+    await waitFor(() => expect(screen.getByText(/0\.0123/)).toBeTruthy());
+    fireEvent.change(inputs[2], { target: { value: 'openai/gpt-4o-mini' } });
+    expect(screen.queryByText(/0\.0123/)).toBeNull();
+
+    // 5. Cancel handoff closes banner cleanly
     fireEvent.click(screen.getByTestId('preview-handoff-cancel-btn'));
     expect(screen.queryByTestId('preview-byok-handoff-banner')).toBeNull();
 
-    // 5. Workspace orgId change clears any handoff state
+    // 6. Workspace orgId change resets imported topic, audience, duration AND handoff banner
     act(() => {
       capturedOnUpgrade?.({
         orgId: 'org-a',
-        topic: 'T2',
-        audience: 'A2',
-        durationSec: 30,
-        scriptText: 'Script 2',
+        topic: 'ORG_A_SECRET_TOPIC',
+        audience: 'ORG_A_SECRET_AUDIENCE',
+        durationSec: 45,
+        scriptText: 'ORG_A_SCRIPT',
         revision: 4,
-        provenance: 'FIXTURE_SCRIPT',
+        provenance: 'USER_EDITED_SCRIPT',
         contentLanguage: 'vi',
       });
     });
-    expect(screen.getByTestId('preview-byok-handoff-banner')).toBeTruthy();
+    expect(inputs[0].value).toBe('ORG_A_SECRET_TOPIC');
 
     rerender(
       <NextIntlClientProvider locale="vi" messages={viMessages}>
@@ -188,5 +210,7 @@ describe('FirstValueJourneyClient Preview-to-BYOK handoff & stale cost protectio
       </NextIntlClientProvider>,
     );
     expect(screen.queryByTestId('preview-byok-handoff-banner')).toBeNull();
+    expect(inputs[0].value).not.toBe('ORG_A_SECRET_TOPIC');
+    expect(inputs[1].value).not.toBe('ORG_A_SECRET_AUDIENCE');
   });
 });

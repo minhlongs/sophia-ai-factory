@@ -476,7 +476,37 @@ export function FirstValueJourneyClient({
     costPreviewTokenRef.current += 1;
     setHandoffSnapshot(null);
     setCostPreview(null);
+    setTopic('SaaS & Crypto Affiliate Campaign Angle');
+    setAudience('SaaS Buyers & Digital Teams');
+    setDurationSec(30);
+    setActiveReview(null);
+    setExportPayload(null);
+    setStatus(null);
   }, [orgId]);
+
+  function handleTopicChange(next: string) {
+    costPreviewTokenRef.current += 1;
+    setTopic(next);
+    setCostPreview(null);
+  }
+
+  function handleAudienceChange(next: string) {
+    costPreviewTokenRef.current += 1;
+    setAudience(next);
+    setCostPreview(null);
+  }
+
+  function handleDurationChange(next: number) {
+    costPreviewTokenRef.current += 1;
+    setDurationSec(next);
+    setCostPreview(null);
+  }
+
+  function handleModelChange(next: string) {
+    costPreviewTokenRef.current += 1;
+    setModel(next);
+    setCostPreview(null);
+  }
 
   function handlePreviewUpgradeHandoff(snapshot: PreviewHandoffSnapshot) {
     if (snapshot.orgId !== orgId) return;
@@ -587,10 +617,10 @@ export function FirstValueJourneyClient({
         canPreview={Boolean(orgId && inputsValid)}
         canCreate={canCreate}
         costPreview={costPreview}
-        onTopicChange={setTopic}
-        onAudienceChange={setAudience}
-        onDurationChange={setDurationSec}
-        onModelChange={setModel}
+        onTopicChange={handleTopicChange}
+        onAudienceChange={handleAudienceChange}
+        onDurationChange={handleDurationChange}
+        onModelChange={handleModelChange}
         onPreviewCost={() => void handleCostPreview()}
         onCreateReview={() => void handleCreateReview()}
       />
