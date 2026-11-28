@@ -4,6 +4,8 @@ import { Link } from '@/navigation';
 import { buildCorePagePayload } from '@/seed/aeo';
 import { normalizeAeoLocale } from '@/tree/aeo';
 import { DualReadPageSection } from '@/forest/components/aeo';
+import { MarketingNav } from '@/components/stitch/layouts/marketing-nav';
+import { MarketingFooter } from '@/components/stitch/layouts/marketing-footer';
 import type { GuideActiveTarget } from '@/seed/guide';
 import { GuideQuickstart2026 } from './guide-quickstart-2026';
 import { GuideSections } from './guide-sections';
@@ -38,8 +40,11 @@ export default async function GuidePage({
   const aeoPayload = buildCorePagePayload('guide', normalizedLocale);
 
   return (
-    <main className="v3-core min-h-screen bg-background text-foreground py-12 sm:py-16 px-4">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <MarketingNav />
+      <div className="h-24 shrink-0" aria-hidden="true" />
+      <main className="v3-core flex-1 bg-background text-foreground py-8 sm:py-12 px-4">
+        <div className="max-w-5xl mx-auto">
         <Link
           href="/dashboard"
           className="btn btn-ghost mb-8"
@@ -68,6 +73,8 @@ export default async function GuidePage({
         <GuideSections t={t} />
         <DualReadPageSection payload={aeoPayload} />
       </div>
-    </main>
+      </main>
+      <MarketingFooter />
+    </div>
   );
 }
