@@ -7,8 +7,9 @@
  */
 
 import { useState } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Share2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/navigation';
 import type { ScriptOutput } from '@/seed/ai/script-generator';
 import {
   buildMultiChannelDistributionPack,
@@ -69,6 +70,20 @@ export function PilotDistributionHub(props: PilotDistributionHubProps) {
       data-testid="pilot-distribution-hub"
       className="space-y-4 rounded-lg border border-border bg-muted/40 p-4"
     >
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+        <div className="text-xs text-foreground">
+          <span className="font-semibold">Phân phối đa kênh (Publishing Queue):</span>{' '}
+          Chọn kênh đã kết nối, hẹn lịch đăng và duyệt bài tại Trung tâm Phân phối. Phần sao chép bên dưới chỉ là xuất thủ công dự phòng.
+        </div>
+        <Link
+          href="/dashboard/publish/queue"
+          data-testid="open-distribution-center-link"
+          className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
+        >
+          <Share2 className="h-3.5 w-3.5" />
+          Mở Trung tâm Phân phối
+        </Link>
+      </div>
       <div>
         <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground">
           {t('pilotDistHubTitle')}

@@ -17,6 +17,7 @@ import {
   Sparkles,
   DollarSign,
   Film,
+  Share2,
   ShieldCheck,
   Activity,
   BookOpen,
@@ -65,6 +66,13 @@ export const OPC_PRIMARY_NAV_GROUPS: DashboardNavModule[] = [
     fallbackLabel: "Campaigns",
     href: "/dashboard/campaigns",
     icon: Film,
+  },
+  {
+    id: "opc_distribution",
+    labelKey: "opcNav.distribution",
+    fallbackLabel: "Distribution Center",
+    href: "/dashboard/publish/queue",
+    icon: Share2,
   },
   {
     id: "opc_approvals",

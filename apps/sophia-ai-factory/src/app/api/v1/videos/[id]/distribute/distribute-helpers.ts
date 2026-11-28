@@ -13,6 +13,30 @@ export const CHANNEL_PROVIDERS: [ChannelProvider, ...ChannelProvider[]] = [
   'facebook', 'twitter', 'threads', 'reddit', 'bluesky', 'mastodon', 'telegram',
 ];
 
+/**
+ * Providers backed by an actual executable adapter in `publisher-factory.ts`.
+ * API-declared providers outside this set (`reddit`, `bluesky`, `mastodon`) are
+ * rejected fail-closed so they cannot enqueue unexecutable publishing jobs.
+ */
+export const EXECUTABLE_CHANNEL_PROVIDERS: ReadonlySet<ChannelProvider> = new Set<ChannelProvider>([
+  'tiktok',
+  'youtube',
+  'instagram',
+  'facebook',
+  'twitter',
+  'pinterest',
+  'linkedin',
+  'zalo',
+  'threads',
+  'telegram',
+]);
+
+export function findUnsupportedChannelProviders(
+  providers: readonly ChannelProvider[],
+): ChannelProvider[] {
+  return providers.filter((p) => !EXECUTABLE_CHANNEL_PROVIDERS.has(p));
+}
+
 export const distributeSchema = z.object({
   channelProviders: z.array(z.enum(CHANNEL_PROVIDERS)).min(1).max(CHANNEL_PROVIDERS.length),
   caption: z.string().max(2200).optional(),

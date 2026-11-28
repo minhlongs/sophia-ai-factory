@@ -70,6 +70,7 @@ export function DashboardNavItems({
     engines: { en: "AI Workbench (39 Engines)", vi: "Xưởng AI (39 Động Cơ)" },
     offers: { en: "Offers · Affiliate Hub", vi: "Offers · Affiliate Hub" },
     campaigns: { en: "Campaigns", vi: "Chiến dịch" },
+    distribution: { en: "Distribution Center", vi: "Trung tâm Phân phối" },
     approvals: { en: "Needs approval", vi: "Cần duyệt" },
     results: { en: "Results", vi: "Kết quả" },
     connections: { en: "Connections", vi: "Kết nối" },
@@ -105,6 +106,8 @@ export function DashboardNavItems({
     "opc_today",
     "opc_first_value",
     "opc_engines",
+    "opc_distribution",
+    "opc_approvals",
     "opc_results",
     "opc_connections",
   ]);

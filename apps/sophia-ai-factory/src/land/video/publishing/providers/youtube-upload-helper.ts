@@ -10,6 +10,11 @@ import {
   assertYouTubeProvenanceAllowed,
   resolveSyntheticMediaDisclosure,
 } from '@/tree/publishing/synthetic-media-disclosure';
+import {
+  isCanonicalPrivateR2Uri,
+  MAX_RESOLVED_PRIVATE_MEDIA_BYTES,
+  resolvePrivateMediaFromR2,
+} from '../private-media-resolver';
 
 export const YOUTUBE_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
 
@@ -84,10 +89,32 @@ export async function performResumableYouTubeUpload(
 ): Promise<string> {
   const metadata = resolvedMetadata ?? buildYouTubeMetadata(meta);
 
-  const videoRes = await fetch(videoUrl);
-  if (!videoRes.ok) throw new Error(`Failed to fetch video: ${videoRes.status}`);
-  const videoBlob = await videoRes.blob();
-  const contentType = videoRes.headers.get('content-type') ?? 'video/mp4';
+  let videoBlob: Blob;
+  let contentType: string;
+
+  if (isCanonicalPrivateR2Uri(videoUrl)) {
+    const ownerUserId = (meta as PublishMeta & { ownerUserId?: string; ownerOrgId?: string }).ownerUserId ?? '';
+    const ownerOrgId = (meta as PublishMeta & { ownerUserId?: string; ownerOrgId?: string }).ownerOrgId;
+    const resolved = await resolvePrivateMediaFromR2({
+      uri: videoUrl,
+      expectedUserId: ownerUserId,
+      ...(ownerOrgId ? { expectedOrgId: ownerOrgId } : {}),
+    });
+    videoBlob = new Blob([resolved.bytes as BlobPart], { type: resolved.contentType });
+    contentType = resolved.contentType;
+  } else {
+    const videoRes = await fetch(videoUrl);
+    if (!videoRes.ok) throw new Error(`Failed to fetch video: ${videoRes.status}`);
+    const declaredLen = Number(videoRes.headers.get('content-length') ?? '0');
+    if (Number.isFinite(declaredLen) && declaredLen > MAX_RESOLVED_PRIVATE_MEDIA_BYTES) {
+      throw new Error(`Video exceeds ${MAX_RESOLVED_PRIVATE_MEDIA_BYTES} byte upload limit`);
+    }
+    videoBlob = await videoRes.blob();
+    if (videoBlob.size > MAX_RESOLVED_PRIVATE_MEDIA_BYTES) {
+      throw new Error(`Video exceeds ${MAX_RESOLVED_PRIVATE_MEDIA_BYTES} byte upload limit`);
+    }
+    contentType = videoRes.headers.get('content-type') ?? 'video/mp4';
+  }
 
   const initRes = await fetch(
     'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status',
