@@ -194,6 +194,27 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── MD3 Canonical Adaptive Pane Layout (8dp Grid + 1040dp Max Constraint) ── */
+.md3-pane-container {
+  width: 100%;
+  max-width: 1040px;
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
+@media (min-width: 600px) {
+  .md3-pane-container {
+    padding-inline: 24px;
+  }
+}
+
+.md3-supporting-pane {
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  padding: 24px;
+}
+
 /* Modern Web Guidance: defer offscreen rendering for below-the-fold sections */
 .mwg-offscreen-section {
   content-visibility: auto;
