@@ -210,6 +210,8 @@ export function formatReceiptClipboardText(
   receipt: PipelineVerifiedReceipt,
   locale: 'vi' | 'en',
 ): string {
+  const evaluatedCount = receipt.passedCount + receipt.warningCount + receipt.blockedCount;
+  const isComplete = evaluatedCount === receipt.totalEngines;
   const sourceLabel =
     receipt.telemetrySource === 'live_d1'
       ? locale === 'vi'
@@ -220,8 +222,11 @@ export function formatReceiptClipboardText(
         : 'STANDARD SAMPLE BRIEF';
 
   if (locale === 'vi') {
+    const header = isComplete
+      ? `BIÊN NHẬN XÁC THỰC ${evaluatedCount}/${receipt.totalEngines} ĐỘNG CƠ • SOPHIA AI FACTORY`
+      : `BIÊN NHẬN CHƯA ĐẦY ĐỦ (${evaluatedCount}/${receipt.totalEngines} ĐỘNG CƠ) • SOPHIA AI FACTORY`;
     return [
-      `BIÊN NHẬN XÁC THỰC ${receipt.passedCount}/${receipt.totalEngines} ĐỘNG CƠ • SOPHIA AI FACTORY`,
+      header,
       `• Nguồn dữ liệu: ${sourceLabel}`,
       `• Thời gian xử lý Edge: ${receipt.totalComputeMs.toFixed(1)}ms`,
       `• Dấu SubID HMAC: ${receipt.subIdWatermark}`,
@@ -230,8 +235,11 @@ export function formatReceiptClipboardText(
     ].join('\n');
   }
 
+  const enHeader = isComplete
+    ? `SOPHIA AI FACTORY • ${evaluatedCount}/${receipt.totalEngines} ENGINE VERIFIED RECEIPT`
+    : `SOPHIA AI FACTORY • INCOMPLETE PIPELINE RECEIPT (${evaluatedCount}/${receipt.totalEngines} ENGINES)`;
   return [
-    `SOPHIA AI FACTORY • ${receipt.passedCount}/${receipt.totalEngines} ENGINE VERIFIED RECEIPT`,
+    enHeader,
     `• Telemetry Source: ${sourceLabel}`,
     `• Edge Compute: ${receipt.totalComputeMs.toFixed(1)}ms`,
     `• S2S SubID Seal: ${receipt.subIdWatermark}`,

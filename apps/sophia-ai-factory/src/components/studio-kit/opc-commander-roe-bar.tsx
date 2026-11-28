@@ -48,6 +48,11 @@ export function regionToJurisdiction(region: RoeRegion): 'VN' | 'US' | 'EU' | 'U
   return region;
 }
 
+export function regionToCountry(region: RoeRegion): 'VN' | 'US' | 'UK' | 'SG' | undefined {
+  if (region === 'EU') return undefined;
+  return region;
+}
+
 export function OpcCommanderRoeBar({
   locale,
   value,

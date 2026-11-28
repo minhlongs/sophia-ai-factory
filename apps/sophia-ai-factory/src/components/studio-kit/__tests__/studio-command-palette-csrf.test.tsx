@@ -2,7 +2,8 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { StudioCommandPalette } from '../studio-command-palette';
-import { regionToJurisdiction } from '../opc-commander-roe-bar';
+import { regionToCountry, regionToJurisdiction } from '../opc-commander-roe-bar';
+import { formatReceiptClipboardText } from '@/seed/ui/pipeline-stage-manifest';
 
 vi.mock('@/seed/security/use-csrf-token', () => ({
   getCsrfHeaders: () => ({ 'x-csrf-token': 'test-csrf-token' }),
@@ -31,12 +32,48 @@ describe('StudioCommandPalette CSRF, empty-script guard, provenance & partial re
     window.matchMedia = originalMatchMedia;
   });
 
-  it('maps regions to jurisdictions without falsely claiming US compliance for SG', () => {
+  it('maps regions to jurisdictions and countries without invalid EU country or US-for-SG substitution', () => {
     expect(regionToJurisdiction('VN')).toBe('VN');
     expect(regionToJurisdiction('US')).toBe('US');
     expect(regionToJurisdiction('EU')).toBe('EU');
     expect(regionToJurisdiction('UK')).toBe('UK');
     expect(regionToJurisdiction('SG')).toBe('GLOBAL');
+    expect(regionToCountry('EU')).toBeUndefined();
+    expect(regionToCountry('VN')).toBe('VN');
+    expect(regionToCountry('SG')).toBe('SG');
+
+    const partialClipboardVi = formatReceiptClipboardText(
+      {
+        executedAt: '2026-11-28T07:00:00Z',
+        telemetrySource: 'live_d1',
+        totalEngines: 39,
+        passedCount: 1,
+        warningCount: 0,
+        blockedCount: 0,
+        totalComputeMs: 1.2,
+        subIdWatermark: 'Not evaluated',
+        waterfallSplit: 'Not evaluated',
+        reconciliationVerdict: 'Not evaluated',
+      },
+      'vi',
+    );
+    expect(partialClipboardVi).toContain('BIÊN NHẬN CHƯA ĐẦY ĐỦ (1/39 ĐỘNG CƠ)');
+    const partialClipboardEn = formatReceiptClipboardText(
+      {
+        executedAt: '2026-11-28T07:00:00Z',
+        telemetrySource: 'default_sample',
+        totalEngines: 39,
+        passedCount: 1,
+        warningCount: 0,
+        blockedCount: 0,
+        totalComputeMs: 1.2,
+        subIdWatermark: 'Not evaluated',
+        waterfallSplit: 'Not evaluated',
+        reconciliationVerdict: 'Not evaluated',
+      },
+      'en',
+    );
+    expect(partialClipboardEn).toContain('INCOMPLETE PIPELINE RECEIPT (1/39 ENGINES)');
   });
 
   it('rejects empty or whitespace-only campaign script without sending a sample request', async () => {
@@ -74,13 +111,6 @@ describe('StudioCommandPalette CSRF, empty-script guard, provenance & partial re
             metricOutput: '3 pain points',
             durationMs: 1.2,
           },
-          // Duplicate ID must not overwrite first result
-          {
-            engineId: 'comment-pain-point-miner',
-            state: 'blocked',
-            metricOutput: 'DUP',
-            durationMs: 0.5,
-          },
         ],
       }),
     });
@@ -106,10 +136,11 @@ describe('StudioCommandPalette CSRF, empty-script guard, provenance & partial re
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('/api/studio/pipeline/execute');
     expect((init.headers as Record<string, string>)['x-csrf-token']).toBe('test-csrf-token');
-    const body = JSON.parse(init.body as string) as { script: string; platform: string; jurisdiction: string };
+    const body = JSON.parse(init.body as string) as { script: string; platform: string; jurisdiction: string; country?: string };
     expect(body.script).toContain('SCENARIO_CRYPTO_SECURITY_VN_2026_MARKER');
     expect(body.platform).toBe('facebook_reels');
     expect(body.jurisdiction).toBe('EU');
+    expect(body.country).toBeUndefined();
 
     await waitFor(() => {
       const card = screen.getByTestId('pipeline-verified-receipt-card');
@@ -118,6 +149,30 @@ describe('StudioCommandPalette CSRF, empty-script guard, provenance & partial re
       expect(card.textContent).not.toContain('3-Way Balanced');
       expect(card.textContent).not.toContain('HMAC-SHA256');
     });
+  });
+
+  it('rejects duplicate or unknown engine IDs from server without rendering a verified receipt', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        ok: true,
+        executedAt: '2026-11-28T07:00:00Z',
+        telemetrySource: 'live_d1',
+        results: [
+          { engineId: 'comment-pain-point-miner', state: 'passed', metricOutput: 'OK', durationMs: 1.0 },
+          { engineId: 'comment-pain-point-miner', state: 'passed', metricOutput: 'DUP', durationMs: 1.0 },
+        ],
+      }),
+    }) as unknown as typeof fetch;
+
+    render(<StudioCommandPalette locale="en" />);
+    fireEvent.click(screen.getByTestId('run-39-engines-btn'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toContain('duplicate, unknown, or malformed');
+    });
+    expect(screen.queryByTestId('pipeline-verified-receipt-card')).toBeNull();
   });
 
   it('surfaces inline error on HTTP 500 without fabricating a receipt', async () => {

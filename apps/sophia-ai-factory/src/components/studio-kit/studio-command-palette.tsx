@@ -34,6 +34,7 @@ import { PipelineAssemblyMatrix } from './pipeline-assembly-matrix';
 import { PipelineVerifiedReceiptCard } from './pipeline-verified-receipt-card';
 import {
   OpcCommanderRoeBar,
+  regionToCountry,
   regionToJurisdiction,
   type CommanderRoeConfig,
 } from './opc-commander-roe-bar';
@@ -183,11 +184,12 @@ export function StudioCommandPalette({
     setRunError(null);
     setReceipt(null);
 
+    const country = regionToCountry(roe.region);
     const payloadBody = {
       script: trimmedScript,
       platform: roe.platform,
       jurisdiction: regionToJurisdiction(roe.region),
-      country: roe.region,
+      ...(country ? { country } : {}),
       postsToday: DEFAULT_LIVE_PIPELINE_INPUT.postsToday,
       ...(roe.useLiveD1Gross ? {} : { grossUsd: roe.customGrossUsd }),
     };
@@ -211,9 +213,28 @@ export function StudioCommandPalette({
         setIsPipelineRunning(false);
         return;
       }
+      const validIds = new Set(orderedCapabilities.map((c) => c.id));
+      const validStates = new Set(['passed', 'warning', 'blocked']);
       const serverMap = new Map<string, EngineLiveTelemetry>();
       for (const item of payload.results) {
-        if (!serverMap.has(item.engineId)) serverMap.set(item.engineId, item);
+        const isValid =
+          item &&
+          typeof item.engineId === 'string' &&
+          validIds.has(item.engineId) &&
+          validStates.has(item.state) &&
+          typeof item.durationMs === 'number' &&
+          Number.isFinite(item.durationMs) &&
+          !serverMap.has(item.engineId);
+        if (!isValid) {
+          setRunError(
+            locale === 'vi'
+              ? 'Phản hồi từ máy chủ chứa kết quả trùng lặp, không hợp lệ hoặc không thuộc danh mục 39 động cơ.'
+              : 'Server response contained duplicate, unknown, or malformed engine telemetry.',
+          );
+          setIsPipelineRunning(false);
+          return;
+        }
+        serverMap.set(item.engineId, item);
       }
       await commitSequence(
         token,
