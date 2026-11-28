@@ -171,7 +171,20 @@ export function EngineWorkbench({ locale }: { readonly locale: 'vi' | 'en' }) {
 
       {/* Always-Visible MD3 34-Engine Catalog (Zero Hidden Features) */}
       <div className="[content-visibility:auto] [contain-intrinsic-size:1px_640px]">
-        <StudioCommandPalette locale={locale} />
+        <StudioCommandPalette
+          locale={locale}
+          campaignDraft={{
+            script: scriptDraft,
+            platform:
+              platformDraft === 'tiktok' || platformDraft === 'youtube_shorts' || platformDraft === 'instagram_reels'
+                ? platformDraft
+                : 'tiktok',
+            region:
+              jurisdictionDraft === 'VN' || jurisdictionDraft === 'US' || jurisdictionDraft === 'UK' || jurisdictionDraft === 'SG'
+                ? jurisdictionDraft
+                : 'US',
+          }}
+        />
       </div>
     </div>
   );

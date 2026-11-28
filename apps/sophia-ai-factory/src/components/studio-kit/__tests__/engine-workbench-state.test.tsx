@@ -4,8 +4,17 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { EngineWorkbench } from '../engine-workbench';
 import { WorkbenchTabScriptPolicy } from '../workbench-tab-script-policy';
 
+const capturedDrafts: Array<{ script?: string; platform?: string; region?: string }> = [];
+
 vi.mock('../studio-command-palette', () => ({
-  StudioCommandPalette: () => <div data-testid="mock-command-palette" />,
+  StudioCommandPalette: ({
+    campaignDraft,
+  }: {
+    campaignDraft?: { script: string; platform: string; region: string };
+  }) => {
+    if (campaignDraft) capturedDrafts.push(campaignDraft);
+    return <div data-testid="mock-command-palette" data-draft-script={campaignDraft?.script ?? ''} />;
+  },
 }));
 vi.mock('../workbench-tab-media-slide', () => ({
   WorkbenchTabMediaSlide: () => <div data-testid="mock-media-tab" />,
@@ -20,8 +29,9 @@ vi.mock('../workbench-tab-r21-r25-engines', () => ({
   WorkbenchTabR21R25Engines: () => <div data-testid="mock-scale-tab" />,
 }));
 
-describe('EngineWorkbench & WorkbenchTabScriptPolicy campaign draft behavior (Wave B.1)', () => {
-  it('preserves controlled script, platform, and jurisdiction across all 5 steps and keeps empty script empty', () => {
+describe('EngineWorkbench & WorkbenchTabScriptPolicy campaign draft & Mission Control handoff (Wave B.1 + B.2)', () => {
+  it('preserves controlled script, platform, and jurisdiction across all 5 steps, forwards to StudioCommandPalette, and keeps empty script empty', () => {
+    capturedDrafts.length = 0;
     render(<EngineWorkbench locale="vi" />);
 
     const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
@@ -45,6 +55,19 @@ describe('EngineWorkbench & WorkbenchTabScriptPolicy campaign draft behavior (Wa
     expect(restoredTextarea.value).toContain(marker);
     expect(restoredSelects[0].value).toBe('youtube_shorts');
     expect(restoredSelects[1].value).toBe('US');
+
+    // Verify StudioCommandPalette received the live campaign draft handoff
+    const latestDraft = capturedDrafts[capturedDrafts.length - 1];
+    expect(latestDraft?.script).toContain(marker);
+    expect(latestDraft?.platform).toBe('youtube_shorts');
+    expect(latestDraft?.region).toBe('US');
+
+    // Also exercise fallback mapping branches (facebook_reels -> tiktok, EU -> US)
+    fireEvent.change(restoredSelects[0], { target: { value: 'facebook_reels' } });
+    fireEvent.change(restoredSelects[1], { target: { value: 'EU' } });
+    const mappedDraft = capturedDrafts[capturedDrafts.length - 1];
+    expect(mappedDraft?.platform).toBe('tiktok');
+    expect(mappedDraft?.region).toBe('US');
 
     // Clearing script must keep it empty instead of reverting to default sample
     fireEvent.change(restoredTextarea, { target: { value: '' } });

@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       const workspaceId = user && db ? await resolveOrgId(user.id, db) : null;
       if (workspaceId) {
         const roi = await getWorkspaceROI(workspaceId);
-        if (roi && roi.totalRevenueCents > 0) {
+        if (roi && typeof roi.totalRevenueCents === 'number') {
           liveGrossUsd = Math.round((roi.totalRevenueCents / 100) * 100) / 100;
           telemetrySource = 'live_d1';
         }

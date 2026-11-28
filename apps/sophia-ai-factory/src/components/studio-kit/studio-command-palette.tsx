@@ -42,6 +42,11 @@ import { StudioInspectorDrawer } from './studio-inspector-drawer';
 export interface StudioCommandPaletteProps {
   readonly locale: 'vi' | 'en';
   readonly capabilities?: readonly StudioCapabilitySpec[];
+  readonly campaignDraft?: {
+    readonly script: string;
+    readonly platform: CommanderRoeConfig['platform'];
+    readonly region: CommanderRoeConfig['region'];
+  };
 }
 
 interface ExecutePipelineResponse {
@@ -60,6 +65,7 @@ function prefersReducedMotion(): boolean {
 export function StudioCommandPalette({
   locale,
   capabilities = SOPHIA_STUDIO_CAPABILITIES,
+  campaignDraft,
 }: StudioCommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [category] = useState<CapabilityCategory | 'all'>('all');
@@ -71,13 +77,23 @@ export function StudioCommandPalette({
   const [runError, setRunError] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<PipelineVerifiedReceipt | null>(null);
   const [roe, setRoe] = useState<CommanderRoeConfig>({
-    script: DEFAULT_LIVE_PIPELINE_INPUT.script,
-    platform: 'tiktok',
-    region: 'VN',
+    script: campaignDraft?.script ?? DEFAULT_LIVE_PIPELINE_INPUT.script,
+    platform: campaignDraft?.platform ?? 'tiktok',
+    region: campaignDraft?.region ?? 'VN',
     useLiveD1Gross: true,
     customGrossUsd: DEFAULT_LIVE_PIPELINE_INPUT.grossUsd,
   });
   const runTokenRef = useRef(0);
+
+  useEffect(() => {
+    if (!campaignDraft) return;
+    setRoe((prev) => ({
+      ...prev,
+      script: campaignDraft.script,
+      platform: campaignDraft.platform,
+      region: campaignDraft.region,
+    }));
+  }, [campaignDraft?.script, campaignDraft?.platform, campaignDraft?.region]);
 
   const stages = useMemo(() => groupCapabilitiesIntoStages(capabilities), [capabilities]);
   const orderedCapabilities = useMemo(
@@ -112,8 +128,10 @@ export function StudioCommandPalette({
 
     if (instant) {
       for (const cap of orderedCapabilities) {
-        collected[cap.id] =
-          serverMap?.get(cap.id) ?? evaluateSingleEngineLive(cap.id, DEFAULT_LIVE_PIPELINE_INPUT);
+        const result = serverMap
+          ? serverMap.get(cap.id)
+          : evaluateSingleEngineLive(cap.id, DEFAULT_LIVE_PIPELINE_INPUT);
+        if (result) collected[cap.id] = result;
       }
       if (runTokenRef.current !== token) return;
       setLiveTelemetry(collected);
@@ -130,8 +148,10 @@ export function StudioCommandPalette({
       setActiveEngineId(cap.id);
       await new Promise((resolve) => setTimeout(resolve, 48));
       if (runTokenRef.current !== token) return;
-      const result =
-        serverMap?.get(cap.id) ?? evaluateSingleEngineLive(cap.id, DEFAULT_LIVE_PIPELINE_INPUT);
+      const result = serverMap
+        ? serverMap.get(cap.id)
+        : evaluateSingleEngineLive(cap.id, DEFAULT_LIVE_PIPELINE_INPUT);
+      if (!result) continue;
       collected[cap.id] = result;
       setLiveTelemetry((prev) => ({ ...prev, [cap.id]: result }));
     }
@@ -169,6 +189,7 @@ export function StudioCommandPalette({
         body: JSON.stringify(payloadBody),
       });
       const payload = (await resp.json().catch(() => ({}))) as ExecutePipelineResponse;
+      if (runTokenRef.current !== token) return;
       if (!resp.ok || payload.ok === false || !Array.isArray(payload.results)) {
         const detail = payload.error || `HTTP ${resp.status}`;
         setRunError(
@@ -180,7 +201,9 @@ export function StudioCommandPalette({
         return;
       }
       const serverMap = new Map<string, EngineLiveTelemetry>();
-      for (const item of payload.results) serverMap.set(item.engineId, item);
+      for (const item of payload.results) {
+        if (!serverMap.has(item.engineId)) serverMap.set(item.engineId, item);
+      }
       await commitSequence(
         token,
         serverMap,
@@ -188,6 +211,7 @@ export function StudioCommandPalette({
         payload.telemetrySource ?? 'default_sample',
       );
     } catch (err) {
+      if (runTokenRef.current !== token) return;
       const detail = err instanceof Error ? err.message : 'Network error';
       setRunError(
         locale === 'vi'
