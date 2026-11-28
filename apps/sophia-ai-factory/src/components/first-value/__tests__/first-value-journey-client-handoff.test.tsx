@@ -213,4 +213,89 @@ describe('FirstValueJourneyClient Preview-to-BYOK handoff, cost integrity & work
     expect(inputs[0].value).not.toBe('ORG_A_SECRET_TOPIC');
     expect(inputs[1].value).not.toBe('ORG_A_SECRET_AUDIENCE');
   });
+
+  it('prevents a slow deferred workspace A GET status response from populating workspace B after orgId switch', async () => {
+    const statusA = deferred<{ ok: boolean; status: number; json: () => Promise<unknown> }>();
+    const statusB = deferred<{ ok: boolean; status: number; json: () => Promise<unknown> }>();
+
+    globalThis.fetch = vi.fn((url: string) => {
+      if (url.includes('orgId=org-a')) return statusA.promise;
+      if (url.includes('orgId=org-b')) return statusB.promise;
+      return Promise.resolve({ ok: false, status: 404, json: async () => ({}) });
+    }) as unknown as typeof fetch;
+
+    const { rerender } = render(
+      <NextIntlClientProvider locale="vi" messages={viMessages}>
+        <FirstValueJourneyClient orgId="org-a" initialPilotMode={false} />
+      </NextIntlClientProvider>,
+    );
+
+    // Switch to workspace B while workspace A GET is still pending
+    rerender(
+      <NextIntlClientProvider locale="vi" messages={viMessages}>
+        <FirstValueJourneyClient orgId="org-b" initialPilotMode={false} />
+      </NextIntlClientProvider>,
+    );
+
+    // Resolve B first with distinctive B review
+    await act(async () => {
+      statusB.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          orgId: 'org-b',
+          configuredProviders: [],
+          receipt: null,
+          recentReviews: [
+            {
+              artifactId: 'art-b',
+              orgId: 'org-b',
+              userId: 'u-b',
+              missionId: 'm-b',
+              reviewState: 'pending_review',
+              provenance: 'fixture_simulated',
+              version: 1,
+              script: { title: 'WORKSPACE_B_UNIQUE_TITLE', total_duration: 30, scenes: [] },
+              createdAt: '2026-11-28T00:00:00Z',
+              updatedAt: '2026-11-28T00:00:00Z',
+            },
+          ],
+          pilot: { liveInferenceEnabled: false },
+        }),
+      });
+    });
+
+    await waitFor(() => expect(screen.getByText(/WORKSPACE_B_UNIQUE_TITLE/)).toBeTruthy());
+
+    // Now resolve stale workspace A GET afterward with distinctive A review -> MUST NOT appear in B
+    await act(async () => {
+      statusA.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          orgId: 'org-a',
+          configuredProviders: ['openrouter'],
+          receipt: null,
+          recentReviews: [
+            {
+              artifactId: 'art-a',
+              orgId: 'org-a',
+              userId: 'u-a',
+              missionId: 'm-a',
+              reviewState: 'pending_review',
+              provenance: 'fixture_simulated',
+              version: 1,
+              script: { title: 'WORKSPACE_A_STALE_LEAK_TITLE', total_duration: 30, scenes: [] },
+              createdAt: '2026-11-28T00:00:00Z',
+              updatedAt: '2026-11-28T00:00:00Z',
+            },
+          ],
+          pilot: { liveInferenceEnabled: false },
+        }),
+      });
+    });
+
+    expect(screen.queryByText(/WORKSPACE_A_STALE_LEAK_TITLE/)).toBeNull();
+    expect(screen.getByText(/WORKSPACE_B_UNIQUE_TITLE/)).toBeTruthy();
+  });
 });

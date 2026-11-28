@@ -207,14 +207,18 @@ export function FirstValueJourneyClient({
   );
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const activeOrgRef = useRef(orgId);
+  activeOrgRef.current = orgId;
 
   const loadStatus = useCallback(async () => {
-    if (!orgId) return;
-    const res = await fetch(`/api/first-value?orgId=${encodeURIComponent(orgId)}`, {
+    const requestOrgId = orgId;
+    if (!requestOrgId) return;
+    const res = await fetch(`/api/first-value?orgId=${encodeURIComponent(requestOrgId)}`, {
       cache: 'no-store',
     });
-    if (!res.ok) return;
+    if (!res.ok || activeOrgRef.current !== requestOrgId) return;
     const data = (await res.json()) as StatusResponse;
+    if (activeOrgRef.current !== requestOrgId) return;
     setStatus(data);
     if (data.pilot?.liveInferenceEnabled && data.pilot.modelId) {
       setModel(data.pilot.modelId);
@@ -227,6 +231,7 @@ export function FirstValueJourneyClient({
   }, [loadStatus]);
 
   async function postAction(body: Record<string, unknown>, idempotencyKey?: string) {
+    const requestOrgId = orgId;
     setBusy(true);
     setErrorMessage(null);
     try {
@@ -241,6 +246,7 @@ export function FirstValueJourneyClient({
         body: JSON.stringify(body),
       });
       const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      if (activeOrgRef.current !== requestOrgId) return null;
       if (!res.ok) {
         setErrorMessage(String(json.error ?? `HTTP ${res.status}`));
         return null;
