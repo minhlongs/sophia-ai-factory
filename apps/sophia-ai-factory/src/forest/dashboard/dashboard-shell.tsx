@@ -98,7 +98,7 @@ export function DashboardShell({
         {/* Page Content Viewport */}
         <main
           id="main-content"
-          className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-[1280px] w-full mx-auto"
+          className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-[1600px] w-full mx-auto"
         >
           {children}
         </main>

@@ -31,6 +31,11 @@ import {
 } from '@/seed/ui/pipeline-stage-manifest';
 import { PipelineAssemblyMatrix } from './pipeline-assembly-matrix';
 import { PipelineVerifiedReceiptCard } from './pipeline-verified-receipt-card';
+import {
+  OpcCommanderRoeBar,
+  regionToJurisdiction,
+  type CommanderRoeConfig,
+} from './opc-commander-roe-bar';
 import { StudioKpiStrip } from './studio-kpi-strip';
 import { StudioInspectorDrawer } from './studio-inspector-drawer';
 
@@ -65,6 +70,13 @@ export function StudioCommandPalette({
   const [activeEngineId, setActiveEngineId] = useState<string | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<PipelineVerifiedReceipt | null>(null);
+  const [roe, setRoe] = useState<CommanderRoeConfig>({
+    script: DEFAULT_LIVE_PIPELINE_INPUT.script,
+    platform: 'tiktok',
+    region: 'VN',
+    useLiveD1Gross: true,
+    customGrossUsd: DEFAULT_LIVE_PIPELINE_INPUT.grossUsd,
+  });
   const runTokenRef = useRef(0);
 
   const stages = useMemo(() => groupCapabilitiesIntoStages(capabilities), [capabilities]);
@@ -140,12 +152,21 @@ export function StudioCommandPalette({
     setRunError(null);
     setReceipt(null);
 
+    const payloadBody = {
+      script: roe.script.trim() || DEFAULT_LIVE_PIPELINE_INPUT.script,
+      platform: roe.platform,
+      jurisdiction: regionToJurisdiction(roe.region),
+      country: roe.region,
+      postsToday: DEFAULT_LIVE_PIPELINE_INPUT.postsToday,
+      ...(roe.useLiveD1Gross ? {} : { grossUsd: roe.customGrossUsd }),
+    };
+
     try {
       const resp = await fetch('/api/studio/pipeline/execute', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(DEFAULT_LIVE_PIPELINE_INPUT),
+        body: JSON.stringify(payloadBody),
       });
       const payload = (await resp.json().catch(() => ({}))) as ExecutePipelineResponse;
       if (!resp.ok || payload.ok === false || !Array.isArray(payload.results)) {
@@ -294,6 +315,13 @@ export function StudioCommandPalette({
           </div>
         </div>
       </div>
+
+      <OpcCommanderRoeBar
+        locale={locale}
+        value={roe}
+        disabled={isPipelineRunning}
+        onChange={setRoe}
+      />
 
       {runError ? (
         <div
