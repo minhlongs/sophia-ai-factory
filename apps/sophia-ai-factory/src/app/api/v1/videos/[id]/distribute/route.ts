@@ -14,6 +14,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import {
   distributeSchema,
   clampDistributeScheduleTime,
+  findUnsupportedChannelProviders,
   resolveConnectedChannels,
 } from './distribute-helpers';
 
@@ -48,6 +49,17 @@ export async function POST(
       );
     }
     const { channelProviders, caption, scheduledAt } = parsed.data;
+    const unsupportedProviders = findUnsupportedChannelProviders(channelProviders);
+    if (unsupportedProviders.length > 0) {
+      return NextResponse.json(
+        {
+          code: 'PROVIDER_NOT_IMPLEMENTED',
+          error: 'Selected channel provider does not have an executable publisher adapter',
+          unsupportedProviders,
+        },
+        { status: 422 },
+      );
+    }
     const resolvedScheduledAt = clampDistributeScheduleTime(scheduledAt);
     const db = createServerClient().unwrap();
 
