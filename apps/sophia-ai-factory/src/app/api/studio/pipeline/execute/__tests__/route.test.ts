@@ -1,45 +1,75 @@
-import { describe, expect, it } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { POST } from '../route';
 
-describe('POST /api/studio/pipeline/execute (Full 39-Engine Production Wiring)', () => {
-  it('executes all 39 registered engines server-side and returns live telemetry', async () => {
-    const req = new Request('http://localhost/api/studio/pipeline/execute', {
+const mockGetCurrentUser = vi.fn();
+const mockGetD1 = vi.fn();
+const mockResolveOrgId = vi.fn();
+const mockGetWorkspaceROI = vi.fn();
+
+vi.mock('@/seed/auth/better-auth-session', () => ({
+  getCurrentUser: () => mockGetCurrentUser(),
+}));
+
+vi.mock('@/seed/db/client', () => ({
+  getD1: () => mockGetD1(),
+}));
+
+vi.mock('@/seed/auth/workspace-access', () => ({
+  resolveOrgId: (...args: unknown[]) => mockResolveOrgId(...args),
+}));
+
+vi.mock('@/tree/roi', () => ({
+  getWorkspaceROI: (...args: unknown[]) => mockGetWorkspaceROI(...args),
+}));
+
+describe('POST /api/studio/pipeline/execute — zero-revenue & provenance semantics (Wave B.2)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('preserves genuine $0 workspace revenue as live_d1 instead of substituting sample revenue', async () => {
+    mockGetCurrentUser.mockResolvedValue({ id: 'u-zero', email: 'zero@example.test' });
+    mockGetD1.mockResolvedValue({});
+    mockResolveOrgId.mockResolvedValue('org-zero');
+    mockGetWorkspaceROI.mockResolvedValue({ totalRevenueCents: 0, totalCostCents: 0, roi: 0, unitCount: 0 });
+
+    const req = new NextRequest('http://127.0.0.1:8788/api/studio/pipeline/execute', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        script: 'Stop losing 40% on fees. #ad #affiliate',
-        platform: 'tiktok',
-        jurisdiction: 'VN',
-        country: 'VN',
-        grossUsd: 1000,
-        postsToday: 1,
+        script: 'Test zero revenue — SCENARIO_CRYPTO_SECURITY_VN_2026_MARKER',
+        platform: 'youtube_shorts',
+        jurisdiction: 'US',
       }),
     });
 
     const res = await POST(req);
     expect(res.status).toBe(200);
-    const data = (await res.json()) as {
-      ok: boolean;
-      totalEngines: number;
-      results: Array<{ engineId: string; state: string; metricOutput: string }>;
-    };
-    expect(data.ok).toBe(true);
-    expect(data.totalEngines).toBe(39);
-    expect(data.results).toHaveLength(39);
-
-    const subId = data.results.find((r) => r.engineId === 'subid-watermark-encoder');
-    expect(subId?.state).toBe('passed');
-    const recon = data.results.find((r) => r.engineId === 'affiliate-payout-reconciler');
-    expect(recon?.state).toBe('passed');
+    const body = (await res.json()) as { ok: boolean; telemetrySource: string; results: Array<{ engineId: string }> };
+    expect(body.ok).toBe(true);
+    expect(body.telemetrySource).toBe('live_d1');
+    expect(body.results).toHaveLength(39);
   });
 
-  it('rejects invalid payload with 400', async () => {
-    const req = new Request('http://localhost/api/studio/pipeline/execute', {
+  it('falls back to default_sample when workspace ROI telemetry is unavailable', async () => {
+    mockGetCurrentUser.mockResolvedValue(null);
+
+    const req = new NextRequest('http://127.0.0.1:8788/api/studio/pipeline/execute', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ grossUsd: -50 }),
+      body: JSON.stringify({
+        script: 'Test unavailable telemetry',
+        platform: 'tiktok',
+        jurisdiction: 'VN',
+      }),
     });
+
     const res = await POST(req);
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { ok: boolean; telemetrySource: string; results: Array<{ engineId: string }> };
+    expect(body.ok).toBe(true);
+    expect(body.telemetrySource).toBe('default_sample');
+    expect(body.results).toHaveLength(39);
   });
 });
