@@ -20,7 +20,7 @@ interface AffiliateViewProps {
 
 export function AffiliateLandingView({ signupUrl, t, beforeFooterSlot }: AffiliateViewProps) {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-16 space-y-20">
+    <main className="md3-pane-container py-12 space-y-16">
       {/* Hero */}
       <section className="text-center space-y-6">
         <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
@@ -98,6 +98,6 @@ export function AffiliateLandingView({ signupUrl, t, beforeFooterSlot }: Affilia
 
       {beforeFooterSlot}
       <AffiliateFooterSections signupUrl={signupUrl} t={t} />
-    </div>
+    </main>
   );
 }

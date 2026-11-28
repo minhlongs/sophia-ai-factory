@@ -27,14 +27,14 @@ export function MarketingNavMobileTrigger({
       <button
         type="button"
         onClick={onSwitchLocale}
-        className="p-2 rounded-lg text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08] text-xs font-mono font-bold uppercase"
+        className="md3-touch-target justify-center px-3 rounded-xl text-foreground hover:text-primary bg-card border border-border text-xs font-mono font-bold uppercase"
       >
         {locale === 'en' ? 'VI' : 'EN'}
       </button>
       <button
         type="button"
         onClick={onToggleMenu}
-        className="p-2 rounded-lg text-foreground dark:text-slate-300 hover:text-primary dark:hover:text-white bg-card dark:bg-[#11131F] border border-border dark:border-white/[0.08]"
+        className="md3-touch-target justify-center rounded-xl text-foreground hover:text-primary bg-card border border-border"
         aria-label="Toggle mobile menu"
       >
         {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
