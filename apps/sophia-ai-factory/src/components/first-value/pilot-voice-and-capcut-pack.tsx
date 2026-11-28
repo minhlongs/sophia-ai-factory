@@ -12,7 +12,7 @@
  * @module components/first-value/pilot-voice-and-capcut-pack
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { ScriptOutput } from '@/seed/ai/script-generator';
 import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
@@ -24,6 +24,7 @@ import {
   triggerTextFileDownload,
   type RepurposedShortClip,
 } from './pilot-capcut-pack-helpers';
+import { checkBrowserAacEncoderSupport } from './pilot-browser-audio-encoder';
 import {
   renderAndDownloadPilotMp4,
   renderNarratedPilotMp4Blob,
@@ -50,6 +51,7 @@ const VOICE_OPTIONS = [
 export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
   const t = useTranslations('firstValue');
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(VOICE_OPTIONS[0].id);
+  const [voiceTargetMode, setVoiceTargetMode] = useState<'narrated_mp4' | 'mp3_only'>('narrated_mp4');
   const [voiceLoading, setVoiceLoading] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -90,8 +92,15 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
     };
   }, [narratedVideoUrl]);
 
-  const scriptFingerprint = `${props.artifactId}:${props.script.title}:${props.script.scenes.map((s) => s.narration).join('|')}`;
+  const scriptFingerprint = `${props.orgId ?? ''}:${props.artifactId}:${props.script.title}:${props.ctaText}:${props.shortUrl}:${props.productImageUrls.join(',')}:${props.script.scenes.map((s) => s.narration).join('|')}`;
+  const fingerprintRef = useRef(scriptFingerprint);
+  const voiceSeqRef = useRef(0);
+  const renderSeqRef = useRef(0);
+
   useEffect(() => {
+    fingerprintRef.current = scriptFingerprint;
+    voiceSeqRef.current += 1;
+    renderSeqRef.current += 1;
     setAudioBlob(null);
     setAudioUrl(null);
     setNarratedVideoUrl(null);
@@ -117,9 +126,23 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
   }
 
   async function handleGenerateVoice() {
+    const reqFingerprint = scriptFingerprint;
+    const reqSeq = voiceSeqRef.current + 1;
+    voiceSeqRef.current = reqSeq;
     setVoiceLoading(true);
     setVoiceError(null);
     try {
+      if (voiceTargetMode === 'narrated_mp4') {
+        const support = await checkBrowserAacEncoderSupport();
+        if (fingerprintRef.current !== reqFingerprint || voiceSeqRef.current !== reqSeq) return;
+        if (!support.supported) {
+          setVoiceError(
+            support.reason ??
+              'Trình duyệt không hỗ trợ mã hóa AAC-LC cho MP4 có giọng đọc. Hãy chọn chế độ chỉ tải .mp3.',
+          );
+          return;
+        }
+      }
       const voiceOption =
         VOICE_OPTIONS.find((v) => v.id === selectedVoiceId) ?? VOICE_OPTIONS[0];
       const text = buildNarrationTextFromScript(props.script, props.ctaText);
@@ -136,11 +159,13 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
           filename: `sophia-voice-${props.artifactId}`,
         }),
       });
+      if (fingerprintRef.current !== reqFingerprint || voiceSeqRef.current !== reqSeq) return;
       if (!response.ok) {
         setVoiceError(t('pilotVoiceError'));
         return;
       }
       const blob = await response.blob();
+      if (fingerprintRef.current !== reqFingerprint || voiceSeqRef.current !== reqSeq) return;
       if (audioUrl) URL.revokeObjectURL(audioUrl);
       const nextUrl = URL.createObjectURL(blob);
       setAudioBlob(blob);
@@ -148,18 +173,26 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
       setNarratedVideoUrl(null);
       setNarratedError(null);
     } catch {
-      setVoiceError(t('pilotVoiceError'));
+      if (fingerprintRef.current === reqFingerprint && voiceSeqRef.current === reqSeq) {
+        setVoiceError(t('pilotVoiceError'));
+      }
     } finally {
-      setVoiceLoading(false);
+      if (fingerprintRef.current === reqFingerprint && voiceSeqRef.current === reqSeq) {
+        setVoiceLoading(false);
+      }
     }
   }
 
   async function handleRenderNarratedMp4() {
     if (!audioBlob || narratedLoading) return;
+    const reqFingerprint = scriptFingerprint;
+    const reqSeq = renderSeqRef.current + 1;
+    renderSeqRef.current = reqSeq;
     setNarratedLoading(true);
     setNarratedError(null);
     try {
       const audioBytes = await audioBlob.arrayBuffer();
+      if (fingerprintRef.current !== reqFingerprint || renderSeqRef.current !== reqSeq) return;
       const { blob } = await renderNarratedPilotMp4Blob({
         artifactId: props.artifactId,
         script: props.script,
@@ -170,16 +203,21 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
         aspectRatio: '9:16',
         audioBytes,
       });
+      if (fingerprintRef.current !== reqFingerprint || renderSeqRef.current !== reqSeq) return;
       if (narratedVideoUrl) URL.revokeObjectURL(narratedVideoUrl);
       setNarratedVideoUrl(URL.createObjectURL(blob));
     } catch (err) {
-      setNarratedError(
-        err instanceof Error
-          ? err.message
-          : 'Không thể ghép giọng đọc vào MP4. Không tự động hạ cấp sang video không tiếng.',
-      );
+      if (fingerprintRef.current === reqFingerprint && renderSeqRef.current === reqSeq) {
+        setNarratedError(
+          err instanceof Error
+            ? err.message
+            : 'Không thể ghép giọng đọc vào MP4. Không tự động hạ cấp sang video không tiếng.',
+        );
+      }
     } finally {
-      setNarratedLoading(false);
+      if (fingerprintRef.current === reqFingerprint && renderSeqRef.current === reqSeq) {
+        setNarratedLoading(false);
+      }
     }
   }
 
@@ -268,6 +306,17 @@ export function PilotVoiceAndCapCutPack(props: PilotVoiceAndCapCutPackProps) {
                 {v.label}
               </option>
             ))}
+          </select>
+          <select
+            aria-label="Voice target mode"
+            data-testid="pilot-voice-target-mode"
+            value={voiceTargetMode}
+            disabled={props.busy || voiceLoading}
+            onChange={(e) => setVoiceTargetMode(e.target.value as 'narrated_mp4' | 'mp3_only')}
+            className="rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground"
+          >
+            <option value="narrated_mp4">MP4 có giọng đọc (kiểm tra AAC trước)</option>
+            <option value="mp3_only">Chỉ xuất file .mp3</option>
           </select>
           <button
             type="button"

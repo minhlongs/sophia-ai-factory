@@ -98,6 +98,7 @@ describe('Pilot CapCut Pack helpers & UI', () => {
       />,
     );
 
+    fireEvent.change(screen.getByTestId('pilot-voice-target-mode'), { target: { value: 'mp3_only' } });
     fireEvent.click(screen.getByTestId('pilot-generate-voice-btn'));
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
@@ -150,6 +151,7 @@ describe('Pilot CapCut Pack helpers & UI', () => {
     fireEvent.click(screen.getByLabelText('Remove image'));
     expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:existing-1');
 
+    fireEvent.change(screen.getByTestId('pilot-voice-target-mode'), { target: { value: 'mp3_only' } });
     fireEvent.click(screen.getByTestId('pilot-generate-voice-btn'));
     await waitFor(() => {
       expect(screen.getByText('pilotVoiceError')).toBeTruthy();
