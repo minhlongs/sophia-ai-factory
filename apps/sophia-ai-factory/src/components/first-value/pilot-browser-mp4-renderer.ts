@@ -218,7 +218,7 @@ export function buildSlidesFromAcceptedScript(args: {
 
 export type PilotMp4AspectRatio = '9:16' | '16:9';
 
-export async function renderAndDownloadPilotMp4(args: {
+export interface RenderPilotMp4Args {
   readonly artifactId: string;
   readonly script: ScriptOutput;
   readonly ctaText: string;
@@ -226,7 +226,12 @@ export async function renderAndDownloadPilotMp4(args: {
   readonly disclosureTag: string;
   readonly productImageUrls?: readonly string[];
   readonly aspectRatio?: PilotMp4AspectRatio;
-}): Promise<EncodedPilotMp4Artifact> {
+}
+
+export async function renderPilotMp4Blob(args: RenderPilotMp4Args): Promise<{
+  readonly encoded: EncodedPilotMp4Artifact;
+  readonly blob: Blob;
+}> {
   const slides = buildSlidesFromAcceptedScript(args);
   const productImages = await loadProductImages(args.productImageUrls);
   const isLandscape = args.aspectRatio === '16:9';
@@ -236,9 +241,16 @@ export async function renderAndDownloadPilotMp4(args: {
     height: isLandscape ? 320 : 576,
     renderRgbaFrame: (slide, w, h) => drawSlideOnCanvas(slide, w, h, productImages),
   });
+  const blob = new Blob([encoded.bytes as BlobPart], { type: 'video/mp4' });
+  return { encoded, blob };
+}
+
+export async function renderAndDownloadPilotMp4(
+  args: RenderPilotMp4Args,
+): Promise<EncodedPilotMp4Artifact> {
+  const { encoded, blob } = await renderPilotMp4Blob(args);
 
   if (typeof document !== 'undefined' && typeof URL.createObjectURL === 'function') {
-    const blob = new Blob([encoded.bytes as BlobPart], { type: 'video/mp4' });
     const objectUrl = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = objectUrl;
