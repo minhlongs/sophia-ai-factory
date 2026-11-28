@@ -13,13 +13,16 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { getD1 } from '@/seed/db/client';
 import { csrfForbiddenResponse, verifyCsrfToken } from '@/seed/security/csrf';
-import { saveApprovedMp4ForDistribution } from '@/land/first-value/distribution-asset-bridge';
+import {
+  MAX_DISTRIBUTION_MP4_BYTES,
+  MIN_DISTRIBUTION_MP4_BYTES,
+  saveApprovedMp4ForDistribution,
+} from '@/land/first-value/distribution-asset-bridge';
 
 export const dynamic = 'force-dynamic';
 
 interface MediaEnv {
   MEDIA_BUCKET?: R2Bucket;
-  BACKUPS_BUCKET?: R2Bucket;
 }
 
 function resolvePrivateR2Bucket(): R2Bucket | null {
@@ -27,9 +30,8 @@ function resolvePrivateR2Bucket(): R2Bucket | null {
     const g = globalThis as unknown as Record<string, MediaEnv | undefined>;
     const env = g.__env__ ?? g.__env;
     if (env?.MEDIA_BUCKET) return env.MEDIA_BUCKET;
-    if (env?.BACKUPS_BUCKET) return env.BACKUPS_BUCKET;
     const ctx = (globalThis as Record<symbol, { env?: MediaEnv }>)[Symbol.for('__cloudflare-context__')];
-    return ctx?.env?.MEDIA_BUCKET ?? ctx?.env?.BACKUPS_BUCKET ?? null;
+    return ctx?.env?.MEDIA_BUCKET ?? null;
   } catch {
     return null;
   }
@@ -42,6 +44,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
   if (!verifyCsrfToken(request)) {
     return csrfForbiddenResponse();
+  }
+
+  const contentLength = Number(request.headers.get('content-length') ?? '0');
+  if (Number.isFinite(contentLength) && contentLength > MAX_DISTRIBUTION_MP4_BYTES + 1024 * 1024) {
+    return NextResponse.json({ code: 'PAYLOAD_TOO_LARGE', error: 'Upload exceeds 50 MB limit' }, { status: 413 });
   }
 
   let formData: FormData;
@@ -58,6 +65,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (!orgId || !artifactId || !(file instanceof Blob)) {
     return NextResponse.json({ error: 'Missing orgId, artifactId, or MP4 file' }, { status: 400 });
+  }
+  if (file.size > MAX_DISTRIBUTION_MP4_BYTES) {
+    return NextResponse.json({ code: 'PAYLOAD_TOO_LARGE', error: 'MP4 file exceeds 50 MB limit' }, { status: 413 });
+  }
+  if (file.size < MIN_DISTRIBUTION_MP4_BYTES) {
+    return NextResponse.json({ code: 'INVALID_MP4_BYTES', error: 'MP4 file is too small' }, { status: 400 });
   }
 
   const hasAccess = await verifyWorkspaceAccess(orgId, user.id).catch(() => false);
