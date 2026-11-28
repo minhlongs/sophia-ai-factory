@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { getCsrfHeaders } from '@/seed/security/use-csrf-token';
 import {
   SOPHIA_STUDIO_CAPABILITIES,
   filterCapabilities,
@@ -185,7 +186,7 @@ export function StudioCommandPalette({
       const resp = await fetch('/api/studio/pipeline/execute', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCsrfHeaders() },
         body: JSON.stringify(payloadBody),
       });
       const payload = (await resp.json().catch(() => ({}))) as ExecutePipelineResponse;

@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-headers-session';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { Campaign } from '@/seed/types';
@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUserFromHeaders(req.headers);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const db = createServerClient();
@@ -60,7 +60,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'CSRF token missing or invalid' }, { status: 403 });
   }
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUserFromHeaders(req.headers);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const campaignId = new URL(req.url).searchParams.get('id');
